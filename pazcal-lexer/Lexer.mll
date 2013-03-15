@@ -4,7 +4,8 @@ type token =
   | T_and | T_bool | T_break | T_case | T_char | T_const | T_continue | T_default | T_do | T_DOWNTO 
   | T_else | T_false | T_FOR | T_FORM | T_FUNC| T_if | T_int | T_MOD | T_NEXT | T_not | T_or | T_PROC 
   | T_PROGRAM | T_REAL | T_return | T_STEP | T_switch | T_TO | T_true | T_while | T_WRITE | T_WRITELN 
-  | T_WRITESP | T_WRITESPLN 
+  | T_WRITESP | T_WRITESPLN
+  | T_name
   | T_eq | T_lparen | T_rparen | T_plus | T_minus | T_times
 }
 
@@ -50,7 +51,7 @@ rule lexer = parse
   | "WRITESP"   { T_WRITESP }
   | "WRITESPLN"   { T_WRITESPLN }
 
-  | letter+(letter* digit* "_"*)* { T_var }
+  | letter+(letter* digit* "_"*)* { T_name }
 
   | '='      { T_eq }
   | '('      { T_lparen }
