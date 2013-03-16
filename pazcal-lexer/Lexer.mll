@@ -1,6 +1,6 @@
 {
 type token =
-  | T_eof | T_var
+  | T_eof | T_name
   | T_and | T_bool | T_break | T_case | T_char | T_const | T_continue | T_default | T_do | T_DOWNTO 
   | T_else | T_false | T_FOR | T_FORM | T_FUNC| T_if | T_int | T_MOD | T_NEXT | T_not | T_or | T_PROC 
   | T_PROGRAM | T_REAL | T_return | T_STEP | T_switch | T_TO | T_true | T_while | T_WRITE | T_WRITELN 
@@ -50,7 +50,7 @@ rule lexer = parse
   | "WRITESP"   { T_WRITESP }
   | "WRITESPLN"   { T_WRITESPLN }
 
-  | letter+(letter* digit* "_"*)* { T_var }
+  | letter+(letter* digit* "_"*)* { T_name }
 
   | '='      { T_eq }
   | '('      { T_lparen }
@@ -71,7 +71,7 @@ rule lexer = parse
   let string_of_token token =
     match token with
       | T_eof    -> "T_eof"
-      | T_var    -> "T_var"
+      | T_name    -> "T_name"
 
   let main =
     let lexbuf = Lexing.from_channel stdin in

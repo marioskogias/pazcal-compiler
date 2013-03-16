@@ -17,7 +17,7 @@ OCAMLC=ocamlc
 %.cmo %.cmi: %.ml
 	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
 
-minibasic$(EXE): Lexer.cmo
+pazcal$(EXE): Lexer.cmo
 	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ $^
 
 Lexer.ml: Lexer.mll
@@ -29,4 +29,4 @@ clean:
 	$(RM) Lexer.ml *.cmo *.cmi *~
 
 distclean: clean
-	$(RM) minibasic$(EXE)
+	$(RM) pazcal$(EXE)
