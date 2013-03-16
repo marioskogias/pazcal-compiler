@@ -1,6 +1,6 @@
 {
 type token =
-  | T_eof | T_name | T_int_const | T_real_const | T_const_char
+  | T_eof | T_name | T_int_const | T_real_const | T_const_char | T_string_const
   | T_and | T_bool | T_break | T_case | T_char | T_const | T_continue | T_default | T_do | T_DOWNTO 
   | T_else | T_false | T_FOR | T_FORM | T_FUNC| T_if | T_int | T_MOD | T_NEXT | T_not | T_or | T_PROC 
   | T_PROGRAM | T_REAL | T_return | T_STEP | T_switch | T_TO | T_true | T_while | T_WRITE | T_WRITELN 
@@ -51,7 +51,8 @@ rule lexer = parse
   | letter+(letter* digit* '_'*)* { T_name }
   | digit+   { T_int_const }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
-  | "'" ([^ '\'' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
+  | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
+  | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
 
   | '='      { T_eq }
   | '('      { T_lparen }
@@ -64,7 +65,7 @@ rule lexer = parse
  (* | "'" [^ '\n']* "\n"   { lexer lexbuf } *)
 
   |  eof          { T_eof }
-  |  _ as chr     { Printf.eprintf "invalid character: '%c' (ascii: %d)"
+  |  _ as chr     { Printf.eprintf "invalid character: '%c' (ascii: %d)\n"
                       chr (Char.code chr);
                     lexer lexbuf }
 
@@ -76,6 +77,7 @@ rule lexer = parse
       | T_int_const -> "T_int_const"
       | T_real_const -> "T_real_const"
       | T_const_char -> "T_const_char"
+      | T_string_const -> "T_string_const"
 
   let main =
     let lexbuf = Lexing.from_channel stdin in
