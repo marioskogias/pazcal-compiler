@@ -1,6 +1,6 @@
 {
 type token =
-  | T_eof | T_name | T_int_const | T_real_const
+  | T_eof | T_name | T_int_const | T_real_const | T_const_char
   | T_and | T_bool | T_break | T_case | T_char | T_const | T_continue | T_default | T_do | T_DOWNTO 
   | T_else | T_false | T_FOR | T_FORM | T_FUNC| T_if | T_int | T_MOD | T_NEXT | T_not | T_or | T_PROC 
   | T_PROGRAM | T_REAL | T_return | T_STEP | T_switch | T_TO | T_true | T_while | T_WRITE | T_WRITELN 
@@ -11,8 +11,7 @@ type token =
 let digit  = ['0'-'9']
 let letter = ['A'-'Z''a'-'z']
 let white  = [' ' '\t' '\r' '\n']
-
-
+let escape = ['\t' '\r' '\n' '\\' '"']
 
 rule lexer = parse
     "and"  { T_and }
@@ -53,6 +52,7 @@ rule lexer = parse
   | letter+(letter* digit* "_"*)* { T_name }
   | digit+   { T_int_const }
   | digit+"."digit+(("e"|"E")("+"|"-")? digit+)?	{ T_real_const }
+  | "'" ([^ '\''] | escape ) "'"   { T_const_char }
 
   | '='      { T_eq }
   | '('      { T_lparen }
@@ -76,6 +76,7 @@ rule lexer = parse
       | T_name    -> "T_name"
       | T_int_const -> "T_int_const"
       | T_real_const -> "T_real_const"
+      | T_const_char -> "T_const_char"
 
   let main =
     let lexbuf = Lexing.from_channel stdin in
