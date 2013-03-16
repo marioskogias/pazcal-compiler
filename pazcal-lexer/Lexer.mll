@@ -11,7 +11,6 @@ type token =
 let digit  = ['0'-'9']
 let letter = ['A'-'Z''a'-'z']
 let white  = [' ' '\t' '\r' '\n']
-let escape = ['\t' '\r' '\n' '\\' '"']
 
 rule lexer = parse
     "and"  { T_and }
@@ -49,10 +48,10 @@ rule lexer = parse
   | "WRITESP"   { T_WRITESP }
   | "WRITESPLN"   { T_WRITESPLN }
 
-  | letter+(letter* digit* "_"*)* { T_name }
+  | letter+(letter* digit* '_'*)* { T_name }
   | digit+   { T_int_const }
-  | digit+"."digit+(("e"|"E")("+"|"-")? digit+)?	{ T_real_const }
-  | "'" ([^ '\''] | escape ) "'"   { T_const_char }
+  | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
+  | "'" ([^ '\'' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
 
   | '='      { T_eq }
   | '('      { T_lparen }
@@ -62,7 +61,7 @@ rule lexer = parse
   | '*'      { T_times }
 
   | white+               { lexer lexbuf }
-  | "'" [^ '\n']* "\n"   { lexer lexbuf }
+ (* | "'" [^ '\n']* "\n"   { lexer lexbuf } *)
 
   |  eof          { T_eof }
   |  _ as chr     { Printf.eprintf "invalid character: '%c' (ascii: %d)"
