@@ -49,7 +49,7 @@ rule lexer = parse
   | "WRITESPLN"   { T_WRITESPLN }
 
   | letter+(letter* digit* '_'*)* { T_name }
-  | digit+   { T_int_const }
+  | (['1'-'9']+ digit*) | ('0'+)	{ T_int_const }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
