@@ -1,6 +1,6 @@
 {
 type token =
-  | T_eof | T_name | T_int_const | T_real_const | T_const_char | T_string_const | T_comment | T_multiple_line_comment
+  | T_eof | T_name | T_int_const | T_real_const | T_const_char | T_string_const 
   | T_and | T_bool | T_break | T_case | T_char | T_const | T_continue | T_default | T_do | T_DOWNTO 
   | T_else | T_false | T_FOR | T_FORM | T_FUNC| T_if | T_int | T_MOD | T_NEXT | T_not | T_or | T_PROC 
   | T_PROGRAM | T_REAL | T_return | T_STEP | T_switch | T_TO | T_true | T_while | T_WRITE | T_WRITELN 
@@ -9,7 +9,7 @@ type token =
   | T_equal | T_greater | T_less | T_less_equal 
   | T_greater_equal | T_not_equal | T_mod | T_mod_equal | T_plus_equal | T_minus_equal | T_div_equal 
   | T_minus_minus | T_plus_plus | T_OR | T_AND | T_NOT | T_div | T_ampersand | T_semicolon | T_fullstop 
-  | T_colon| T_comma| T_lbracket| T_rbracket | T_lbrace| T_rbrace | T_empty
+  | T_colon| T_comma| T_lbracket| T_rbracket | T_lbrace| T_rbrace
 
 }
 
@@ -58,8 +58,8 @@ rule lexer = parse
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
-  | "//" (_)* "\\n" {T_comment}
-  | "/*"(_|white)* "*/" { T_multiple_line_comment}
+  | "//" (_)* "\\n"  { lexer lexbuf }
+  | "/*"(_|white)* "*/"  { lexer lexbuf }
 
   | '='      { T_eq }
   | '('      { T_lparen }
@@ -93,13 +93,7 @@ rule lexer = parse
   | ']'      { T_rbracket }
   | '{'      { T_lbrace}
   | '}'      { T_rbrace }
-
-
-  |white+ { T_empty }
-
-
-(*  | white+               { lexer lexbuf }*)
- (* | "'" [^ '\n']* "\n"   { lexer lexbuf } *)
+  | white+   { lexer lexbuf }
 
   |  eof          { T_eof }
   |  _ as chr     { Printf.eprintf "invalid character: '%c' (ascii: %d)\n"
@@ -115,8 +109,6 @@ rule lexer = parse
 	| T_real_const -> "T_real_const"
 	| T_const_char -> "T_const_char"
 	| T_string_const -> "T_string_const"
-	| T_comment -> "T_comment"
-	| T_multiple_line_comment -> "T_multiple_line_comment"
 	| T_and -> "T_and"
 	| T_bool -> "T_bool"
 	| T_break -> "T_break"
@@ -183,7 +175,6 @@ rule lexer = parse
 	| T_rbracket -> "T_rbracket"
 	| T_lbrace -> "T_lbrace"
 	| T_rbrace -> "T_rbrace"
-	| T_empty -> "T_empty"
   let main =
     let lexbuf = Lexing.from_channel stdin in
     let rec loop () =
