@@ -6,10 +6,11 @@ type token =
   | T_PROGRAM | T_REAL | T_return | T_STEP | T_switch | T_TO | T_true | T_while | T_WRITE | T_WRITELN 
   | T_WRITESP | T_WRITESPLN
   | T_eq | T_lparen | T_rparen | T_plus | T_minus | T_times
-  | T_eq | T_lparen | T_rparen | T_plus | T_minus | T_times | T_equal | T_greater | T_less | T_less_equal 
+  | T_equal | T_greater | T_less | T_less_equal 
   | T_greater_equal | T_not_equal | T_mod | T_mod_equal | T_plus_equal | T_minus_equal | T_div_equal 
   | T_minus_minus | T_plus_plus | T_OR | T_AND | T_NOT | T_div | T_ampersand | T_semicolon | T_fullstop 
-  | T_colon| T_comma| T_lbracket| T_rbracket | T_lbrace| T_rbrace 
+  | T_colon| T_comma| T_lbracket| T_rbracket | T_lbrace| T_rbrace | T_empty
+
 }
 
 let digit  = ['0'-'9']
@@ -66,21 +67,21 @@ rule lexer = parse
   | '+'      { T_plus }
   | '-'      { T_minus }
   | '*'      { T_times }
-  | '=='     { T_equal }
+  | "=="     { T_equal }
   | '>'      { T_greater }
   | '<'      { T_less }
-  | '<='     { T_less_equal }
-  | '>='     { T_greater_equal }
-  | '!='     { T_not_equal }
+  | "<="     { T_less_equal }
+  | ">="     { T_greater_equal }
+  | "!="     { T_not_equal }
   | '%'      { T_mod }
-  | '%='     { T_mod_equal }
-  | '+='     { T_plus_equal }
-  | '-='     { T_minus_equal }
-  | '/='     { T_div_equal }
-  | '--'     { T_minus_minus }
-  | '++'     { T_plus_plus }
-  | '||'     { T_OR }
-  | '&&'     { T_AND }
+  | "%="     { T_mod_equal }
+  | "+="     { T_plus_equal }
+  | "-="     { T_minus_equal }
+  | "/="     { T_div_equal }
+  | "--"     { T_minus_minus }
+  | "++"     { T_plus_plus }
+  | "||"     { T_OR }
+  | "&&"     { T_AND }
   | '!'      { T_NOT }
   | '/'      { T_div }
   | '&'      { T_ampersand }
@@ -94,10 +95,10 @@ rule lexer = parse
   | '}'      { T_rbrace }
 
 
+  |white+ { T_empty }
 
 
-
-  | white+               { lexer lexbuf }
+(*  | white+               { lexer lexbuf }*)
  (* | "'" [^ '\n']* "\n"   { lexer lexbuf } *)
 
   |  eof          { T_eof }
@@ -182,7 +183,7 @@ rule lexer = parse
 	| T_rbracket -> "T_rbracket"
 	| T_lbrace -> "T_lbrace"
 	| T_rbrace -> "T_rbrace"
-
+	| T_empty -> "T_empty"
   let main =
     let lexbuf = Lexing.from_channel stdin in
     let rec loop () =
