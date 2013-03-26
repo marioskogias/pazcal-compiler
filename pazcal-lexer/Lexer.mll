@@ -58,7 +58,7 @@ rule lexer = parse
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
-  | "//" (_)* '\n'  { lexer lexbuf }
+  | "//" [^ '\n']* "\n"   { lexer lexbuf }
   | "/*"(_|white)* "*/"  { lexer lexbuf }
 
   | '='      { T_eq }
