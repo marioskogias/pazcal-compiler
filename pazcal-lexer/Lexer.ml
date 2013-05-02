@@ -2796,8 +2796,8 @@ and __ocaml_lex_lexer_rec lexbuf __ocaml_lex_state =
 
   | 40 ->
 # 78 "Lexer.mll"
-                                  ( Printf.eprintf "found a %d line comment" (count_substring (Lexing.lexeme lexbuf) "\n");
-					lexer lexbuf )
+                                  (for i = 1 to (count_substring (Lexing.lexeme lexbuf) "\n") do Lexing.new_line lexbuf done;
+				    lexer lexbuf )
 # 2802 "Lexer.ml"
 
   | 41 ->

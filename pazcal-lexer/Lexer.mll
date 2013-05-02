@@ -75,8 +75,8 @@ rule lexer = parse
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
   | "//" [^ '\n']* "\n"   { Lexing.new_line lexbuf ; lexer lexbuf }
-  | "/*"(_|white|new_line)* "*/"  { Printf.eprintf "found a %d line comment" (count_substring (Lexing.lexeme lexbuf) "\n");
-					lexer lexbuf }
+  | "/*"(_|white|new_line)* "*/"  {for i = 1 to (count_substring (Lexing.lexeme lexbuf) "\n") do Lexing.new_line lexbuf done;
+				    lexer lexbuf }
 
   | '='      { T_eq }
   | '('      { T_lparen }
