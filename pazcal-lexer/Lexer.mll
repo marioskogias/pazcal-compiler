@@ -11,11 +11,27 @@ type token =
   | T_minus_minus | T_plus_plus | T_OR | T_AND | T_NOT | T_div | T_ampersand | T_semicolon | T_fullstop 
   | T_colon| T_comma| T_lbracket| T_rbracket | T_lbrace| T_rbrace
 
+let count_substring str sub =
+  let sub_len = String.length sub in
+  let len_diff = (String.length str) - sub_len
+  and reg = Str.regexp_string sub in
+  let rec aux i n =
+    if i > len_diff then n else
+      try
+        let pos = Str.search_forward reg str i in
+        aux (pos + sub_len) (succ n)
+      with Not_found -> n
+  in
+  aux 0 0
+ 
+
 }
+
 
 let digit  = ['0'-'9']
 let letter = ['A'-'Z''a'-'z']
-let white  = [' ' '\t' '\r' '\n']
+let white  = [' ' '\t' '\r']
+let new_line = ['\n']
 
 rule lexer = parse
     "and"  { T_and }
@@ -58,8 +74,9 @@ rule lexer = parse
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
-  | "//" [^ '\n']* "\n"   { lexer lexbuf }
-  | "/*"(_|white)* "*/"  { lexer lexbuf }
+  | "//" [^ '\n']* "\n"   { Lexing.new_line lexbuf ; lexer lexbuf }
+  | "/*"(_|white|new_line)* "*/"  { Printf.eprintf "found a %d line comment" (count_substring (Lexing.lexeme lexbuf) "\n");
+					lexer lexbuf }
 
   | '='      { T_eq }
   | '('      { T_lparen }
@@ -94,10 +111,11 @@ rule lexer = parse
   | '{'      { T_lbrace}
   | '}'      { T_rbrace }
   | white+   { lexer lexbuf }
+  | new_line { Lexing.new_line lexbuf; lexer lexbuf }
 
   |  eof          { T_eof }
-  |  _ as chr     { Printf.eprintf "invalid character: '%c' (ascii: %d)\n"
-                      chr (Char.code chr);
+  |  _ as chr     { Printf.eprintf "invalid character: '%c' (ascii: %d) in line %n\n"
+                      chr (Char.code chr) (lexbuf.Lexing.lex_curr_p.Lexing.pos_lnum) ;
                     lexer lexbuf }
 
 {
@@ -175,12 +193,17 @@ rule lexer = parse
 	| T_rbracket -> "T_rbracket"
 	| T_lbrace -> "T_lbrace"
 	| T_rbrace -> "T_rbrace"
+ 
   let main =
     let lexbuf = Lexing.from_channel stdin in
     let rec loop () =
-      let token = lexer lexbuf in
+      let 
+	token = lexer lexbuf in
       Printf.printf "token=%s, lexeme=\"%s\"\n"
         (string_of_token token) (Lexing.lexeme lexbuf);
       if token <> T_eof then loop () in
     loop ()
+
+ 
+
 }

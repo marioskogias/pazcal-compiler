@@ -5,7 +5,7 @@ else
    EXE=
 endif
 
-OCAMLC_FLAGS=-g
+OCAMLC_FLAGS=-g 
 OCAMLC=ocamlc
 
 %.cmo: %.ml %.mli
@@ -18,7 +18,7 @@ OCAMLC=ocamlc
 	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
 
 pazcal$(EXE): Lexer.cmo
-	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ $^
+	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ str.cma $^
 
 Lexer.ml: Lexer.mll
 	ocamllex -o $@ $<
