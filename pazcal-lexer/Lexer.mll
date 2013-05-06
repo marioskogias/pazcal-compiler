@@ -98,7 +98,7 @@ rule lexer = parse
   | "--"     { T_minus_minus }
   | "++"     { T_plus_plus }
   | "||"     { T_OR }
-  | "&&"     { T_AND }
+  | "&&"     { T_and }
   | '!'      { T_NOT }
   | '/'      { T_div }
   | '&'      { T_ampersand }

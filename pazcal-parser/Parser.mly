@@ -68,20 +68,14 @@
 
 
 
-
-
-
-
-
-
-
-
-
 %token T_eof
 
-%left T_plus T_minus
-%left T_times
+%left T_equal T_not_equal T_less T_greater T_less_equal T_greater_equal
 
+%left T_plus T_minus T_OR T_or
+%left T_times T_div T_mod T_MOD T_and T_AND
+
+(* old stuff
 %start program
 %type <unit> program
 %type <unit> stmt_list
@@ -107,3 +101,34 @@ expr      : T_const { () }
 	  | expr T_plus expr { () }
 	  | expr T_minus expr { () }
 	  | expr T_times expr { () }
+*)
+
+(*declarations*)
+
+%start pmodule
+%type <unit> pmodule
+%type <unit> declaration_list
+%type <unit> declaration
+%type <unit> const_def
+%type <unit> var_def
+%type <unit> routine
+%type <unit> program
+%%
+
+(*rules*)
+
+
+
+
+pmodule : declaration_list T_eof { () }
+
+declaration_list : /*nothing */ { () }
+		|declaration declaration_list { () }
+
+declaration : const_def { () }
+	    | var_def { () }
+	    | routine { () }
+	    | program { () }
+
+const_def : T_const ptype id T_equal const_expr (T_comma id T_equal const_expr)* T_semicolon { () }
+
