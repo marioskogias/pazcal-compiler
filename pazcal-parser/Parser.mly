@@ -74,37 +74,6 @@
 
 %left T_plus T_minus T_OR T_or
 %left T_times T_div T_mod T_MOD T_and T_AND
-
-(* old stuff
-%start program
-%type <unit> program
-%type <unit> stmt_list
-%type <unit> stmt
-%type <unit> expr
-
-%%
-
-program   : stmt_list T_eof { () }
-
-stmt_list : /* nothing */ { () }
-          | stmt stmt_list { () }
-
-stmt      : T_print expr { () }
-          | T_let T_var T_eq expr { () }
-  	  | T_for expr T_do stmt { () }
-	  | T_begin stmt_list T_end { () }
-	  | T_if expr T_then stmt { () }
-
-expr      : T_const { () }
-          | T_var { () }
-	  | T_lparen expr T_rparen { () }
-	  | expr T_plus expr { () }
-	  | expr T_minus expr { () }
-	  | expr T_times expr { () }
-*)
-
-(*declarations*)
-
 %start pmodule
 %type <unit> pmodule
 %type <unit> declaration_list
@@ -118,10 +87,16 @@ expr      : T_const { () }
 %type <unit> var_init_bra
 %type <unit> var_init_bra_list
 %type <unit> routine
+%type <unit> routine_header
+%type <unit> routine_header_beg
+%type <unit> routine_header_body
+%type <unit> routine_header_list
+%type <unit> formal
+%type <unit> formal_end
 %type <unit> program
+
 %%
 
-(*rules*)
 
 
 
@@ -149,10 +124,36 @@ var_def : ptype var_init var_def_list T_semicolon { () }
 var_def_list : /*nothing*/ { () }
 	     | T_comma var_init var_def_list { () }
 
-var_init : id T_equal expr { () }
+var_init : id { () } 
+	 |id T_equal expr { () }
 	 | var_init_bra_list { () }
 
 var_init_bra : id T_lbracket const_expr T_rbracket { () }
 
 var_init_bra_list : var_init_bra { () }
 		  | var_init_bra_list var_init_bra { () }
+
+routine_header : routine_header_beg id T_lparen routine_header_body T_rparen
+
+routine_header_body : ptype formal | routine_header_list
+
+routine_header_list : /*nothing*/ { () }
+		    | T_comma ptype formal routine_header_list
+
+routine_header_beg : T_proc { () }
+		   | T_func ptype { () }
+
+formal : id { () }
+       | T_ambersand id  { () }
+       | id T_lbracket const_expr Trbracket formal_end { () }
+       | id T_lbracket Trbracket formal_end { () }
+
+formal_end : /*nothing*/ { () }
+	   | T_lbracket const_expr T_rbracket formal_end { () }
+
+routine : routine_header T_semicolon { () }
+	| routine_header block { () }
+
+program_header : T_program id T_lparen T_rparen
+
+program : program_header block
