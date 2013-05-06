@@ -110,7 +110,13 @@ expr      : T_const { () }
 %type <unit> declaration_list
 %type <unit> declaration
 %type <unit> const_def
+%type <unit> const_inner_def
+%type <unit> const_def_list
 %type <unit> var_def
+%type <unit> var_def_list
+%type <unit> var_init
+%type <unit> var_init_bra
+%type <unit> var_init_bra_list
 %type <unit> routine
 %type <unit> program
 %%
@@ -130,5 +136,23 @@ declaration : const_def { () }
 	    | routine { () }
 	    | program { () }
 
-const_def : T_const ptype id T_equal const_expr (T_comma id T_equal const_expr)* T_semicolon { () }
+const_inner_def : id T_equal const_expr { () }
 
+const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
+
+
+const_def_list : /*nothing*/ { () }
+	       | T_comma const_inner_def const_def_list
+
+var_def : ptype var_init var_def_list T_semicolon { () }
+
+var_def_list : /*nothing*/ { () }
+	     | T_comma var_init var_def_list { () }
+
+var_init : id T_equal expr { () }
+	 | var_init_bra_list { () }
+
+var_init_bra : id T_lbracket const_expr T_rbracket { () }
+
+var_init_bra_list : var_init_bra { () }
+		  | var_init_bra_list var_init_bra { () }
