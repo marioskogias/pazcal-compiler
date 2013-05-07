@@ -94,7 +94,17 @@
 %type <unit> formal
 %type <unit> formal_end
 %type <unit> program
-
+%type <unit> ptype
+%type <unit> const_expr
+%type <unit> expr
+%type <unit> l_value
+%type <unit> expr_list
+%type <unit> unop
+%type <unit> binop
+%type <unit> call 
+%type <unit> expressions
+%type <unit> block
+%type <unit> inner_block
 %%
 
 
@@ -157,3 +167,61 @@ routine : routine_header T_semicolon { () }
 program_header : T_program id T_lparen T_rparen
 
 program : program_header block
+
+ptype : T_init { () }
+      | T_bool { () }
+      | T_char { () }
+      | T_REAL { () }
+
+const_expr : expr { () }
+
+expr : T_int_const { () }
+     | T_real_const { () }
+     | T_const_char { () }
+     | T_string_const { () }
+     | T_true { () }
+     | T_false { () }
+     | T_lparen expr T_rparen { () }
+     | l_value { () }
+     | call { () }
+     | unop expr { () }
+     | expr binop expr { () }
+
+l_value : id expr_list { () }
+
+expr_list : /*nothing*/ { () }
+	  | T_lbracket expr_list T_rbracket { () }
+
+unop : T_plus { () }
+     | T_minus { () }
+     | T_NOT { () }
+     | T_not { () }
+
+binop : T_plus { () }
+      | T_minus { () } 
+      | T_times { () }
+      | T_div { () }
+      | T_mod { () }
+      | T_MOD { () }
+      | T_equal { () }
+      | T_not_equal { () }
+      | T_greate { () }
+      | T_less { () }
+      | T_less_equal { () }
+      | T_greater_equal { () }
+      | T_and { () }
+      | T_AND { () } /*need to change the lexer */
+      | T_OR { () }
+      | T_or { () }
+
+call : id T_lparen T_rparen { () }
+     | id T_lparen expr expressions T_rparen
+
+expressions : /*nothing*/ { () }
+	    | T_comma expr expressions { () }
+
+block : T_lbrace inner_block T_rbrace { () }
+
+inner_block : /*nothing*/ { () }
+	    | local_def inner_block { () }
+	    | stmt inner_block { () }
