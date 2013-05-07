@@ -105,6 +105,17 @@
 %type <unit> expressions
 %type <unit> block
 %type <unit> inner_block
+%type <unit> local_def
+%type <unit> stmt
+%type <unit> switch_inner 
+%type <unit> switch_first_part 
+%type <unit> pformat_list
+%type <unit> assign
+%type <unit> range
+%type <unit> clause
+%type <unit> stmt_list 
+%type <unit> write
+%type <unit> pformat
 %%
 
 
@@ -225,3 +236,65 @@ block : T_lbrace inner_block T_rbrace { () }
 inner_block : /*nothing*/ { () }
 	    | local_def inner_block { () }
 	    | stmt inner_block { () }
+
+local_def : const_def { () }
+	  | var_def { () }
+
+stmt : T_semicolon { () }
+     | l_value assign T_semicolon { () }
+     | l_value T_plus_plue T_semicolon{ () }
+     | l_value T_minus_minus T_semicolon { () }
+     | call T_semicolon { () }
+     | T_if T_lparen expr T_rparen stmt T_else stmt { () }
+     | T_if T_lparen expr T_rparen stmt { () }
+     | T_while T_lparen expr T_rparen stmt { () }
+     | T_for T_lparen id T_comma range T_rparen stmt { () }
+     | T_do stmt T_while T_lparen expr T_rparen T_semicolon { () }
+     | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { () }
+     | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { () }
+     | T_break T_semicolon { () }
+     | T_continue T_semicolon { () }
+     | T_return T_semicolon { () }
+     | T_return expr T_semicolon { () }
+     | block { () }
+     | write T_lparen T_rparen T_semicolon { () }
+     | write T_lparen pformat pformat_list T_rparen T_semicolon { () }
+
+
+pformat_list : /**nothing/ { () }
+	     | T_comma pformat pformat_list { () }
+
+
+
+inner_switch : /*nothing*/ { () }
+	     | switch_first_part clause inner_switch { () }
+
+switch_first_part : T_case const_expr T_colon { () }
+		  | T_case const_expr T_colon switch_first_part { () }
+
+assign : T_eq { () }
+       | T_plus_equal { () }
+       | T_minus_equal { ()}
+       | T_mod_equal { () }
+       | T_div_equal { () }
+       | T_times_equal { () } /*add this to the lexer*/
+
+range : expr T_TO expr { () }
+      | expr T_TO expr T_STEP expr
+      | expr T_DOWNTO expr { () }
+      | expr T_DOWNTO expr T_STEP expr
+
+clause : stmt_list T_break T_semicolon { () }
+       | stmt_list T_NEXT T_semicolon { () }
+
+stmt_list : /*nothing*/ { () }
+	  | stmt stmt_list { () }
+
+write : T_WRITE { () }
+      | T_WRITELN { () } 
+      | T_WRITESP { () }
+      | T_WRITESPLN { () }
+
+pformat : expr { () }
+	| T_FORM T_lparen expr T_comma expr T_rparen { () }
+	| T_FORM T_lparen expr T_comma expr T_comma expr T_rparen { () }
