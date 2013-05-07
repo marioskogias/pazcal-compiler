@@ -19,8 +19,8 @@ OCAMLDEP=ocamldep
 	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
 
 
-minibasic$(EXE):  Parser.cmo Lexer.cmo Main.cmo
-	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ $^
+pazcal$(EXE):  Parser.cmo Lexer.cmo Main.cmo
+	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ str.cma $^
 
 Lexer.ml: Lexer.mll
 	ocamllex -o $@ $<
@@ -39,4 +39,4 @@ clean:
 	$(RM) Lexer.ml Parser.ml Parser.mli Parser.output *.cmo *.cmi *~
 
 distclean: clean
-	$(RM) minibasic$(EXE) .depend
+	$(RM) pazcal$(EXE) .depend

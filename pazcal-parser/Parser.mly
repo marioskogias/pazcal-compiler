@@ -32,7 +32,7 @@
 %token T_WRITELN
 %token T_WRITESP 
 %token T_WRITESPLN 
-%token  T_eq 
+%token T_eq 
 %token T_lparen 
 %token T_rparen 
 %token T_plus 
@@ -49,6 +49,7 @@
 %token T_plus_equal 
 %token T_minus_equal 
 %token T_div_equal 
+%token T_times_equal
 %token T_minus_minus 
 %token T_plus_plus 
 %token T_OR 
@@ -64,9 +65,11 @@
 %token T_rbracket 
 %token T_lbrace
 %token T_rbrace 
-
-
-
+%token T_name
+%token T_real_const
+%token T_const_char
+%token T_string_const
+%token T_int_const
 
 %token T_eof
 
@@ -74,6 +77,7 @@
 
 %left T_plus T_minus T_OR T_or
 %left T_times T_div T_mod T_MOD T_and T_AND
+
 %start pmodule
 %type <unit> pmodule
 %type <unit> declaration_list
@@ -107,7 +111,7 @@
 %type <unit> inner_block
 %type <unit> local_def
 %type <unit> stmt
-%type <unit> switch_inner 
+%type <unit> inner_switch 
 %type <unit> switch_first_part 
 %type <unit> pformat_list
 %type <unit> assign
@@ -132,42 +136,43 @@ declaration : const_def { () }
 	    | routine { () }
 	    | program { () }
 
-const_inner_def : id T_equal const_expr { () }
+const_inner_def : T_name T_equal const_expr { () }
 
 const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 
 
 const_def_list : /*nothing*/ { () }
-	       | T_comma const_inner_def const_def_list
+	       | T_comma const_inner_def const_def_list { () }
 
 var_def : ptype var_init var_def_list T_semicolon { () }
 
 var_def_list : /*nothing*/ { () }
 	     | T_comma var_init var_def_list { () }
 
-var_init : id { () } 
-	 |id T_equal expr { () }
+var_init : T_name { () } 
+	 |T_name T_equal expr { () }
 	 | var_init_bra_list { () }
 
-var_init_bra : id T_lbracket const_expr T_rbracket { () }
+var_init_bra : T_name T_lbracket const_expr T_rbracket { () } 
 
 var_init_bra_list : var_init_bra { () }
 		  | var_init_bra_list var_init_bra { () }
 
-routine_header : routine_header_beg id T_lparen routine_header_body T_rparen
+routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen { () }
 
-routine_header_body : ptype formal | routine_header_list
+routine_header_body : ptype formal { () }
+		    | routine_header_list { () }
 
 routine_header_list : /*nothing*/ { () }
-		    | T_comma ptype formal routine_header_list
+		    | T_comma ptype formal routine_header_list { () }
 
-routine_header_beg : T_proc { () }
-		   | T_func ptype { () }
+routine_header_beg : T_PROC { () }
+		   | T_FUNC ptype { () }
 
-formal : id { () }
-       | T_ambersand id  { () }
-       | id T_lbracket const_expr Trbracket formal_end { () }
-       | id T_lbracket Trbracket formal_end { () }
+formal : T_name { () }
+       | T_ampersand T_name  { () }
+       | T_name T_lbracket const_expr T_rbracket formal_end { () }
+       | T_name T_lbracket T_rbracket formal_end { () }
 
 formal_end : /*nothing*/ { () }
 	   | T_lbracket const_expr T_rbracket formal_end { () }
@@ -175,11 +180,11 @@ formal_end : /*nothing*/ { () }
 routine : routine_header T_semicolon { () }
 	| routine_header block { () }
 
-program_header : T_program id T_lparen T_rparen
+program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : program_header block
+program : program_header block { () }
 
-ptype : T_init { () }
+ptype : T_int { () }
       | T_bool { () }
       | T_char { () }
       | T_REAL { () }
@@ -198,7 +203,7 @@ expr : T_int_const { () }
      | unop expr { () }
      | expr binop expr { () }
 
-l_value : id expr_list { () }
+l_value : T_name expr_list { () }
 
 expr_list : /*nothing*/ { () }
 	  | T_lbracket expr_list T_rbracket { () }
@@ -216,17 +221,17 @@ binop : T_plus { () }
       | T_MOD { () }
       | T_equal { () }
       | T_not_equal { () }
-      | T_greate { () }
+      | T_greater { () }
       | T_less { () }
       | T_less_equal { () }
       | T_greater_equal { () }
       | T_and { () }
-      | T_AND { () } /*need to change the lexer */
+      | T_AND { () } 
       | T_OR { () }
       | T_or { () }
 
-call : id T_lparen T_rparen { () }
-     | id T_lparen expr expressions T_rparen
+call : T_name T_lparen T_rparen { () }
+     | T_name T_lparen expr expressions T_rparen { () }
 
 expressions : /*nothing*/ { () }
 	    | T_comma expr expressions { () }
@@ -242,13 +247,13 @@ local_def : const_def { () }
 
 stmt : T_semicolon { () }
      | l_value assign T_semicolon { () }
-     | l_value T_plus_plue T_semicolon{ () }
+     | l_value T_plus_plus T_semicolon{ () }
      | l_value T_minus_minus T_semicolon { () }
      | call T_semicolon { () }
      | T_if T_lparen expr T_rparen stmt T_else stmt { () }
      | T_if T_lparen expr T_rparen stmt { () }
      | T_while T_lparen expr T_rparen stmt { () }
-     | T_for T_lparen id T_comma range T_rparen stmt { () }
+     | T_FOR T_lparen T_name T_comma range T_rparen stmt { () }
      | T_do stmt T_while T_lparen expr T_rparen T_semicolon { () }
      | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { () }
      | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { () }
@@ -261,10 +266,23 @@ stmt : T_semicolon { () }
      | write T_lparen pformat pformat_list T_rparen T_semicolon { () }
 
 
-pformat_list : /**nothing/ { () }
-	     | T_comma pformat pformat_list { () }
+assign : T_eq { () }
+       | T_plus_equal { () }
+       | T_minus_equal { ()}
+       | T_mod_equal { () }
+       | T_div_equal { () }
+       | T_times_equal { () }
 
+range : expr T_TO expr { () }
+      | expr T_TO expr T_STEP expr { () }
+      | expr T_DOWNTO expr { () }
+      | expr T_DOWNTO expr T_STEP expr { () }
 
+stmt_list : /*nothing*/ { () }
+	  | stmt stmt_list { () }
+
+clause : stmt_list T_break T_semicolon { () }
+       | stmt_list T_NEXT T_semicolon { () }
 
 inner_switch : /*nothing*/ { () }
 	     | switch_first_part clause inner_switch { () }
@@ -272,23 +290,10 @@ inner_switch : /*nothing*/ { () }
 switch_first_part : T_case const_expr T_colon { () }
 		  | T_case const_expr T_colon switch_first_part { () }
 
-assign : T_eq { () }
-       | T_plus_equal { () }
-       | T_minus_equal { ()}
-       | T_mod_equal { () }
-       | T_div_equal { () }
-       | T_times_equal { () } /*add this to the lexer*/
+pformat_list : /*nothing*/ { () }
+	     | T_comma pformat pformat_list { () }
 
-range : expr T_TO expr { () }
-      | expr T_TO expr T_STEP expr
-      | expr T_DOWNTO expr { () }
-      | expr T_DOWNTO expr T_STEP expr
 
-clause : stmt_list T_break T_semicolon { () }
-       | stmt_list T_NEXT T_semicolon { () }
-
-stmt_list : /*nothing*/ { () }
-	  | stmt stmt_list { () }
 
 write : T_WRITE { () }
       | T_WRITELN { () } 

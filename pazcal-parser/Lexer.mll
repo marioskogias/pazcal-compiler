@@ -85,6 +85,7 @@ rule lexer = parse
   | "+="     { T_plus_equal }
   | "-="     { T_minus_equal }
   | "/="     { T_div_equal }
+  | "*="     { T_times_equal }
   | "--"     { T_minus_minus }
   | "++"     { T_plus_plus }
   | "||"     { T_OR }
