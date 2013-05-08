@@ -73,7 +73,7 @@ rule lexer = parse
   | (['1'-'9']+ digit*) | ('0'+)	{ T_int_const }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
-  | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))* "\\n"? '"' { T_string_const }
+  | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' { T_string_const }
   | "//" [^ '\n']* "\n"   { Lexing.new_line lexbuf ; lexer lexbuf }
   | "/*"(_|white|new_line)* "*/"  {for i = 1 to (count_substring (Lexing.lexeme lexbuf) "\n") do Lexing.new_line lexbuf done;
 				    lexer lexbuf }

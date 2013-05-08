@@ -160,8 +160,8 @@ var_init_bra_list : var_init_bra { () }
 
 routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen { () }
 
-routine_header_body : ptype formal { () }
-		    | routine_header_list { () }
+routine_header_body :/*nothing*/ { () } 
+		    |ptype formal routine_header_list { () }
 
 routine_header_list : /*nothing*/ { () }
 		    | T_comma ptype formal routine_header_list { () }

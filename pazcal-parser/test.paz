@@ -1,6 +1,6 @@
 PROGRAM hello ()
- {
+{
 
-	WRIT$LN("Hello world!");
+	WRITELN("Hello world!");
 
 }
