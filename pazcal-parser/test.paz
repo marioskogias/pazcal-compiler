@@ -1,0 +1,6 @@
+PROGRAM hello ()
+ {
+
+	WRIT$LN("Hello world!");
+
+}

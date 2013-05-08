@@ -1,0 +1,6 @@
+PROGRAM hello ()
+ {
+
+	WRI$TLN("Hello world!");
+
+}
