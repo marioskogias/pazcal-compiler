@@ -198,8 +198,8 @@ expr : T_int_const { () }
      | T_lparen expr T_rparen { () }
      | l_value { () }
      | call { () }
-     | unop expr { () }
-     | expr binop expr { () }
+   /*  | unop expr { () }
+     | expr binop expr { () } */
 
 l_value : T_name expr_list { () }
 
@@ -249,7 +249,7 @@ stmt : T_semicolon { () }
      | l_value T_minus_minus T_semicolon { () }
      | call T_semicolon { () }
      | T_if T_lparen expr T_rparen stmt T_else stmt { () }
-     | T_if T_lparen expr T_rparen stmt { () }
+     | T_if T_lparen expr T_rparen stmt { () } 
      | T_while T_lparen expr T_rparen stmt { () }
      | T_FOR T_lparen T_name T_comma range T_rparen stmt { () }
      | T_do stmt T_while T_lparen expr T_rparen T_semicolon { () }
@@ -279,14 +279,14 @@ range : expr T_TO expr { () }
 stmt_list : /*nothing*/ { () }
 	  | stmt stmt_list { () }
 
-clause : stmt_list T_break T_semicolon { () }
+clause : stmt_list { () }
        | stmt_list T_NEXT T_semicolon { () }
 
 inner_switch : /*nothing*/ { () }
 	     | switch_first_part clause inner_switch { () }
 
 switch_first_part : T_case const_expr T_colon { () }
-		  | T_case const_expr T_colon switch_first_part { () }
+	/*	  | T_case const_expr T_colon switch_first_part { () } this should change */
 
 pformat_list : /*nothing*/ { () }
 	     | T_comma pformat pformat_list { () }

@@ -1,0 +1,2490 @@
+   0  $accept : %entry% $end
+
+   1  pmodule : declaration_list T_eof
+
+   2  declaration_list :
+   3                   | declaration declaration_list
+
+   4  declaration : const_def
+   5              | var_def
+   6              | routine
+   7              | program
+
+   8  const_inner_def : T_name T_eq const_expr
+
+   9  const_def : T_const ptype const_inner_def const_def_list T_semicolon
+
+  10  const_def_list :
+  11                 | T_comma const_inner_def const_def_list
+
+  12  var_def : ptype var_init var_def_list T_semicolon
+
+  13  var_def_list :
+  14               | T_comma var_init var_def_list
+
+  15  var_init : T_name
+  16           | T_name T_eq expr
+  17           | T_name var_init_bra_list
+
+  18  var_init_bra_list : T_lbracket const_expr T_rbracket
+  19                    | T_lbracket const_expr T_rbracket var_init_bra_list
+
+  20  routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen
+
+  21  routine_header_body :
+  22                      | ptype formal routine_header_list
+
+  23  routine_header_list :
+  24                      | T_comma ptype formal routine_header_list
+
+  25  routine_header_beg : T_PROC
+  26                     | T_FUNC ptype
+
+  27  formal : T_name
+  28         | T_ampersand T_name
+  29         | T_name T_lbracket const_expr T_rbracket formal_end
+  30         | T_name T_lbracket T_rbracket formal_end
+
+  31  formal_end :
+  32             | T_lbracket const_expr T_rbracket formal_end
+
+  33  routine : routine_header T_semicolon
+  34          | routine_header block
+
+  35  program_header : T_PROGRAM T_name T_lparen T_rparen
+
+  36  program : program_header block
+
+  37  ptype : T_int
+  38        | T_bool
+  39        | T_char
+  40        | T_REAL
+
+  41  const_expr : expr
+
+  42  expr : T_int_const
+  43       | T_real_const
+  44       | T_const_char
+  45       | T_string_const
+  46       | T_true
+  47       | T_false
+  48       | T_lparen expr T_rparen
+  49       | l_value
+  50       | call
+
+  51  l_value : T_name expr_list
+
+  52  expr_list :
+  53            | T_lbracket expr T_rbracket expr_list
+
+  54  unop : T_plus
+  55       | T_minus
+  56       | T_NOT
+  57       | T_not
+
+  58  binop : T_plus
+  59        | T_minus
+  60        | T_times
+  61        | T_div
+  62        | T_mod
+  63        | T_MOD
+  64        | T_equal
+  65        | T_not_equal
+  66        | T_greater
+  67        | T_less
+  68        | T_less_equal
+  69        | T_greater_equal
+  70        | T_and
+  71        | T_AND
+  72        | T_OR
+  73        | T_or
+
+  74  call : T_name T_lparen T_rparen
+  75       | T_name T_lparen expr expressions T_rparen
+
+  76  expressions :
+  77              | T_comma expr expressions
+
+  78  block : T_lbrace inner_block T_rbrace
+
+  79  inner_block :
+  80              | local_def inner_block
+  81              | stmt inner_block
+
+  82  local_def : const_def
+  83            | var_def
+
+  84  stmt : T_semicolon
+  85       | l_value assign expr T_semicolon
+  86       | l_value T_plus_plus T_semicolon
+  87       | l_value T_minus_minus T_semicolon
+  88       | call T_semicolon
+  89       | T_if T_lparen expr T_rparen stmt T_else stmt
+  90       | T_if T_lparen expr T_rparen stmt
+  91       | T_while T_lparen expr T_rparen stmt
+  92       | T_FOR T_lparen T_name T_comma range T_rparen stmt
+  93       | T_do stmt T_while T_lparen expr T_rparen T_semicolon
+  94       | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace
+  95       | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_rbrace
+  96       | T_break T_semicolon
+  97       | T_continue T_semicolon
+  98       | T_return T_semicolon
+  99       | T_return expr T_semicolon
+ 100       | block
+ 101       | write T_lparen T_rparen T_semicolon
+ 102       | write T_lparen pformat pformat_list T_rparen T_semicolon
+
+ 103  assign : T_eq
+ 104         | T_plus_equal
+ 105         | T_minus_equal
+ 106         | T_mod_equal
+ 107         | T_div_equal
+ 108         | T_times_equal
+
+ 109  range : expr T_TO expr
+ 110        | expr T_TO expr T_STEP expr
+ 111        | expr T_DOWNTO expr
+ 112        | expr T_DOWNTO expr T_STEP expr
+
+ 113  stmt_list :
+ 114            | stmt stmt_list
+
+ 115  clause : stmt_list
+ 116         | stmt_list T_NEXT T_semicolon
+
+ 117  inner_switch :
+ 118               | switch_first_part clause inner_switch
+
+ 119  switch_first_part : T_case const_expr T_colon
+
+ 120  pformat_list :
+ 121               | T_comma pformat pformat_list
+
+ 122  write : T_WRITE
+ 123        | T_WRITELN
+ 124        | T_WRITESP
+ 125        | T_WRITESPLN
+
+ 126  pformat : expr
+ 127          | T_FORM T_lparen expr T_comma expr T_rparen
+ 128          | T_FORM T_lparen expr T_comma expr T_comma expr T_rparen
+
+ 129  %entry% : '\001' pmodule
+
+state 0
+	$accept : . %entry% $end  (0)
+
+	'\001'  shift 1
+	.  error
+
+	%entry%  goto 2
+
+
+state 1
+	%entry% : '\001' . pmodule  (129)
+	declaration_list : .  (2)
+
+	T_bool  shift 3
+	T_char  shift 4
+	T_const  shift 5
+	T_FUNC  shift 6
+	T_int  shift 7
+	T_PROC  shift 8
+	T_PROGRAM  shift 9
+	T_REAL  shift 10
+	T_eof  reduce 2
+
+	pmodule  goto 11
+	declaration_list  goto 12
+	declaration  goto 13
+	const_def  goto 14
+	var_def  goto 15
+	routine  goto 16
+	routine_header  goto 17
+	routine_header_beg  goto 18
+	program  goto 19
+	ptype  goto 20
+	program_header  goto 21
+
+
+state 2
+	$accept : %entry% . $end  (0)
+
+	$end  accept
+
+
+state 3
+	ptype : T_bool .  (38)
+
+	.  reduce 38
+
+
+state 4
+	ptype : T_char .  (39)
+
+	.  reduce 39
+
+
+state 5
+	const_def : T_const . ptype const_inner_def const_def_list T_semicolon  (9)
+
+	T_bool  shift 3
+	T_char  shift 4
+	T_int  shift 7
+	T_REAL  shift 10
+	.  error
+
+	ptype  goto 22
+
+
+state 6
+	routine_header_beg : T_FUNC . ptype  (26)
+
+	T_bool  shift 3
+	T_char  shift 4
+	T_int  shift 7
+	T_REAL  shift 10
+	.  error
+
+	ptype  goto 23
+
+
+state 7
+	ptype : T_int .  (37)
+
+	.  reduce 37
+
+
+state 8
+	routine_header_beg : T_PROC .  (25)
+
+	.  reduce 25
+
+
+state 9
+	program_header : T_PROGRAM . T_name T_lparen T_rparen  (35)
+
+	T_name  shift 24
+	.  error
+
+
+state 10
+	ptype : T_REAL .  (40)
+
+	.  reduce 40
+
+
+state 11
+	%entry% : '\001' pmodule .  (129)
+
+	.  reduce 129
+
+
+state 12
+	pmodule : declaration_list . T_eof  (1)
+
+	T_eof  shift 25
+	.  error
+
+
+state 13
+	declaration_list : declaration . declaration_list  (3)
+	declaration_list : .  (2)
+
+	T_bool  shift 3
+	T_char  shift 4
+	T_const  shift 5
+	T_FUNC  shift 6
+	T_int  shift 7
+	T_PROC  shift 8
+	T_PROGRAM  shift 9
+	T_REAL  shift 10
+	T_eof  reduce 2
+
+	declaration_list  goto 26
+	declaration  goto 13
+	const_def  goto 14
+	var_def  goto 15
+	routine  goto 16
+	routine_header  goto 17
+	routine_header_beg  goto 18
+	program  goto 19
+	ptype  goto 20
+	program_header  goto 21
+
+
+state 14
+	declaration : const_def .  (4)
+
+	.  reduce 4
+
+
+state 15
+	declaration : var_def .  (5)
+
+	.  reduce 5
+
+
+state 16
+	declaration : routine .  (6)
+
+	.  reduce 6
+
+
+state 17
+	routine : routine_header . T_semicolon  (33)
+	routine : routine_header . block  (34)
+
+	T_semicolon  shift 27
+	T_lbrace  shift 28
+	.  error
+
+	block  goto 29
+
+
+state 18
+	routine_header : routine_header_beg . T_name T_lparen routine_header_body T_rparen  (20)
+
+	T_name  shift 30
+	.  error
+
+
+state 19
+	declaration : program .  (7)
+
+	.  reduce 7
+
+
+state 20
+	var_def : ptype . var_init var_def_list T_semicolon  (12)
+
+	T_name  shift 31
+	.  error
+
+	var_init  goto 32
+
+
+state 21
+	program : program_header . block  (36)
+
+	T_lbrace  shift 28
+	.  error
+
+	block  goto 33
+
+
+state 22
+	const_def : T_const ptype . const_inner_def const_def_list T_semicolon  (9)
+
+	T_name  shift 34
+	.  error
+
+	const_inner_def  goto 35
+
+
+state 23
+	routine_header_beg : T_FUNC ptype .  (26)
+
+	.  reduce 26
+
+
+state 24
+	program_header : T_PROGRAM T_name . T_lparen T_rparen  (35)
+
+	T_lparen  shift 36
+	.  error
+
+
+state 25
+	pmodule : declaration_list T_eof .  (1)
+
+	.  reduce 1
+
+
+state 26
+	declaration_list : declaration declaration_list .  (3)
+
+	.  reduce 3
+
+
+state 27
+	routine : routine_header T_semicolon .  (33)
+
+	.  reduce 33
+
+
+state 28
+	block : T_lbrace . inner_block T_rbrace  (78)
+	inner_block : .  (79)
+
+	T_bool  shift 3
+	T_break  shift 37
+	T_char  shift 4
+	T_const  shift 5
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_int  shift 7
+	T_REAL  shift 10
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	T_rbrace  reduce 79
+
+	const_def  goto 51
+	var_def  goto 52
+	ptype  goto 20
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	inner_block  goto 56
+	local_def  goto 57
+	stmt  goto 58
+	write  goto 59
+
+
+state 29
+	routine : routine_header block .  (34)
+
+	.  reduce 34
+
+
+state 30
+	routine_header : routine_header_beg T_name . T_lparen routine_header_body T_rparen  (20)
+
+	T_lparen  shift 60
+	.  error
+
+
+state 31
+	var_init : T_name .  (15)
+	var_init : T_name . T_eq expr  (16)
+	var_init : T_name . var_init_bra_list  (17)
+
+	T_eq  shift 61
+	T_lbracket  shift 62
+	T_semicolon  reduce 15
+	T_comma  reduce 15
+
+	var_init_bra_list  goto 63
+
+
+state 32
+	var_def : ptype var_init . var_def_list T_semicolon  (12)
+	var_def_list : .  (13)
+
+	T_comma  shift 64
+	T_semicolon  reduce 13
+
+	var_def_list  goto 65
+
+
+state 33
+	program : program_header block .  (36)
+
+	.  reduce 36
+
+
+state 34
+	const_inner_def : T_name . T_eq const_expr  (8)
+
+	T_eq  shift 66
+	.  error
+
+
+state 35
+	const_def : T_const ptype const_inner_def . const_def_list T_semicolon  (9)
+	const_def_list : .  (10)
+
+	T_comma  shift 67
+	T_semicolon  reduce 10
+
+	const_def_list  goto 68
+
+
+state 36
+	program_header : T_PROGRAM T_name T_lparen . T_rparen  (35)
+
+	T_rparen  shift 69
+	.  error
+
+
+state 37
+	stmt : T_break . T_semicolon  (96)
+
+	T_semicolon  shift 70
+	.  error
+
+
+state 38
+	stmt : T_continue . T_semicolon  (97)
+
+	T_semicolon  shift 71
+	.  error
+
+
+state 39
+	stmt : T_do . stmt T_while T_lparen expr T_rparen T_semicolon  (93)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	.  error
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 72
+	write  goto 59
+
+
+state 40
+	stmt : T_FOR . T_lparen T_name T_comma range T_rparen stmt  (92)
+
+	T_lparen  shift 73
+	.  error
+
+
+state 41
+	stmt : T_if . T_lparen expr T_rparen stmt T_else stmt  (89)
+	stmt : T_if . T_lparen expr T_rparen stmt  (90)
+
+	T_lparen  shift 74
+	.  error
+
+
+state 42
+	stmt : T_return . T_semicolon  (98)
+	stmt : T_return . expr T_semicolon  (99)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_semicolon  shift 78
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 83
+	l_value  goto 84
+	call  goto 85
+
+
+state 43
+	stmt : T_switch . T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace  (94)
+	stmt : T_switch . T_lparen expr T_rparen T_lbrace inner_switch T_rbrace  (95)
+
+	T_lparen  shift 86
+	.  error
+
+
+state 44
+	stmt : T_while . T_lparen expr T_rparen stmt  (91)
+
+	T_lparen  shift 87
+	.  error
+
+
+state 45
+	write : T_WRITE .  (122)
+
+	.  reduce 122
+
+
+state 46
+	write : T_WRITELN .  (123)
+
+	.  reduce 123
+
+
+state 47
+	write : T_WRITESP .  (124)
+
+	.  reduce 124
+
+
+state 48
+	write : T_WRITESPLN .  (125)
+
+	.  reduce 125
+
+
+state 49
+	stmt : T_semicolon .  (84)
+
+	.  reduce 84
+
+
+state 50
+	l_value : T_name . expr_list  (51)
+	call : T_name . T_lparen T_rparen  (74)
+	call : T_name . T_lparen expr expressions T_rparen  (75)
+	expr_list : .  (52)
+
+	T_lparen  shift 88
+	T_lbracket  shift 89
+	T_DOWNTO  reduce 52
+	T_STEP  reduce 52
+	T_TO  reduce 52
+	T_eq  reduce 52
+	T_rparen  reduce 52
+	T_mod_equal  reduce 52
+	T_plus_equal  reduce 52
+	T_minus_equal  reduce 52
+	T_div_equal  reduce 52
+	T_times_equal  reduce 52
+	T_minus_minus  reduce 52
+	T_plus_plus  reduce 52
+	T_semicolon  reduce 52
+	T_colon  reduce 52
+	T_comma  reduce 52
+	T_rbracket  reduce 52
+
+	expr_list  goto 90
+
+
+state 51
+	local_def : const_def .  (82)
+
+	.  reduce 82
+
+
+state 52
+	local_def : var_def .  (83)
+
+	.  reduce 83
+
+
+state 53
+	stmt : l_value . assign expr T_semicolon  (85)
+	stmt : l_value . T_plus_plus T_semicolon  (86)
+	stmt : l_value . T_minus_minus T_semicolon  (87)
+
+	T_eq  shift 91
+	T_mod_equal  shift 92
+	T_plus_equal  shift 93
+	T_minus_equal  shift 94
+	T_div_equal  shift 95
+	T_times_equal  shift 96
+	T_minus_minus  shift 97
+	T_plus_plus  shift 98
+	.  error
+
+	assign  goto 99
+
+
+state 54
+	stmt : call . T_semicolon  (88)
+
+	T_semicolon  shift 100
+	.  error
+
+
+state 55
+	stmt : block .  (100)
+
+	.  reduce 100
+
+
+state 56
+	block : T_lbrace inner_block . T_rbrace  (78)
+
+	T_rbrace  shift 101
+	.  error
+
+
+state 57
+	inner_block : local_def . inner_block  (80)
+	inner_block : .  (79)
+
+	T_bool  shift 3
+	T_break  shift 37
+	T_char  shift 4
+	T_const  shift 5
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_int  shift 7
+	T_REAL  shift 10
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	T_rbrace  reduce 79
+
+	const_def  goto 51
+	var_def  goto 52
+	ptype  goto 20
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	inner_block  goto 102
+	local_def  goto 57
+	stmt  goto 58
+	write  goto 59
+
+
+state 58
+	inner_block : stmt . inner_block  (81)
+	inner_block : .  (79)
+
+	T_bool  shift 3
+	T_break  shift 37
+	T_char  shift 4
+	T_const  shift 5
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_int  shift 7
+	T_REAL  shift 10
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	T_rbrace  reduce 79
+
+	const_def  goto 51
+	var_def  goto 52
+	ptype  goto 20
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	inner_block  goto 103
+	local_def  goto 57
+	stmt  goto 58
+	write  goto 59
+
+
+state 59
+	stmt : write . T_lparen T_rparen T_semicolon  (101)
+	stmt : write . T_lparen pformat pformat_list T_rparen T_semicolon  (102)
+
+	T_lparen  shift 104
+	.  error
+
+
+state 60
+	routine_header : routine_header_beg T_name T_lparen . routine_header_body T_rparen  (20)
+	routine_header_body : .  (21)
+
+	T_bool  shift 3
+	T_char  shift 4
+	T_int  shift 7
+	T_REAL  shift 10
+	T_rparen  reduce 21
+
+	routine_header_body  goto 105
+	ptype  goto 106
+
+
+state 61
+	var_init : T_name T_eq . expr  (16)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 107
+	l_value  goto 84
+	call  goto 85
+
+
+state 62
+	var_init_bra_list : T_lbracket . const_expr T_rbracket  (18)
+	var_init_bra_list : T_lbracket . const_expr T_rbracket var_init_bra_list  (19)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	const_expr  goto 108
+	expr  goto 109
+	l_value  goto 84
+	call  goto 85
+
+
+state 63
+	var_init : T_name var_init_bra_list .  (17)
+
+	.  reduce 17
+
+
+state 64
+	var_def_list : T_comma . var_init var_def_list  (14)
+
+	T_name  shift 31
+	.  error
+
+	var_init  goto 110
+
+
+state 65
+	var_def : ptype var_init var_def_list . T_semicolon  (12)
+
+	T_semicolon  shift 111
+	.  error
+
+
+state 66
+	const_inner_def : T_name T_eq . const_expr  (8)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	const_expr  goto 112
+	expr  goto 109
+	l_value  goto 84
+	call  goto 85
+
+
+state 67
+	const_def_list : T_comma . const_inner_def const_def_list  (11)
+
+	T_name  shift 34
+	.  error
+
+	const_inner_def  goto 113
+
+
+state 68
+	const_def : T_const ptype const_inner_def const_def_list . T_semicolon  (9)
+
+	T_semicolon  shift 114
+	.  error
+
+
+state 69
+	program_header : T_PROGRAM T_name T_lparen T_rparen .  (35)
+
+	.  reduce 35
+
+
+state 70
+	stmt : T_break T_semicolon .  (96)
+
+	.  reduce 96
+
+
+state 71
+	stmt : T_continue T_semicolon .  (97)
+
+	.  reduce 97
+
+
+state 72
+	stmt : T_do stmt . T_while T_lparen expr T_rparen T_semicolon  (93)
+
+	T_while  shift 115
+	.  error
+
+
+state 73
+	stmt : T_FOR T_lparen . T_name T_comma range T_rparen stmt  (92)
+
+	T_name  shift 116
+	.  error
+
+
+state 74
+	stmt : T_if T_lparen . expr T_rparen stmt T_else stmt  (89)
+	stmt : T_if T_lparen . expr T_rparen stmt  (90)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 117
+	l_value  goto 84
+	call  goto 85
+
+
+state 75
+	expr : T_false .  (47)
+
+	.  reduce 47
+
+
+state 76
+	expr : T_true .  (46)
+
+	.  reduce 46
+
+
+state 77
+	expr : T_lparen . expr T_rparen  (48)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 118
+	l_value  goto 84
+	call  goto 85
+
+
+state 78
+	stmt : T_return T_semicolon .  (98)
+
+	.  reduce 98
+
+
+state 79
+	expr : T_real_const .  (43)
+
+	.  reduce 43
+
+
+state 80
+	expr : T_const_char .  (44)
+
+	.  reduce 44
+
+
+state 81
+	expr : T_string_const .  (45)
+
+	.  reduce 45
+
+
+state 82
+	expr : T_int_const .  (42)
+
+	.  reduce 42
+
+
+state 83
+	stmt : T_return expr . T_semicolon  (99)
+
+	T_semicolon  shift 119
+	.  error
+
+
+state 84
+	expr : l_value .  (49)
+
+	.  reduce 49
+
+
+state 85
+	expr : call .  (50)
+
+	.  reduce 50
+
+
+state 86
+	stmt : T_switch T_lparen . expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace  (94)
+	stmt : T_switch T_lparen . expr T_rparen T_lbrace inner_switch T_rbrace  (95)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 120
+	l_value  goto 84
+	call  goto 85
+
+
+state 87
+	stmt : T_while T_lparen . expr T_rparen stmt  (91)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 121
+	l_value  goto 84
+	call  goto 85
+
+
+state 88
+	call : T_name T_lparen . T_rparen  (74)
+	call : T_name T_lparen . expr expressions T_rparen  (75)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_rparen  shift 122
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 123
+	l_value  goto 84
+	call  goto 85
+
+
+state 89
+	expr_list : T_lbracket . expr T_rbracket expr_list  (53)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 124
+	l_value  goto 84
+	call  goto 85
+
+
+state 90
+	l_value : T_name expr_list .  (51)
+
+	.  reduce 51
+
+
+state 91
+	assign : T_eq .  (103)
+
+	.  reduce 103
+
+
+state 92
+	assign : T_mod_equal .  (106)
+
+	.  reduce 106
+
+
+state 93
+	assign : T_plus_equal .  (104)
+
+	.  reduce 104
+
+
+state 94
+	assign : T_minus_equal .  (105)
+
+	.  reduce 105
+
+
+state 95
+	assign : T_div_equal .  (107)
+
+	.  reduce 107
+
+
+state 96
+	assign : T_times_equal .  (108)
+
+	.  reduce 108
+
+
+state 97
+	stmt : l_value T_minus_minus . T_semicolon  (87)
+
+	T_semicolon  shift 125
+	.  error
+
+
+state 98
+	stmt : l_value T_plus_plus . T_semicolon  (86)
+
+	T_semicolon  shift 126
+	.  error
+
+
+state 99
+	stmt : l_value assign . expr T_semicolon  (85)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 127
+	l_value  goto 84
+	call  goto 85
+
+
+state 100
+	stmt : call T_semicolon .  (88)
+
+	.  reduce 88
+
+
+state 101
+	block : T_lbrace inner_block T_rbrace .  (78)
+
+	.  reduce 78
+
+
+state 102
+	inner_block : local_def inner_block .  (80)
+
+	.  reduce 80
+
+
+state 103
+	inner_block : stmt inner_block .  (81)
+
+	.  reduce 81
+
+
+state 104
+	stmt : write T_lparen . T_rparen T_semicolon  (101)
+	stmt : write T_lparen . pformat pformat_list T_rparen T_semicolon  (102)
+
+	T_false  shift 75
+	T_FORM  shift 128
+	T_true  shift 76
+	T_lparen  shift 77
+	T_rparen  shift 129
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 130
+	l_value  goto 84
+	call  goto 85
+	pformat  goto 131
+
+
+state 105
+	routine_header : routine_header_beg T_name T_lparen routine_header_body . T_rparen  (20)
+
+	T_rparen  shift 132
+	.  error
+
+
+state 106
+	routine_header_body : ptype . formal routine_header_list  (22)
+
+	T_ampersand  shift 133
+	T_name  shift 134
+	.  error
+
+	formal  goto 135
+
+
+state 107
+	var_init : T_name T_eq expr .  (16)
+
+	.  reduce 16
+
+
+state 108
+	var_init_bra_list : T_lbracket const_expr . T_rbracket  (18)
+	var_init_bra_list : T_lbracket const_expr . T_rbracket var_init_bra_list  (19)
+
+	T_rbracket  shift 136
+	.  error
+
+
+state 109
+	const_expr : expr .  (41)
+
+	.  reduce 41
+
+
+state 110
+	var_def_list : T_comma var_init . var_def_list  (14)
+	var_def_list : .  (13)
+
+	T_comma  shift 64
+	T_semicolon  reduce 13
+
+	var_def_list  goto 137
+
+
+state 111
+	var_def : ptype var_init var_def_list T_semicolon .  (12)
+
+	.  reduce 12
+
+
+state 112
+	const_inner_def : T_name T_eq const_expr .  (8)
+
+	.  reduce 8
+
+
+state 113
+	const_def_list : T_comma const_inner_def . const_def_list  (11)
+	const_def_list : .  (10)
+
+	T_comma  shift 67
+	T_semicolon  reduce 10
+
+	const_def_list  goto 138
+
+
+state 114
+	const_def : T_const ptype const_inner_def const_def_list T_semicolon .  (9)
+
+	.  reduce 9
+
+
+state 115
+	stmt : T_do stmt T_while . T_lparen expr T_rparen T_semicolon  (93)
+
+	T_lparen  shift 139
+	.  error
+
+
+state 116
+	stmt : T_FOR T_lparen T_name . T_comma range T_rparen stmt  (92)
+
+	T_comma  shift 140
+	.  error
+
+
+state 117
+	stmt : T_if T_lparen expr . T_rparen stmt T_else stmt  (89)
+	stmt : T_if T_lparen expr . T_rparen stmt  (90)
+
+	T_rparen  shift 141
+	.  error
+
+
+state 118
+	expr : T_lparen expr . T_rparen  (48)
+
+	T_rparen  shift 142
+	.  error
+
+
+state 119
+	stmt : T_return expr T_semicolon .  (99)
+
+	.  reduce 99
+
+
+state 120
+	stmt : T_switch T_lparen expr . T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace  (94)
+	stmt : T_switch T_lparen expr . T_rparen T_lbrace inner_switch T_rbrace  (95)
+
+	T_rparen  shift 143
+	.  error
+
+
+state 121
+	stmt : T_while T_lparen expr . T_rparen stmt  (91)
+
+	T_rparen  shift 144
+	.  error
+
+
+state 122
+	call : T_name T_lparen T_rparen .  (74)
+
+	.  reduce 74
+
+
+state 123
+	call : T_name T_lparen expr . expressions T_rparen  (75)
+	expressions : .  (76)
+
+	T_comma  shift 145
+	T_rparen  reduce 76
+
+	expressions  goto 146
+
+
+state 124
+	expr_list : T_lbracket expr . T_rbracket expr_list  (53)
+
+	T_rbracket  shift 147
+	.  error
+
+
+state 125
+	stmt : l_value T_minus_minus T_semicolon .  (87)
+
+	.  reduce 87
+
+
+state 126
+	stmt : l_value T_plus_plus T_semicolon .  (86)
+
+	.  reduce 86
+
+
+state 127
+	stmt : l_value assign expr . T_semicolon  (85)
+
+	T_semicolon  shift 148
+	.  error
+
+
+state 128
+	pformat : T_FORM . T_lparen expr T_comma expr T_rparen  (127)
+	pformat : T_FORM . T_lparen expr T_comma expr T_comma expr T_rparen  (128)
+
+	T_lparen  shift 149
+	.  error
+
+
+state 129
+	stmt : write T_lparen T_rparen . T_semicolon  (101)
+
+	T_semicolon  shift 150
+	.  error
+
+
+state 130
+	pformat : expr .  (126)
+
+	.  reduce 126
+
+
+state 131
+	stmt : write T_lparen pformat . pformat_list T_rparen T_semicolon  (102)
+	pformat_list : .  (120)
+
+	T_comma  shift 151
+	T_rparen  reduce 120
+
+	pformat_list  goto 152
+
+
+state 132
+	routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen .  (20)
+
+	.  reduce 20
+
+
+state 133
+	formal : T_ampersand . T_name  (28)
+
+	T_name  shift 153
+	.  error
+
+
+state 134
+	formal : T_name .  (27)
+	formal : T_name . T_lbracket const_expr T_rbracket formal_end  (29)
+	formal : T_name . T_lbracket T_rbracket formal_end  (30)
+
+	T_lbracket  shift 154
+	T_rparen  reduce 27
+	T_comma  reduce 27
+
+
+state 135
+	routine_header_body : ptype formal . routine_header_list  (22)
+	routine_header_list : .  (23)
+
+	T_comma  shift 155
+	T_rparen  reduce 23
+
+	routine_header_list  goto 156
+
+
+state 136
+	var_init_bra_list : T_lbracket const_expr T_rbracket .  (18)
+	var_init_bra_list : T_lbracket const_expr T_rbracket . var_init_bra_list  (19)
+
+	T_lbracket  shift 62
+	T_semicolon  reduce 18
+	T_comma  reduce 18
+
+	var_init_bra_list  goto 157
+
+
+state 137
+	var_def_list : T_comma var_init var_def_list .  (14)
+
+	.  reduce 14
+
+
+state 138
+	const_def_list : T_comma const_inner_def const_def_list .  (11)
+
+	.  reduce 11
+
+
+state 139
+	stmt : T_do stmt T_while T_lparen . expr T_rparen T_semicolon  (93)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 158
+	l_value  goto 84
+	call  goto 85
+
+
+state 140
+	stmt : T_FOR T_lparen T_name T_comma . range T_rparen stmt  (92)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 159
+	l_value  goto 84
+	call  goto 85
+	range  goto 160
+
+
+state 141
+	stmt : T_if T_lparen expr T_rparen . stmt T_else stmt  (89)
+	stmt : T_if T_lparen expr T_rparen . stmt  (90)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	.  error
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 161
+	write  goto 59
+
+
+state 142
+	expr : T_lparen expr T_rparen .  (48)
+
+	.  reduce 48
+
+
+state 143
+	stmt : T_switch T_lparen expr T_rparen . T_lbrace inner_switch T_default T_colon clause T_rbrace  (94)
+	stmt : T_switch T_lparen expr T_rparen . T_lbrace inner_switch T_rbrace  (95)
+
+	T_lbrace  shift 162
+	.  error
+
+
+state 144
+	stmt : T_while T_lparen expr T_rparen . stmt  (91)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	.  error
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 163
+	write  goto 59
+
+
+state 145
+	expressions : T_comma . expr expressions  (77)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 164
+	l_value  goto 84
+	call  goto 85
+
+
+state 146
+	call : T_name T_lparen expr expressions . T_rparen  (75)
+
+	T_rparen  shift 165
+	.  error
+
+
+state 147
+	expr_list : T_lbracket expr T_rbracket . expr_list  (53)
+	expr_list : .  (52)
+
+	T_lbracket  shift 89
+	T_DOWNTO  reduce 52
+	T_STEP  reduce 52
+	T_TO  reduce 52
+	T_eq  reduce 52
+	T_rparen  reduce 52
+	T_mod_equal  reduce 52
+	T_plus_equal  reduce 52
+	T_minus_equal  reduce 52
+	T_div_equal  reduce 52
+	T_times_equal  reduce 52
+	T_minus_minus  reduce 52
+	T_plus_plus  reduce 52
+	T_semicolon  reduce 52
+	T_colon  reduce 52
+	T_comma  reduce 52
+	T_rbracket  reduce 52
+
+	expr_list  goto 166
+
+
+state 148
+	stmt : l_value assign expr T_semicolon .  (85)
+
+	.  reduce 85
+
+
+state 149
+	pformat : T_FORM T_lparen . expr T_comma expr T_rparen  (127)
+	pformat : T_FORM T_lparen . expr T_comma expr T_comma expr T_rparen  (128)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 167
+	l_value  goto 84
+	call  goto 85
+
+
+state 150
+	stmt : write T_lparen T_rparen T_semicolon .  (101)
+
+	.  reduce 101
+
+
+state 151
+	pformat_list : T_comma . pformat pformat_list  (121)
+
+	T_false  shift 75
+	T_FORM  shift 128
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 130
+	l_value  goto 84
+	call  goto 85
+	pformat  goto 168
+
+
+state 152
+	stmt : write T_lparen pformat pformat_list . T_rparen T_semicolon  (102)
+
+	T_rparen  shift 169
+	.  error
+
+
+state 153
+	formal : T_ampersand T_name .  (28)
+
+	.  reduce 28
+
+
+state 154
+	formal : T_name T_lbracket . const_expr T_rbracket formal_end  (29)
+	formal : T_name T_lbracket . T_rbracket formal_end  (30)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_rbracket  shift 170
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	const_expr  goto 171
+	expr  goto 109
+	l_value  goto 84
+	call  goto 85
+
+
+state 155
+	routine_header_list : T_comma . ptype formal routine_header_list  (24)
+
+	T_bool  shift 3
+	T_char  shift 4
+	T_int  shift 7
+	T_REAL  shift 10
+	.  error
+
+	ptype  goto 172
+
+
+state 156
+	routine_header_body : ptype formal routine_header_list .  (22)
+
+	.  reduce 22
+
+
+state 157
+	var_init_bra_list : T_lbracket const_expr T_rbracket var_init_bra_list .  (19)
+
+	.  reduce 19
+
+
+state 158
+	stmt : T_do stmt T_while T_lparen expr . T_rparen T_semicolon  (93)
+
+	T_rparen  shift 173
+	.  error
+
+
+state 159
+	range : expr . T_TO expr  (109)
+	range : expr . T_TO expr T_STEP expr  (110)
+	range : expr . T_DOWNTO expr  (111)
+	range : expr . T_DOWNTO expr T_STEP expr  (112)
+
+	T_DOWNTO  shift 174
+	T_TO  shift 175
+	.  error
+
+
+state 160
+	stmt : T_FOR T_lparen T_name T_comma range . T_rparen stmt  (92)
+
+	T_rparen  shift 176
+	.  error
+
+
+161: shift/reduce conflict (shift 177, reduce 90) on T_else
+state 161
+	stmt : T_if T_lparen expr T_rparen stmt . T_else stmt  (89)
+	stmt : T_if T_lparen expr T_rparen stmt .  (90)
+
+	T_else  shift 177
+	T_bool  reduce 90
+	T_break  reduce 90
+	T_case  reduce 90
+	T_char  reduce 90
+	T_const  reduce 90
+	T_continue  reduce 90
+	T_default  reduce 90
+	T_do  reduce 90
+	T_FOR  reduce 90
+	T_if  reduce 90
+	T_int  reduce 90
+	T_NEXT  reduce 90
+	T_REAL  reduce 90
+	T_return  reduce 90
+	T_switch  reduce 90
+	T_while  reduce 90
+	T_WRITE  reduce 90
+	T_WRITELN  reduce 90
+	T_WRITESP  reduce 90
+	T_WRITESPLN  reduce 90
+	T_semicolon  reduce 90
+	T_lbrace  reduce 90
+	T_rbrace  reduce 90
+	T_name  reduce 90
+
+
+state 162
+	stmt : T_switch T_lparen expr T_rparen T_lbrace . inner_switch T_default T_colon clause T_rbrace  (94)
+	stmt : T_switch T_lparen expr T_rparen T_lbrace . inner_switch T_rbrace  (95)
+	inner_switch : .  (117)
+
+	T_case  shift 178
+	T_default  reduce 117
+	T_rbrace  reduce 117
+
+	inner_switch  goto 179
+	switch_first_part  goto 180
+
+
+state 163
+	stmt : T_while T_lparen expr T_rparen stmt .  (91)
+
+	.  reduce 91
+
+
+state 164
+	expressions : T_comma expr . expressions  (77)
+	expressions : .  (76)
+
+	T_comma  shift 145
+	T_rparen  reduce 76
+
+	expressions  goto 181
+
+
+state 165
+	call : T_name T_lparen expr expressions T_rparen .  (75)
+
+	.  reduce 75
+
+
+state 166
+	expr_list : T_lbracket expr T_rbracket expr_list .  (53)
+
+	.  reduce 53
+
+
+state 167
+	pformat : T_FORM T_lparen expr . T_comma expr T_rparen  (127)
+	pformat : T_FORM T_lparen expr . T_comma expr T_comma expr T_rparen  (128)
+
+	T_comma  shift 182
+	.  error
+
+
+state 168
+	pformat_list : T_comma pformat . pformat_list  (121)
+	pformat_list : .  (120)
+
+	T_comma  shift 151
+	T_rparen  reduce 120
+
+	pformat_list  goto 183
+
+
+state 169
+	stmt : write T_lparen pformat pformat_list T_rparen . T_semicolon  (102)
+
+	T_semicolon  shift 184
+	.  error
+
+
+state 170
+	formal : T_name T_lbracket T_rbracket . formal_end  (30)
+	formal_end : .  (31)
+
+	T_lbracket  shift 185
+	T_rparen  reduce 31
+	T_comma  reduce 31
+
+	formal_end  goto 186
+
+
+state 171
+	formal : T_name T_lbracket const_expr . T_rbracket formal_end  (29)
+
+	T_rbracket  shift 187
+	.  error
+
+
+state 172
+	routine_header_list : T_comma ptype . formal routine_header_list  (24)
+
+	T_ampersand  shift 133
+	T_name  shift 134
+	.  error
+
+	formal  goto 188
+
+
+state 173
+	stmt : T_do stmt T_while T_lparen expr T_rparen . T_semicolon  (93)
+
+	T_semicolon  shift 189
+	.  error
+
+
+state 174
+	range : expr T_DOWNTO . expr  (111)
+	range : expr T_DOWNTO . expr T_STEP expr  (112)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 190
+	l_value  goto 84
+	call  goto 85
+
+
+state 175
+	range : expr T_TO . expr  (109)
+	range : expr T_TO . expr T_STEP expr  (110)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 191
+	l_value  goto 84
+	call  goto 85
+
+
+state 176
+	stmt : T_FOR T_lparen T_name T_comma range T_rparen . stmt  (92)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	.  error
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 192
+	write  goto 59
+
+
+state 177
+	stmt : T_if T_lparen expr T_rparen stmt T_else . stmt  (89)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	.  error
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 193
+	write  goto 59
+
+
+state 178
+	switch_first_part : T_case . const_expr T_colon  (119)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	const_expr  goto 194
+	expr  goto 109
+	l_value  goto 84
+	call  goto 85
+
+
+state 179
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch . T_default T_colon clause T_rbrace  (94)
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch . T_rbrace  (95)
+
+	T_default  shift 195
+	T_rbrace  shift 196
+	.  error
+
+
+state 180
+	inner_switch : switch_first_part . clause inner_switch  (118)
+	stmt_list : .  (113)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	T_case  reduce 113
+	T_default  reduce 113
+	T_NEXT  reduce 113
+	T_rbrace  reduce 113
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 197
+	clause  goto 198
+	stmt_list  goto 199
+	write  goto 59
+
+
+state 181
+	expressions : T_comma expr expressions .  (77)
+
+	.  reduce 77
+
+
+state 182
+	pformat : T_FORM T_lparen expr T_comma . expr T_rparen  (127)
+	pformat : T_FORM T_lparen expr T_comma . expr T_comma expr T_rparen  (128)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 200
+	l_value  goto 84
+	call  goto 85
+
+
+state 183
+	pformat_list : T_comma pformat pformat_list .  (121)
+
+	.  reduce 121
+
+
+state 184
+	stmt : write T_lparen pformat pformat_list T_rparen T_semicolon .  (102)
+
+	.  reduce 102
+
+
+state 185
+	formal_end : T_lbracket . const_expr T_rbracket formal_end  (32)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	const_expr  goto 201
+	expr  goto 109
+	l_value  goto 84
+	call  goto 85
+
+
+state 186
+	formal : T_name T_lbracket T_rbracket formal_end .  (30)
+
+	.  reduce 30
+
+
+state 187
+	formal : T_name T_lbracket const_expr T_rbracket . formal_end  (29)
+	formal_end : .  (31)
+
+	T_lbracket  shift 185
+	T_rparen  reduce 31
+	T_comma  reduce 31
+
+	formal_end  goto 202
+
+
+state 188
+	routine_header_list : T_comma ptype formal . routine_header_list  (24)
+	routine_header_list : .  (23)
+
+	T_comma  shift 155
+	T_rparen  reduce 23
+
+	routine_header_list  goto 203
+
+
+state 189
+	stmt : T_do stmt T_while T_lparen expr T_rparen T_semicolon .  (93)
+
+	.  reduce 93
+
+
+state 190
+	range : expr T_DOWNTO expr .  (111)
+	range : expr T_DOWNTO expr . T_STEP expr  (112)
+
+	T_STEP  shift 204
+	T_rparen  reduce 111
+
+
+state 191
+	range : expr T_TO expr .  (109)
+	range : expr T_TO expr . T_STEP expr  (110)
+
+	T_STEP  shift 205
+	T_rparen  reduce 109
+
+
+state 192
+	stmt : T_FOR T_lparen T_name T_comma range T_rparen stmt .  (92)
+
+	.  reduce 92
+
+
+state 193
+	stmt : T_if T_lparen expr T_rparen stmt T_else stmt .  (89)
+
+	.  reduce 89
+
+
+state 194
+	switch_first_part : T_case const_expr . T_colon  (119)
+
+	T_colon  shift 206
+	.  error
+
+
+state 195
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default . T_colon clause T_rbrace  (94)
+
+	T_colon  shift 207
+	.  error
+
+
+state 196
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch T_rbrace .  (95)
+
+	.  reduce 95
+
+
+state 197
+	stmt_list : stmt . stmt_list  (114)
+	stmt_list : .  (113)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	T_case  reduce 113
+	T_default  reduce 113
+	T_NEXT  reduce 113
+	T_rbrace  reduce 113
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 197
+	stmt_list  goto 208
+	write  goto 59
+
+
+state 198
+	inner_switch : switch_first_part clause . inner_switch  (118)
+	inner_switch : .  (117)
+
+	T_case  shift 178
+	T_default  reduce 117
+	T_rbrace  reduce 117
+
+	inner_switch  goto 209
+	switch_first_part  goto 180
+
+
+state 199
+	clause : stmt_list .  (115)
+	clause : stmt_list . T_NEXT T_semicolon  (116)
+
+	T_NEXT  shift 210
+	T_case  reduce 115
+	T_default  reduce 115
+	T_rbrace  reduce 115
+
+
+state 200
+	pformat : T_FORM T_lparen expr T_comma expr . T_rparen  (127)
+	pformat : T_FORM T_lparen expr T_comma expr . T_comma expr T_rparen  (128)
+
+	T_rparen  shift 211
+	T_comma  shift 212
+	.  error
+
+
+state 201
+	formal_end : T_lbracket const_expr . T_rbracket formal_end  (32)
+
+	T_rbracket  shift 213
+	.  error
+
+
+state 202
+	formal : T_name T_lbracket const_expr T_rbracket formal_end .  (29)
+
+	.  reduce 29
+
+
+state 203
+	routine_header_list : T_comma ptype formal routine_header_list .  (24)
+
+	.  reduce 24
+
+
+state 204
+	range : expr T_DOWNTO expr T_STEP . expr  (112)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 214
+	l_value  goto 84
+	call  goto 85
+
+
+state 205
+	range : expr T_TO expr T_STEP . expr  (110)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 215
+	l_value  goto 84
+	call  goto 85
+
+
+state 206
+	switch_first_part : T_case const_expr T_colon .  (119)
+
+	.  reduce 119
+
+
+state 207
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon . clause T_rbrace  (94)
+	stmt_list : .  (113)
+
+	T_break  shift 37
+	T_continue  shift 38
+	T_do  shift 39
+	T_FOR  shift 40
+	T_if  shift 41
+	T_return  shift 42
+	T_switch  shift 43
+	T_while  shift 44
+	T_WRITE  shift 45
+	T_WRITELN  shift 46
+	T_WRITESP  shift 47
+	T_WRITESPLN  shift 48
+	T_semicolon  shift 49
+	T_lbrace  shift 28
+	T_name  shift 50
+	T_NEXT  reduce 113
+	T_rbrace  reduce 113
+
+	l_value  goto 53
+	call  goto 54
+	block  goto 55
+	stmt  goto 197
+	clause  goto 216
+	stmt_list  goto 199
+	write  goto 59
+
+
+state 208
+	stmt_list : stmt stmt_list .  (114)
+
+	.  reduce 114
+
+
+state 209
+	inner_switch : switch_first_part clause inner_switch .  (118)
+
+	.  reduce 118
+
+
+state 210
+	clause : stmt_list T_NEXT . T_semicolon  (116)
+
+	T_semicolon  shift 217
+	.  error
+
+
+state 211
+	pformat : T_FORM T_lparen expr T_comma expr T_rparen .  (127)
+
+	.  reduce 127
+
+
+state 212
+	pformat : T_FORM T_lparen expr T_comma expr T_comma . expr T_rparen  (128)
+
+	T_false  shift 75
+	T_true  shift 76
+	T_lparen  shift 77
+	T_name  shift 50
+	T_real_const  shift 79
+	T_const_char  shift 80
+	T_string_const  shift 81
+	T_int_const  shift 82
+	.  error
+
+	expr  goto 218
+	l_value  goto 84
+	call  goto 85
+
+
+state 213
+	formal_end : T_lbracket const_expr T_rbracket . formal_end  (32)
+	formal_end : .  (31)
+
+	T_lbracket  shift 185
+	T_rparen  reduce 31
+	T_comma  reduce 31
+
+	formal_end  goto 219
+
+
+state 214
+	range : expr T_DOWNTO expr T_STEP expr .  (112)
+
+	.  reduce 112
+
+
+state 215
+	range : expr T_TO expr T_STEP expr .  (110)
+
+	.  reduce 110
+
+
+state 216
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause . T_rbrace  (94)
+
+	T_rbrace  shift 220
+	.  error
+
+
+state 217
+	clause : stmt_list T_NEXT T_semicolon .  (116)
+
+	.  reduce 116
+
+
+state 218
+	pformat : T_FORM T_lparen expr T_comma expr T_comma expr . T_rparen  (128)
+
+	T_rparen  shift 221
+	.  error
+
+
+state 219
+	formal_end : T_lbracket const_expr T_rbracket formal_end .  (32)
+
+	.  reduce 32
+
+
+state 220
+	stmt : T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace .  (94)
+
+	.  reduce 94
+
+
+state 221
+	pformat : T_FORM T_lparen expr T_comma expr T_comma expr T_rparen .  (128)
+
+	.  reduce 128
+
+
+Rules never reduced:
+	unop : T_plus  (54)
+	unop : T_minus  (55)
+	unop : T_NOT  (56)
+	unop : T_not  (57)
+	binop : T_plus  (58)
+	binop : T_minus  (59)
+	binop : T_times  (60)
+	binop : T_div  (61)
+	binop : T_mod  (62)
+	binop : T_MOD  (63)
+	binop : T_equal  (64)
+	binop : T_not_equal  (65)
+	binop : T_greater  (66)
+	binop : T_less  (67)
+	binop : T_less_equal  (68)
+	binop : T_greater_equal  (69)
+	binop : T_and  (70)
+	binop : T_AND  (71)
+	binop : T_OR  (72)
+	binop : T_or  (73)
+
+
+State 161 contains 1 shift/reduce conflict.
+
+
+76 terminals, 43 nonterminals
+130 grammar rules, 222 states

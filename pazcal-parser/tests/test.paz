@@ -1,0 +1,6 @@
+PROGRAM hello ()
+{
+
+	WRITELN("Hello world!");
+
+}
