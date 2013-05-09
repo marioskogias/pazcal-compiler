@@ -88,7 +88,6 @@
 %type <unit> var_def
 %type <unit> var_def_list
 %type <unit> var_init
-%type <unit> var_init_bra
 %type <unit> var_init_bra_list
 %type <unit> routine
 %type <unit> routine_header
@@ -136,7 +135,7 @@ declaration : const_def { () }
 	    | routine { () }
 	    | program { () }
 
-const_inner_def : T_name T_equal const_expr { () }
+const_inner_def : T_name T_eq const_expr { () }
 
 const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 
@@ -150,13 +149,12 @@ var_def_list : /*nothing*/ { () }
 	     | T_comma var_init var_def_list { () }
 
 var_init : T_name { () } 
-	 |T_name T_equal expr { () }
-	 | var_init_bra_list { () }
+	 | T_name T_eq expr { () }
+	 | T_name var_init_bra_list { () }
 
-var_init_bra : T_name T_lbracket const_expr T_rbracket { () } 
 
-var_init_bra_list : var_init_bra { () }
-		  | var_init_bra_list var_init_bra { () }
+var_init_bra_list : T_lbracket const_expr T_rbracket { () }
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { () }
 
 routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen { () }
 

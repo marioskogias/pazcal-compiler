@@ -22,7 +22,7 @@ PROGRAM solve ()
 
 	WRITE("Please, give the number of rings: ");
 
-	//int numberOfRings = READ_INT();
+	int numberOfRings = READ_INT();
 
 	WRITELN("\nHere is the solution:\n");
 
