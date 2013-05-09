@@ -204,7 +204,7 @@ expr : T_int_const { () }
 l_value : T_name expr_list { () }
 
 expr_list : /*nothing*/ { () }
-	  | T_lbracket expr_list T_rbracket { () }
+	  | T_lbracket expr T_rbracket expr_list { () }
 
 unop : T_plus { () }
      | T_minus { () }
@@ -244,7 +244,7 @@ local_def : const_def { () }
 	  | var_def { () }
 
 stmt : T_semicolon { () }
-     | l_value assign T_semicolon { () }
+     | l_value assign expr T_semicolon { () }
      | l_value T_plus_plus T_semicolon{ () }
      | l_value T_minus_minus T_semicolon { () }
      | call T_semicolon { () }
