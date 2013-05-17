@@ -102,8 +102,8 @@
 %type <unit> expr
 %type <unit> l_value
 %type <unit> expr_list
-%type <unit> unop
-%type <unit> binop
+//%type <unit> unop
+//%type <unit> binop
 %type <unit> call 
 %type <unit> expressions
 %type <unit> block
@@ -198,14 +198,37 @@ expr : T_int_const { () }
      | T_lparen expr T_rparen { () }
      | l_value { () }
      | call { () }
-   /*  | unop expr { () }
-     | expr binop expr { () } */
+     | T_plus expr { () }
+     | T_minus expr { () }
+     | T_NOT expr { () }
+     | T_not expr { () }
+     | expr T_plus expr { () }
+     | expr T_minus expr { () }
+     | expr T_times expr { () }
+     | expr T_div expr { () }
+     | expr T_mod expr { () }
+     | expr T_MOD expr { () }
+     | expr T_equal expr { () }
+     | expr T_not_equal expr { () }
+     | expr T_greater expr { () }
+     | expr T_less expr { () }
+     | expr T_less_equal expr { () }
+     | expr T_greater_equal expr { () }
+     | expr T_and expr { () }
+     | expr T_AND expr { () }
+     | expr T_OR expr { () }
+     | expr T_or expr { () }
+
+/*
+     | unop expr { () }
+     | expr binop expr { () } 
+*/
 
 l_value : T_name expr_list { () }
 
 expr_list : /*nothing*/ { () }
 	  | T_lbracket expr T_rbracket expr_list { () }
-
+/*
 unop : T_plus { () }
      | T_minus { () }
      | T_NOT { () }
@@ -227,6 +250,7 @@ binop : T_plus { () }
       | T_AND { () } 
       | T_OR { () }
       | T_or { () }
+*/
 
 call : T_name T_lparen T_rparen { () }
      | T_name T_lparen expr expressions T_rparen { () }
