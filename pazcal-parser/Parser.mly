@@ -198,8 +198,8 @@ expr : T_int_const { () }
      | T_lparen expr T_rparen { () }
      | l_value { () }
      | call { () }
-   /*  | unop expr { () }
-     | expr binop expr { () } */
+     | unop expr { () }
+     | expr binop expr { () } 
 
 l_value : T_name expr_list { () }
 
