@@ -78,6 +78,8 @@
 %left T_plus T_minus T_OR T_or
 %left T_times T_div T_mod T_MOD T_and T_AND
 
+%right T_not T_NOT
+
 %start pmodule
 %type <unit> pmodule
 %type <unit> declaration_list
@@ -102,8 +104,8 @@
 %type <unit> expr
 %type <unit> l_value
 %type <unit> expr_list
-%type <unit> unop
-%type <unit> binop
+//%type <unit> unop
+//%type <unit> binop
 %type <unit> call 
 %type <unit> expressions
 %type <unit> block
@@ -111,7 +113,7 @@
 %type <unit> local_def
 %type <unit> stmt
 %type <unit> inner_switch 
-%type <unit> switch_first_part 
+%type <unit> switch_exp 
 %type <unit> pformat_list
 %type <unit> assign
 %type <unit> range
@@ -198,14 +200,32 @@ expr : T_int_const { () }
      | T_lparen expr T_rparen { () }
      | l_value { () }
      | call { () }
-     | unop expr { () }
-     | expr binop expr { () } 
+     | T_plus expr { () }
+     | T_minus expr { () }
+     | T_NOT expr { () }
+     | T_not expr { () } 
+     | expr T_plus expr { () }
+     | expr T_minus expr { () }
+     | expr T_times expr { () }
+     | expr T_div expr { () }
+     | expr T_mod expr { () }
+     | expr T_MOD expr { () }
+     | expr T_equal expr { () }
+     | expr T_not_equal expr { () }
+     | expr T_greater expr { () }
+     | expr T_less expr { () }
+     | expr T_less_equal expr { () }
+     | expr T_greater_equal expr { () }
+     | expr T_and expr { () }
+     | expr T_AND expr { () }
+     | expr T_OR expr { () }
+     | expr T_or expr { () }
 
 l_value : T_name expr_list { () }
 
 expr_list : /*nothing*/ { () }
 	  | T_lbracket expr T_rbracket expr_list { () }
-
+/*
 unop : T_plus { () }
      | T_minus { () }
      | T_NOT { () }
@@ -227,6 +247,7 @@ binop : T_plus { () }
       | T_AND { () } 
       | T_OR { () }
       | T_or { () }
+*/
 
 call : T_name T_lparen T_rparen { () }
      | T_name T_lparen expr expressions T_rparen { () }
@@ -283,10 +304,10 @@ clause : stmt_list { () }
        | stmt_list T_NEXT T_semicolon { () }
 
 inner_switch : /*nothing*/ { () }
-	     | switch_first_part clause inner_switch { () }
+	     | switch_exp clause inner_switch { () }
 
-switch_first_part : T_case const_expr T_colon { () }
-	/*	  | T_case const_expr T_colon switch_first_part { () } this should change */
+switch_exp : T_case const_expr T_colon  { () }
+	   | T_case const_expr %prec T_colon switch_exp { () } 
 
 pformat_list : /*nothing*/ { () }
 	     | T_comma pformat pformat_list { () }
