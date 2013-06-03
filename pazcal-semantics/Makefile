@@ -9,7 +9,7 @@ endif
 
 EXEFILE=gracec$(EXE)
 MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml \
-  Lexer.ml Parser.ml Symbtest.ml
+  Lexer.ml Parser.ml Symbtest.ml Main.ml
 MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli Symbol.mli \
   Parser.mli Lexer.mli
 CMOFILES=$(patsubst %.ml,%.cmo,$(MLFILES))
@@ -29,15 +29,21 @@ OCAMLOPT=ocamlopt $(OCAMLOPT_FLAGS)
 OCAMLDEP=ocamldep
 INCLUDES=
 
-default: symbtest$(EXE) pazcal$(EXE)
+default:  pazcal$(EXE) symbtest$(EXE)
 
-symbtest$(EXE): $(filter-out Lexer.cmo Parser.cmo,$(CMOFILES))
+symbtest$(EXE): $(filter-out Lexer.cmo Parser.cmo Main.cmo,$(CMOFILES))
 	$(OCAMLC) -o $@ $^
 
-pazcal$(EXE): $(CMOFILES)
+pazcal$(EXE): $(filter-out Symbtest.cmo,$(CMOFILES))
 	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ str.cma $^
 
 all: $(EXEFILE)
+
+Parser.ml Parser.mli: Parser.mly
+	ocamlyacc -v Parser.mly
+
+Lexer.ml: Lexer.mll
+	ocamllex Lexer.mll
 
 extend.cmo: extend.ml
 	$(OCAMLC) -pp "camlp5o pa_extend.cmo q_MLast.cmo" -I +camlp5 -c $<
@@ -54,20 +60,16 @@ extend.cmo: extend.ml
 %.cmo %.cmi: %.ml extend.cmo
 	$(OCAMLC) $(CAMLP5_FLAGS) -c $<
 
+
 .PHONY: all clean count depend
 
 $(EXEFILE): Parser.mli Lexer.ml $(CMOFILES)
 	$(OCAMLC) -o $@ $(CMOFILES)
 
-Parser.ml Parser.mli: Parser.mly
-	ocamlyacc -v Parser.mly
-
-Lexer.ml: Lexer.mll
-	ocamllex Lexer.mll
 
 -include .depend
 
-depend: $(MLFILES) $(MLIFILES) extend.cmo
+depend: Lexer.ml Lexer.mli Parser.ml Parser.mli Main.ml $(MLFILES) $(MLIFILES) extend.cmo
 	$(OCAMLDEP) $(CAMLP5_FLAGS) $(INCLUDES) \
           $(filter-out extend.cmo,$^) > .depend
 

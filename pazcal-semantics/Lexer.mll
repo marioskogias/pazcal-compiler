@@ -25,10 +25,10 @@ let new_line = ['\n']
 
 rule lexer = parse
     "and"  { T_and }
-  | "bool"    { T_bool }
+  | "bool"    { T_bool("bool") }
   | "break"    { T_break }
   | "case"     { T_case }
-  | "char"  { T_char }
+  | "char"  { T_char("char") }
   | "const"    { T_const }
   | "continue"     { T_continue }
   | "default"   { T_default }
@@ -40,14 +40,14 @@ rule lexer = parse
   | "FORM"   { T_FORM }
   | "FUNC"   { T_FUNC }
   | "if"   { T_if }
-  | "int"   { T_int }
+  | "int"   { T_int("int") }
   | "MOD"   { T_MOD }
   | "NEXT"   { T_NEXT }
   | "not"   { T_not }
   | "or"   { T_or }
   | "PROC"   { T_PROC }
   | "PROGRAM"   { T_PROGRAM }
-  | "REAL"   { T_REAL }
+  | "REAL"   { T_REAL("real") }
   | "return"   { T_return }
   | "STEP"   { T_STEP }
   | "switch"   { T_switch }
@@ -59,7 +59,7 @@ rule lexer = parse
   | "WRITESP"   { T_WRITESP }
   | "WRITESPLN"   { T_WRITESPLN }
 
-  | letter+(letter* digit* '_'*)* { T_name }
+  | letter+(letter* digit* '_'*)* as name { T_name(name) }
   | (['1'-'9']+ digit*) | ('0'+)	{ T_int_const }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }

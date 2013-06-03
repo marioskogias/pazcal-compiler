@@ -1,8 +1,8 @@
 %token T_and 
-%token T_bool 
+%token <string> T_bool 
 %token T_break 
 %token T_case 
-%token T_char 
+%token <string> T_char 
 %token T_const 
 %token T_continue 
 %token T_default 
@@ -14,14 +14,14 @@
 %token T_FORM 
 %token T_FUNC 
 %token T_if 
-%token T_int 
+%token <string> T_int 
 %token T_MOD 
 %token T_NEXT 
 %token T_not 
 %token T_or 
 %token T_PROC 
 %token T_PROGRAM 
-%token T_REAL 
+%token <string> T_REAL 
 %token T_return 
 %token T_STEP 
 %token T_switch 
@@ -65,7 +65,7 @@
 %token T_rbracket 
 %token T_lbrace
 %token T_rbrace 
-%token T_name
+%token <string> T_name
 %token T_real_const
 %token T_const_char
 %token T_string_const
@@ -89,7 +89,7 @@
 %type <unit> const_def_list
 %type <unit> var_def
 %type <unit> var_def_list
-%type <unit> var_init
+%type <string> var_init
 %type <unit> var_init_bra_list
 %type <unit> routine
 %type <unit> routine_header
@@ -99,7 +99,7 @@
 %type <unit> formal
 %type <unit> formal_end
 %type <unit> program
-%type <unit> ptype
+%type <string> ptype
 %type <unit> const_expr
 %type <unit> expr
 %type <unit> l_value
@@ -145,14 +145,14 @@ const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 const_def_list : /*nothing*/ { () }
 	       | T_comma const_inner_def const_def_list { () }
 
-var_def : ptype var_init var_def_list T_semicolon { () }
+var_def : ptype var_init var_def_list T_semicolon { print_string $1; print_string $2 }
 
 var_def_list : /*nothing*/ { () }
 	     | T_comma var_init var_def_list { () }
 
-var_init : T_name { () } 
-	 | T_name T_eq expr { () }
-	 | T_name var_init_bra_list { () }
+var_init : T_name { $1 } 
+	 | T_name T_eq expr { $1 }
+	 | T_name var_init_bra_list { $1 }
 
 
 var_init_bra_list : T_lbracket const_expr T_rbracket { () }
@@ -184,10 +184,10 @@ program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
 program : program_header block { () }
 
-ptype : T_int  { () }
-      | T_bool { () }
-      | T_char { () }
-      | T_REAL { () }
+ptype : T_int  { $1 }
+      | T_bool { $1 }
+      | T_char { $1 }
+      | T_REAL { $1 }
 
 const_expr : expr { () }
 
