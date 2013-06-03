@@ -9,8 +9,8 @@ OCAMLC_FLAGS=-g
 OCAMLC=ocamlc
 OCAMLDEP=ocamldep
 
-%.cmo: %.mli %.ml
-	$(OCAMLC) $(OCAMLC_FLAGS) -c $^
+%.cmo: %.ml %.mli
+	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
 
 %.cmi: %.mli
 	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
@@ -18,8 +18,7 @@ OCAMLDEP=ocamldep
 %.cmo %.cmi: %.ml
 	$(OCAMLC) $(OCAMLC_FLAGS) -c $<
 
-
-pazcal$(EXE):  Parser.cmo Lexer.cmo Main.cmo
+pazcal$(EXE): Lexer.cmo Parser.cmo Main.cmo
 	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ str.cma $^
 
 Lexer.ml: Lexer.mll

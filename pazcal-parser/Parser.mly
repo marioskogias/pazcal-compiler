@@ -184,7 +184,7 @@ program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
 program : program_header block { () }
 
-ptype : T_int { () }
+ptype : T_int  { () }
       | T_bool { () }
       | T_char { () }
       | T_REAL { () }
