@@ -145,7 +145,7 @@ const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 const_def_list : /*nothing*/ { () }
 	       | T_comma const_inner_def const_def_list { () }
 
-var_def : ptype var_init var_def_list T_semicolon { print_string $1; print_string $2 }
+var_def : ptype var_init var_def_list T_semicolon { print_string $1; print_string " "; print_string $2; print_string "\n" }
 
 var_def_list : /*nothing*/ { () }
 	     | T_comma var_init var_def_list { () }
