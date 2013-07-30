@@ -1,3 +1,17 @@
+%{
+
+open Printf 
+
+let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
+
+let rec printList = function 
+  | [] -> ()
+  | [(a,b)] -> printTup (a,b)
+  | (a::b) -> printTup a ;  printList b;;
+
+%}
+
+
 %token T_and 
 %token <string> T_bool 
 %token T_break 
@@ -69,7 +83,7 @@
 %token T_real_const
 %token T_const_char
 %token T_string_const
-%token T_int_const
+%token <int> T_int_const
 
 %token T_eof
 
@@ -88,9 +102,9 @@
 %type <unit> const_inner_def
 %type <unit> const_def_list
 %type <unit> var_def
-%type <unit> var_def_list
-%type <string> var_init
-%type <unit> var_init_bra_list
+%type <(string * int list) list> var_def_list
+%type <string * int list> var_init
+%type <int list> var_init_bra_list
 %type <unit> routine
 %type <unit> routine_header
 %type <unit> routine_header_beg
@@ -100,8 +114,8 @@
 %type <unit> formal_end
 %type <unit> program
 %type <string> ptype
-%type <unit> const_expr
-%type <unit> expr
+%type <int> const_expr
+%type <int> expr
 %type <unit> l_value
 %type <unit> expr_list
 //%type <unit> unop
@@ -145,18 +159,18 @@ const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 const_def_list : /*nothing*/ { () }
 	       | T_comma const_inner_def const_def_list { () }
 
-var_def : ptype var_init var_def_list T_semicolon { print_string $1; print_string " "; print_string $2; print_string "\n" }
+var_def : ptype var_init var_def_list T_semicolon { print_string $1; print_string " "; printTup $2; print_string " "; printList $3 ; print_string "\n" }
 
-var_def_list : /*nothing*/ { () }
-	     | T_comma var_init var_def_list { () }
+var_def_list : /*nothing*/ { [] }
+	     | T_comma var_init var_def_list { ($2::$3) }
 
-var_init : T_name { $1 } 
-	 | T_name T_eq expr { $1 }
-	 | T_name var_init_bra_list { $1 }
+var_init : T_name { ($1,[]) } 
+	 | T_name T_eq expr { ($1,[]) }
+	 | T_name var_init_bra_list { ($1,$2) }
 
 
-var_init_bra_list : T_lbracket const_expr T_rbracket { () }
-		  | T_lbracket const_expr T_rbracket var_init_bra_list { () }
+var_init_bra_list : T_lbracket const_expr T_rbracket { [$2] }
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { ($2::$4) }
 
 routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen { () }
 
@@ -189,9 +203,9 @@ ptype : T_int  { $1 }
       | T_char { $1 }
       | T_REAL { $1 }
 
-const_expr : expr { () }
+const_expr : expr { $1 }
 
-expr : T_int_const { () }
+expr : T_int_const { $1 }
      | T_real_const { () }
      | T_const_char { () }
      | T_string_const { () }

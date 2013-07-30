@@ -60,7 +60,7 @@ rule lexer = parse
   | "WRITESPLN"   { T_WRITESPLN }
 
   | letter+(letter* digit* '_'*)* as name { T_name(name) }
-  | (['1'-'9']+ digit*) | ('0'+)	{ T_int_const }
+  | (['1'-'9']+ digit*) | ('0'+) as value { T_int_const(int_of_string value) }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' { T_string_const }
