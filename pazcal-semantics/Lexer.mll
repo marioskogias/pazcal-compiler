@@ -1,5 +1,6 @@
 {
 open Parser
+open Types
 
 let count_substring str sub =
   let sub_len = String.length sub in
@@ -25,10 +26,10 @@ let new_line = ['\n']
 
 rule lexer = parse
     "and"  { T_and }
-  | "bool"    { T_bool("bool") }
+  | "bool"    { T_bool(TYPE_bool) }
   | "break"    { T_break }
   | "case"     { T_case }
-  | "char"  { T_char("char") }
+  | "char"  { T_char(TYPE_char) }
   | "const"    { T_const }
   | "continue"     { T_continue }
   | "default"   { T_default }
@@ -40,14 +41,14 @@ rule lexer = parse
   | "FORM"   { T_FORM }
   | "FUNC"   { T_FUNC }
   | "if"   { T_if }
-  | "int"   { T_int("int") }
+  | "int"   { T_int(TYPE_int) }
   | "MOD"   { T_MOD }
   | "NEXT"   { T_NEXT }
   | "not"   { T_not }
   | "or"   { T_or }
   | "PROC"   { T_PROC }
   | "PROGRAM"   { T_PROGRAM }
-  | "REAL"   { T_REAL("real") }
+  | "REAL"   { T_REAL(TYPE_real) }
   | "return"   { T_return }
   | "STEP"   { T_STEP }
   | "switch"   { T_switch }
@@ -60,7 +61,7 @@ rule lexer = parse
   | "WRITESPLN"   { T_WRITESPLN }
 
   | letter+(letter* digit* '_'*)* as name { T_name(name) }
-  | (['1'-'9']+ digit*) | ('0'+) as value { T_int_const(int_of_string value) }
+  | (['1'-'9']+ digit*) | ('0'+) as value { T_int_const(value) }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
   | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' { T_string_const }

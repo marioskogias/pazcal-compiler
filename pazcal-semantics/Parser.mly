@@ -1,6 +1,9 @@
 %{
 
 open Printf 
+open Types
+open Identifier
+open Symbol
 
 let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
 
@@ -9,14 +12,25 @@ let rec printList = function
   | [(a,b)] -> printTup (a,b)
   | (a::b) -> printTup a ;  printList b;;
 
+
+let type_to_string = function
+  | TYPE_int -> "int "
+  | TYPE_char -> "char "
+  | TYPE_real -> "real "
+  | TYPE_bool -> "bool "
+  | TYPE_none -> "none "
+  | TYPE_proc -> "proc "
+
+let registerVar var_type (a,b) = print_string (type_to_string var_type); printTup (a,b) ; print_string "\n"
+
 %}
 
 
 %token T_and 
-%token <string> T_bool 
+%token <Types.typ> T_bool 
 %token T_break 
 %token T_case 
-%token <string> T_char 
+%token <Types.typ> T_char 
 %token T_const 
 %token T_continue 
 %token T_default 
@@ -28,14 +42,14 @@ let rec printList = function
 %token T_FORM 
 %token T_FUNC 
 %token T_if 
-%token <string> T_int 
+%token <Types.typ> T_int 
 %token T_MOD 
 %token T_NEXT 
 %token T_not 
 %token T_or 
 %token T_PROC 
 %token T_PROGRAM 
-%token <string> T_REAL 
+%token <Types.typ> T_REAL 
 %token T_return 
 %token T_STEP 
 %token T_switch 
@@ -83,7 +97,7 @@ let rec printList = function
 %token T_real_const
 %token T_const_char
 %token T_string_const
-%token <int> T_int_const
+%token <string> T_int_const
 
 %token T_eof
 
@@ -113,9 +127,9 @@ let rec printList = function
 %type <unit> formal
 %type <unit> formal_end
 %type <unit> program
-%type <string> ptype
-%type <int> const_expr
-%type <int> expr
+%type <Types.typ> ptype
+%type <string> const_expr
+%type <string> expr
 %type <unit> l_value
 %type <unit> expr_list
 //%type <unit> unop
@@ -141,7 +155,9 @@ let rec printList = function
 
 
 
-pmodule : declaration_list T_eof { () }
+pmodule : initialization declaration_list T_eof { () }
+
+initialization : { ignore(initSymbolTable 256); ignore(openScope()) }
 
 declaration_list : /*nothing */ { () }
 		|declaration declaration_list { () }
@@ -159,7 +175,7 @@ const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 const_def_list : /*nothing*/ { () }
 	       | T_comma const_inner_def const_def_list { () }
 
-var_def : ptype var_init var_def_list T_semicolon { print_string $1; print_string " "; printTup $2; print_string " "; printList $3 ; print_string "\n" }
+var_def : ptype var_init var_def_list T_semicolon { ignore(registerVar $1 $2); ignore(List.map (registerVar $1) $3)   }
 
 var_def_list : /*nothing*/ { [] }
 	     | T_comma var_init var_def_list { ($2::$3) }
@@ -169,8 +185,8 @@ var_init : T_name { ($1,[]) }
 	 | T_name var_init_bra_list { ($1,$2) }
 
 
-var_init_bra_list : T_lbracket const_expr T_rbracket { [$2] }
-		  | T_lbracket const_expr T_rbracket var_init_bra_list { ($2::$4) }
+var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string $2] } //(*make sure to return only int*)
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { (int_of_string $2::$4) }
 
 routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen { () }
 
@@ -206,34 +222,34 @@ ptype : T_int  { $1 }
 const_expr : expr { $1 }
 
 expr : T_int_const { $1 }
-     | T_real_const { () }
-     | T_const_char { () }
-     | T_string_const { () }
-     | T_true { () }
-     | T_false { () }
-     | T_lparen expr T_rparen { () }
-     | l_value { () }
-     | call { () }
-     | T_plus expr { () }
-     | T_minus expr { () }
-     | T_NOT expr { () }
-     | T_not expr { () } 
-     | expr T_plus expr { () }
-     | expr T_minus expr { () }
-     | expr T_times expr { () }
-     | expr T_div expr { () }
-     | expr T_mod expr { () }
-     | expr T_MOD expr { () }
-     | expr T_equal expr { () }
-     | expr T_not_equal expr { () }
-     | expr T_greater expr { () }
-     | expr T_less expr { () }
-     | expr T_less_equal expr { () }
-     | expr T_greater_equal expr { () }
-     | expr T_and expr { () }
-     | expr T_AND expr { () }
-     | expr T_OR expr { () }
-     | expr T_or expr { () }
+     | T_real_const { "test" }
+     | T_const_char { "test" }
+     | T_string_const { "test" }
+     | T_true { "true" }
+     | T_false { "flase" }
+     | T_lparen expr T_rparen { "test" }
+     | l_value { "test" }
+     | call { "test" }
+     | T_plus expr { "test" }
+     | T_minus expr { "test" }
+     | T_NOT expr { "test" }
+     | T_not expr { "test" } 
+     | expr T_plus expr { "test" }
+     | expr T_minus expr { "test" }
+     | expr T_times expr { "test" }
+     | expr T_div expr { "test" }
+     | expr T_mod expr { "test" }
+     | expr T_MOD expr { "test" }
+     | expr T_equal expr { "test" }
+     | expr T_not_equal expr { "test" }
+     | expr T_greater expr { "test" }
+     | expr T_less expr { "test" }
+     | expr T_less_equal expr { "test" }
+     | expr T_greater_equal expr { "test" }
+     | expr T_and expr { "test" }
+     | expr T_AND expr { "test" }
+     | expr T_OR expr { "test" }
+     | expr T_or expr { "test" }
 
 l_value : T_name expr_list { () }
 
