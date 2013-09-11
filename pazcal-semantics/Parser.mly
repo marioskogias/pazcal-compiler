@@ -12,16 +12,22 @@ let rec printList = function
   | [(a,b)] -> printTup (a,b)
   | (a::b) -> printTup a ;  printList b;;
 
+(*function to create table type*)
 
-let type_to_string = function
-  | TYPE_int -> "int "
-  | TYPE_char -> "char "
-  | TYPE_real -> "real "
-  | TYPE_bool -> "bool "
-  | TYPE_none -> "none "
-  | TYPE_proc -> "proc "
+let rec table_type var_type = function 
+  | [] -> var_type
+  | (a::b) -> let x = table_type var_type b in TYPE_array(x,a)
 
-let registerVar var_type (a,b) = print_string (type_to_string var_type); printTup (a,b) ; print_string "\n"
+(*function to register a variable*)
+let registerVar var_type (a,b) = ignore(newVariable (id_make a) (table_type var_type b) true)
+
+(*function to register a param*)
+let register_param anc (param_type, (name, mode, nlist)) = 
+	let var_type = table_type param_type nlist
+	in ignore(newParameter (id_make name)var_type mode anc true)
+
+(*function to register a function/proc and its params*)
+let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type)
 
 %}
 
@@ -121,11 +127,11 @@ let registerVar var_type (a,b) = print_string (type_to_string var_type); printTu
 %type <int list> var_init_bra_list
 %type <unit> routine
 %type <unit> routine_header
-%type <unit> routine_header_beg
-%type <unit> routine_header_body
-%type <unit> routine_header_list
-%type <unit> formal
-%type <unit> formal_end
+%type <Types.typ * entry> routine_header_beg
+%type <(Types.typ * (string * Symbol.pass_mode * int list)) list> routine_header_body
+%type <(Types.typ * (string * Symbol.pass_mode * int list)) list> routine_header_list
+%type <string * Symbol.pass_mode * int list> formal
+%type <int list> formal_end
 %type <unit> program
 %type <Types.typ> ptype
 %type <string> const_expr
@@ -157,7 +163,7 @@ let registerVar var_type (a,b) = print_string (type_to_string var_type); printTu
 
 pmodule : initialization declaration_list T_eof { () }
 
-initialization : { ignore(initSymbolTable 256); ignore(openScope()) }
+initialization : { ignore(initSymbolTable 256) }
 
 declaration_list : /*nothing */ { () }
 		|declaration declaration_list { () }
@@ -188,31 +194,31 @@ var_init : T_name { ($1,[]) }
 var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string $2] } //(*make sure to return only int*)
 		  | T_lbracket const_expr T_rbracket var_init_bra_list { (int_of_string $2::$4) }
 
-routine_header : routine_header_beg T_name T_lparen routine_header_body T_rparen { () }
+routine_header : routine_header_beg T_lparen routine_header_body T_rparen { ignore(registerFun $1 $3) }
 
-routine_header_body :/*nothing*/ { () } 
-		    |ptype formal routine_header_list { () }
+routine_header_body :/*nothing*/ { [] } 
+		    |ptype formal routine_header_list { (($1,$2)::$3) }
 
-routine_header_list : /*nothing*/ { () }
-		    | T_comma ptype formal routine_header_list { () }
+routine_header_list : /*nothing*/ { [] }
+		    | T_comma ptype formal routine_header_list { (($2,$3) :: $4) }
 
-routine_header_beg : T_PROC { () }
-		   | T_FUNC ptype { () }
+routine_header_beg : T_PROC T_name { (TYPE_proc,newFunction (id_make $2) true) }
+		   | T_FUNC ptype T_name { ($2,newFunction (id_make $3) true) }
 
-formal : T_name { () }
-       | T_ampersand T_name  { () }
-       | T_name T_lbracket const_expr T_rbracket formal_end { () }
-       | T_name T_lbracket T_rbracket formal_end { () }
+formal : T_name { ($1,PASS_BY_VALUE,[]) }
+       | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
+       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(int_of_string $3::$5)) }
+       | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
-formal_end : /*nothing*/ { () }
-	   | T_lbracket const_expr T_rbracket formal_end { () }
+formal_end : /*nothing*/ { [] }
+	   | T_lbracket const_expr T_rbracket formal_end { (int_of_string $2::$4) }
 
 routine : routine_header T_semicolon { () }
 	| routine_header block { () }
 
-program_header : T_PROGRAM T_name T_lparen T_rparen { () }
+program_header : T_PROGRAM T_name T_lparen T_rparen { openScope() }
 
-program : program_header block { () }
+program : program_header block { closeScope() }
 
 ptype : T_int  { $1 }
       | T_bool { $1 }
