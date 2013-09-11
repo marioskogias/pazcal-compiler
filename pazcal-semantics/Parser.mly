@@ -27,7 +27,7 @@ let register_param anc (param_type, (name, mode, nlist)) =
 	in ignore(newParameter (id_make name)var_type mode anc true)
 
 (*function to register a function/proc and its params*)
-let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type)
+let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type); fun_entry
 
 %}
 
@@ -126,7 +126,7 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 %type <string * int list> var_init
 %type <int list> var_init_bra_list
 %type <unit> routine
-%type <unit> routine_header
+%type <entry> routine_header
 %type <Types.typ * entry> routine_header_beg
 %type <(Types.typ * (string * Symbol.pass_mode * int list)) list> routine_header_body
 %type <(Types.typ * (string * Symbol.pass_mode * int list)) list> routine_header_list
@@ -194,7 +194,7 @@ var_init : T_name { ($1,[]) }
 var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string $2] } //(*make sure to return only int*)
 		  | T_lbracket const_expr T_rbracket var_init_bra_list { (int_of_string $2::$4) }
 
-routine_header : routine_header_beg T_lparen routine_header_body T_rparen { ignore(registerFun $1 $3) }
+routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
 
 routine_header_body :/*nothing*/ { [] } 
 		    |ptype formal routine_header_list { (($1,$2)::$3) }
@@ -213,7 +213,7 @@ formal : T_name { ($1,PASS_BY_VALUE,[]) }
 formal_end : /*nothing*/ { [] }
 	   | T_lbracket const_expr T_rbracket formal_end { (int_of_string $2::$4) }
 
-routine : routine_header T_semicolon { () }
+routine : routine_header T_semicolon { forwardFunction $1 }
 	| routine_header block { () }
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { openScope() }
