@@ -19,7 +19,7 @@ let rec table_type var_type = function
   | (a::b) -> let x = table_type var_type b in TYPE_array(x,a)
 
 (*function to register a variable*)
-let registerVar var_type (a,b) = ignore(newVariable (id_make a) (table_type var_type b) true)
+let registerVar var_type (a,b) =  ignore(newVariable (id_make a) (table_type var_type b) true)
 
 (*function to register a param*)
 let register_param anc (param_type, (name, mode, nlist)) = 
@@ -163,7 +163,7 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 
 pmodule : initialization declaration_list T_eof { () }
 
-initialization : { ignore(initSymbolTable 256) }
+initialization : { print_string "initialize\n"; ignore(initSymbolTable 256);  openScope()}
 
 declaration_list : /*nothing */ { () }
 		|declaration declaration_list { () }
@@ -202,8 +202,8 @@ routine_header_body :/*nothing*/ { [] }
 routine_header_list : /*nothing*/ { [] }
 		    | T_comma ptype formal routine_header_list { (($2,$3) :: $4) }
 
-routine_header_beg : T_PROC T_name { (TYPE_proc,newFunction (id_make $2) true) }
-		   | T_FUNC ptype T_name { ($2,newFunction (id_make $3) true) }
+routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2) true) in ignore(openScope());a }
+		   | T_FUNC ptype T_name { let a = ($2,newFunction (id_make $3) true) in ignore(openScope());a }
 
 formal : T_name { ($1,PASS_BY_VALUE,[]) }
        | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
@@ -213,12 +213,16 @@ formal : T_name { ($1,PASS_BY_VALUE,[]) }
 formal_end : /*nothing*/ { [] }
 	   | T_lbracket const_expr T_rbracket formal_end { (int_of_string $2::$4) }
 
-routine : routine_header T_semicolon { forwardFunction $1 }
-	| routine_header block { () }
+routine : routine_header T_semicolon closeScope { forwardFunction $1 }
+	| routine_header block closeScope { () }
 
-program_header : T_PROGRAM T_name T_lparen T_rparen { openScope() }
+program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : program_header block { closeScope() }
+program : openScope program_header block closeScope { () }
+
+openScope : { openScope() }
+
+closeScope : { closeScope() }
 
 ptype : T_int  { $1 }
       | T_bool { $1 }
@@ -257,6 +261,8 @@ expr : T_int_const { $1 }
      | expr T_OR expr { "test" }
      | expr T_or expr { "test" }
 
+//l_value : T_name expr_list { ignore(lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true) }
+
 l_value : T_name expr_list { () }
 
 expr_list : /*nothing*/ { () }
@@ -291,7 +297,7 @@ call : T_name T_lparen T_rparen { () }
 expressions : /*nothing*/ { () }
 	    | T_comma expr expressions { () }
 
-block : T_lbrace inner_block T_rbrace { () }
+block : T_lbrace  inner_block T_rbrace { () }
 
 inner_block : /*nothing*/ { () }
 	    | local_def inner_block { () }
@@ -316,7 +322,7 @@ stmt : T_semicolon { () }
      | T_continue T_semicolon { () }
      | T_return T_semicolon { () }
      | T_return expr T_semicolon { () }
-     | block { () }
+     | openScope block closeScope { () }
      | write T_lparen T_rparen T_semicolon { () }
      | write T_lparen pformat pformat_list T_rparen T_semicolon { () }
 
