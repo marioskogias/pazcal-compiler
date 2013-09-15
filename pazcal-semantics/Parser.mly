@@ -30,6 +30,18 @@ let register_param anc (param_type, (name, mode, nlist)) =
 (*function to register a function/proc and its params*)
 let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type); fun_entry
 
+(*function to get entry's type*)
+let get_type e = 
+	match e.entry_info with
+	  | ENTRY_variable inf -> inf.variable_type
+          | ENTRY_parameter inf -> inf.parameter_type
+          | ENTRY_function inf -> inf.function_result
+	(*to be continued...*)
+          | _ ->TYPE_int
+
+(*function to get entry's name*)
+let get_name e = id_name e.entry_id 
+
 %}
 
 
@@ -141,7 +153,7 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 %type <unit> expr_list
 //%type <unit> unop
 //%type <unit> binop
-%type <unit> call 
+%type <entry> call 
 %type <unit> expressions
 %type <unit> block
 %type <unit> inner_block
@@ -239,13 +251,13 @@ expr : T_int_const { (TYPE_int,$1) }
      | T_true { (TYPE_bool,"true") }
      | T_false { (TYPE_bool,"false") }
      | T_lparen expr T_rparen { (TYPE_int,"test") }
-     | l_value { (TYPE_int,"test") }
-     | call { (TYPE_int,"test") }
+     | l_value { (get_type $1,get_name $1) }
+     | call { (get_type $1,"test") }
      | T_plus expr { (TYPE_int,"test") }
      | T_minus expr { (TYPE_int,"test") }
      | T_NOT expr { (TYPE_int,"test") }
      | T_not expr { (TYPE_int,"test") } 
-     | expr T_plus expr { ignore(if (check_arithmetic_types "+" (fst $1) (fst $3)) then print_string "ok" else print_string "wrong" );(TYPE_int,"test") }
+     | expr T_plus expr { ignore(check_arithmetic_types "+" (fst $1) (fst $3)); (TYPE_int,"test") }
      | expr T_minus expr { (TYPE_int,"test") }
      | expr T_times expr { (TYPE_int,"test") }
      | expr T_div expr { (TYPE_int,"test") }
@@ -290,8 +302,8 @@ binop : T_plus { () }
       | T_or { () }
 */
 
-call : T_name T_lparen T_rparen { () }
-     | T_name T_lparen expr expressions T_rparen { () }
+call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
+     | T_name T_lparen expr expressions T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
 
 expressions : /*nothing*/ { () }
 	    | T_comma expr expressions { () }
