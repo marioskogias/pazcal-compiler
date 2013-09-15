@@ -4,6 +4,7 @@ open Printf
 open Types
 open Identifier
 open Symbol
+open Semantic 
 
 let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
 
@@ -100,9 +101,9 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 %token T_lbrace
 %token T_rbrace 
 %token <string> T_name
-%token T_real_const
-%token T_const_char
-%token T_string_const
+%token <string> T_real_const
+%token <string> T_const_char
+%token <string> T_string_const
 %token <string> T_int_const
 
 %token T_eof
@@ -134,9 +135,9 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 %type <int list> formal_end
 %type <unit> program
 %type <Types.typ> ptype
-%type <string> const_expr
-%type <string> expr
-%type <unit> l_value
+%type <Types.typ * string> const_expr
+%type <Types.typ * string> expr
+%type <entry> l_value
 %type <unit> expr_list
 //%type <unit> unop
 //%type <unit> binop
@@ -163,7 +164,7 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 
 pmodule : initialization declaration_list T_eof { () }
 
-initialization : { print_string "initialize\n"; ignore(initSymbolTable 256);  openScope()}
+initialization : { ignore(initSymbolTable 256);  openScope()}
 
 declaration_list : /*nothing */ { () }
 		|declaration declaration_list { () }
@@ -191,8 +192,8 @@ var_init : T_name { ($1,[]) }
 	 | T_name var_init_bra_list { ($1,$2) }
 
 
-var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string $2] } //(*make sure to return only int*)
-		  | T_lbracket const_expr T_rbracket var_init_bra_list { (int_of_string $2::$4) }
+var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string (snd $2)] } //(*make sure to return only int*)
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { (int_of_string (snd $2)::$4) }
 
 routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
 
@@ -207,11 +208,11 @@ routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2)
 
 formal : T_name { ($1,PASS_BY_VALUE,[]) }
        | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
-       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(int_of_string $3::$5)) }
+       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(int_of_string (snd $3)::$5)) }
        | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
 formal_end : /*nothing*/ { [] }
-	   | T_lbracket const_expr T_rbracket formal_end { (int_of_string $2::$4) }
+	   | T_lbracket const_expr T_rbracket formal_end { (int_of_string (snd $2)::$4) }
 
 routine : routine_header T_semicolon closeScope { forwardFunction $1 }
 	| routine_header block closeScope { () }
@@ -231,39 +232,37 @@ ptype : T_int  { $1 }
 
 const_expr : expr { $1 }
 
-expr : T_int_const { $1 }
-     | T_real_const { "test" }
-     | T_const_char { "test" }
-     | T_string_const { "test" }
-     | T_true { "true" }
-     | T_false { "flase" }
-     | T_lparen expr T_rparen { "test" }
-     | l_value { "test" }
-     | call { "test" }
-     | T_plus expr { "test" }
-     | T_minus expr { "test" }
-     | T_NOT expr { "test" }
-     | T_not expr { "test" } 
-     | expr T_plus expr { "test" }
-     | expr T_minus expr { "test" }
-     | expr T_times expr { "test" }
-     | expr T_div expr { "test" }
-     | expr T_mod expr { "test" }
-     | expr T_MOD expr { "test" }
-     | expr T_equal expr { "test" }
-     | expr T_not_equal expr { "test" }
-     | expr T_greater expr { "test" }
-     | expr T_less expr { "test" }
-     | expr T_less_equal expr { "test" }
-     | expr T_greater_equal expr { "test" }
-     | expr T_and expr { "test" }
-     | expr T_AND expr { "test" }
-     | expr T_OR expr { "test" }
-     | expr T_or expr { "test" }
+expr : T_int_const { (TYPE_int,$1) }
+     | T_real_const { (TYPE_real,$1) }
+     | T_const_char { (TYPE_char,$1) }
+     | T_string_const { (TYPE_array (TYPE_char,0),$1) }
+     | T_true { (TYPE_bool,"true") }
+     | T_false { (TYPE_bool,"false") }
+     | T_lparen expr T_rparen { (TYPE_int,"test") }
+     | l_value { (TYPE_int,"test") }
+     | call { (TYPE_int,"test") }
+     | T_plus expr { (TYPE_int,"test") }
+     | T_minus expr { (TYPE_int,"test") }
+     | T_NOT expr { (TYPE_int,"test") }
+     | T_not expr { (TYPE_int,"test") } 
+     | expr T_plus expr { ignore(if (check_arithmetic_types "+" (fst $1) (fst $3)) then print_string "ok" else print_string "wrong" );(TYPE_int,"test") }
+     | expr T_minus expr { (TYPE_int,"test") }
+     | expr T_times expr { (TYPE_int,"test") }
+     | expr T_div expr { (TYPE_int,"test") }
+     | expr T_mod expr { (TYPE_int,"test") }
+     | expr T_MOD expr { (TYPE_int,"test") }
+     | expr T_equal expr { (TYPE_int,"test") }
+     | expr T_not_equal expr { (TYPE_int,"test") }
+     | expr T_greater expr { (TYPE_int,"test") }
+     | expr T_less expr { (TYPE_int,"test") }
+     | expr T_less_equal expr { (TYPE_int,"test") }
+     | expr T_greater_equal expr { (TYPE_int,"test") }
+     | expr T_and expr { (TYPE_int,"test") }
+     | expr T_AND expr { (TYPE_int,"test") }
+     | expr T_OR expr { (TYPE_int,"test") }
+     | expr T_or expr { (TYPE_int,"test") }
 
-//l_value : T_name expr_list { ignore(lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true) }
-
-l_value : T_name expr_list { () }
+l_value : T_name expr_list { lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true   }
 
 expr_list : /*nothing*/ { () }
 	  | T_lbracket expr T_rbracket expr_list { () }

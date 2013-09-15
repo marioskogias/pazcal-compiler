@@ -8,9 +8,9 @@ else
 endif
 
 EXEFILE=gracec$(EXE)
-MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml \
+MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml Semantic.ml\
   Lexer.ml Parser.ml Main.ml
-MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli Symbol.mli \
+MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli Symbol.mli Semantic.mli\
   Parser.mli Lexer.mli
 CMOFILES=$(patsubst %.ml,%.cmo,$(MLFILES))
 CMIFILES=$(patsubst %.ml,%.cmi,$(MLFILES))
@@ -29,10 +29,8 @@ OCAMLOPT=ocamlopt $(OCAMLOPT_FLAGS)
 OCAMLDEP=ocamldep
 INCLUDES=
 
-default:  pazcal$(EXE) symbtest$(EXE)
+default:  pazcal$(EXE)
 
-symbtest$(EXE): $(filter-out Lexer.cmo Parser.cmo Main.cmo,$(CMOFILES))
-	$(OCAMLC) -o $@ $^
 
 pazcal$(EXE): $(filter-out Symbtest.cmo,$(CMOFILES))
 	$(OCAMLC) $(OCAMLC_FLAGS) -o $@ str.cma $^
@@ -73,11 +71,6 @@ depend: Lexer.ml Lexer.mli Parser.ml Parser.mli Main.ml $(MLFILES) $(MLIFILES) e
 	$(OCAMLDEP) $(CAMLP5_FLAGS) $(INCLUDES) \
           $(filter-out extend.cmo,$^) > .depend
 
-depend-symbtest: Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml \
-                 Hashcons.mli Identifier.mli Error.mli Types.mli \
-                 Symbol.mli extend.cmo
-	$(OCAMLDEP) $(CAMLP5_FLAGS) $(INCLUDES) \
-          $(filter-out extend.cmo,$^) > .depend
 
 clean:
 	$(RM) $(CMXFILES) $(CMOFILES) $(CMIFILES) $(OBJFILES) $(EXEFILES) \

@@ -62,9 +62,9 @@ rule lexer = parse
 
   | letter+(letter* digit* '_'*)* as name { T_name(name) }
   | (['1'-'9']+ digit*) | ('0'+) as value { T_int_const(value) }
-  | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)?	{ T_real_const }
-  | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"   { T_const_char }
-  | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' { T_string_const }
+  | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)? as value { T_real_const(value) }
+  | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"  as value{ T_const_char(value) }
+  | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' as value { T_string_const(value) }
   | "//" [^ '\n']* "\n"   { Lexing.new_line lexbuf ; lexer lexbuf }
   | "/*"(_|white|new_line)* "*/"  {for i = 1 to (count_substring (Lexing.lexeme lexbuf) "\n") do Lexing.new_line lexbuf done;
 				    lexer lexbuf }
