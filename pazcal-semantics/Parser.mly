@@ -42,6 +42,10 @@ let get_type e =
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
+(*handle tuples with 3 elements*)
+let first_el (a,_,_) = a
+
+let second_el (_,b,_) = b
 %}
 
 
@@ -148,7 +152,7 @@ let get_name e = id_name e.entry_id
 %type <unit> program
 %type <Types.typ> ptype
 %type <Types.typ * string> const_expr
-%type <Types.typ * string> expr
+%type <Types.typ * string *string> expr
 %type <entry> l_value
 %type <unit> expr_list
 //%type <unit> unop
@@ -205,7 +209,7 @@ var_init : T_name { ($1,[]) }
 
 
 var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string (snd $2)] } //(*make sure to return only int*)
-		  | T_lbracket const_expr T_rbracket var_init_bra_list { (int_of_string (snd $2)::$4) }
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2)::$4) }
 
 routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
 
@@ -220,11 +224,11 @@ routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2)
 
 formal : T_name { ($1,PASS_BY_VALUE,[]) }
        | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
-       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(int_of_string (snd $3)::$5)) }
+       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(table_size (fst $3) (snd $3)::$5)) }
        | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
 formal_end : /*nothing*/ { [] }
-	   | T_lbracket const_expr T_rbracket formal_end { (int_of_string (snd $2)::$4) }
+	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2)::$4) }
 
 routine : routine_header T_semicolon closeScope { forwardFunction $1 }
 	| routine_header block closeScope { () }
@@ -242,65 +246,42 @@ ptype : T_int  { $1 }
       | T_char { $1 }
       | T_REAL { $1 }
 
-const_expr : expr { $1 }
+const_expr : expr { ((first_el $1), (second_el $1)) }
 
-expr : T_int_const { (TYPE_int,$1) }
-     | T_real_const { (TYPE_real,$1) }
-     | T_const_char { (TYPE_char,$1) }
-     | T_string_const { (TYPE_array (TYPE_char,0),$1) }
-     | T_true { (TYPE_bool,"true") }
-     | T_false { (TYPE_bool,"false") }
-     | T_lparen expr T_rparen { (TYPE_int,"test") }
-     | l_value { (get_type $1,get_name $1) }
-     | call { (get_type $1,"test") }
-     | T_plus expr { (TYPE_int,"test") }
-     | T_minus expr { (TYPE_int,"test") }
-     | T_NOT expr { (TYPE_int,"test") }
-     | T_not expr { (TYPE_int,"test") } 
-     | expr T_plus expr { ignore(check_arithmetic_types "+" (fst $1) (fst $3)); (TYPE_int,"test") }
-     | expr T_minus expr { (TYPE_int,"test") }
-     | expr T_times expr { (TYPE_int,"test") }
-     | expr T_div expr { (TYPE_int,"test") }
-     | expr T_mod expr { (TYPE_int,"test") }
-     | expr T_MOD expr { (TYPE_int,"test") }
-     | expr T_equal expr { (TYPE_int,"test") }
-     | expr T_not_equal expr { (TYPE_int,"test") }
-     | expr T_greater expr { (TYPE_int,"test") }
-     | expr T_less expr { (TYPE_int,"test") }
-     | expr T_less_equal expr { (TYPE_int,"test") }
-     | expr T_greater_equal expr { (TYPE_int,"test") }
-     | expr T_and expr { (TYPE_int,"test") }
-     | expr T_AND expr { (TYPE_int,"test") }
-     | expr T_OR expr { (TYPE_int,"test") }
-     | expr T_or expr { (TYPE_int,"test") }
+expr : T_int_const { (TYPE_int,$1,"") }
+     | T_real_const { (TYPE_real,$1,"") }
+     | T_const_char { (TYPE_char,$1 ,"") }
+     | T_string_const { (TYPE_array (TYPE_char,0),$1, "")}
+     | T_true { (TYPE_bool,"true","") }
+     | T_false { (TYPE_bool,"false","") }
+     | T_lparen expr T_rparen { ((first_el $2),"test","") }
+     | l_value { (get_type $1,get_name $1,"") }
+     | call { (get_type $1,"test","") }
+     | T_plus expr { (check_is_number (first_el $2), "test","") }
+     | T_minus expr { (check_is_number (first_el $2), "test","") }
+     | T_NOT expr { (check_is_bool (first_el $2), "test","") }
+     | T_not expr { (check_is_bool (first_el $2), "test","") } 
+     | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3),"test","") }
+     | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3),"test","") }
+     | expr T_times expr { (check_binop_types (first_el $1) (first_el $3),"test","") }
+     | expr T_div expr { (check_binop_types (first_el $1) (first_el $3), "test","") }
+     | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) ,"test","") }
+     | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) ,"test","") }
+     | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
+     | expr T_not_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
+     | expr T_greater expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
+     | expr T_less expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
+     | expr T_less_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
+     | expr T_greater_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
+     | expr T_and expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
+     | expr T_AND expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
+     | expr T_OR expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
+     | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
 
 l_value : T_name expr_list { lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true   }
 
 expr_list : /*nothing*/ { () }
 	  | T_lbracket expr T_rbracket expr_list { () }
-/*
-unop : T_plus { () }
-     | T_minus { () }
-     | T_NOT { () }
-     | T_not { () }
-
-binop : T_plus { () }
-      | T_minus { () } 
-      | T_times { () }
-      | T_div { () }
-      | T_mod { () }
-      | T_MOD { () }
-      | T_equal { () }
-      | T_not_equal { () }
-      | T_greater { () }
-      | T_less { () }
-      | T_less_equal { () }
-      | T_greater_equal { () }
-      | T_and { () }
-      | T_AND { () } 
-      | T_OR { () }
-      | T_or { () }
-*/
 
 call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
      | T_name T_lparen expr expressions T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
