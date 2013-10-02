@@ -54,3 +54,20 @@ let table_size val_type value =
 			int_of_string value
 		with Failure "int_of_string" -> 0
 	|_ -> ignore(error "Not an integer value"); -1
+
+let check_function_params symbol_table_params_list passed_param_list = 
+		
+	let rec help_check = function
+		| ([],[]) -> true
+		| ([], l1) -> if (List.length l1) > 0 then (ignore(error "wrong params 1"); false) else true
+		| (l1,[]) -> if (List.length l1) > 0 then (ignore(error "wrong params 2");false) else true
+		| ((a::b), (c::d)) -> 	
+			let par_type =
+				match a.entry_info with
+          				| ENTRY_parameter inf -> inf.parameter_type
+					| _ -> TYPE_none
+			in
+			if (equalType par_type c) then help_check (b, d)
+			else (ignore(error "wrong params 3"); false)
+
+	in help_check (symbol_table_params_list, passed_param_list)

@@ -46,6 +46,12 @@ let get_name e = id_name e.entry_id
 let first_el (a,_,_) = a
 
 let second_el (_,b,_) = b
+
+(*get the parameter list of a function as it is in the symbol table*)
+let get_param_list a = 
+	match a.entry_info with 
+	| ENTRY_function inf -> inf.function_paramlist 
+	| _ -> []
 %}
 
 
@@ -158,7 +164,7 @@ let second_el (_,b,_) = b
 //%type <unit> unop
 //%type <unit> binop
 %type <entry> call 
-%type <unit> expressions
+%type <Types.typ list> expressions
 %type <unit> block
 %type <unit> inner_block
 %type <unit> local_def
@@ -284,10 +290,11 @@ expr_list : /*nothing*/ { () }
 	  | T_lbracket expr T_rbracket expr_list { () }
 
 call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
-     | T_name T_lparen expr expressions T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
+     | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+							in ignore(check_function_params (get_param_list e) ((first_el $3)::$4)) ; e  }
 
-expressions : /*nothing*/ { () }
-	    | T_comma expr expressions { () }
+expressions : /*nothing*/ { [] }
+	    | T_comma expr expressions { first_el $2::$3 }
 
 block : T_lbrace  inner_block T_rbrace { () }
 
