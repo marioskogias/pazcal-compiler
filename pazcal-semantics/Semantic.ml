@@ -71,3 +71,9 @@ let check_function_params symbol_table_params_list passed_param_list =
 			else (ignore(error "wrong params 3"); false)
 
 	in help_check (symbol_table_params_list, passed_param_list)
+
+
+(*bool val if in loop*)
+let in_loop = ref false
+
+

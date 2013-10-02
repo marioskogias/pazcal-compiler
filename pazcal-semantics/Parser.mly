@@ -5,6 +5,7 @@ open Types
 open Identifier
 open Symbol
 open Semantic 
+open Error
 
 let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
 
@@ -312,19 +313,20 @@ stmt : T_semicolon { () }
      | call T_semicolon { () }
      | T_if T_lparen expr T_rparen stmt T_else stmt { () }
      | T_if T_lparen expr T_rparen stmt { () } 
-     | T_while T_lparen expr T_rparen stmt { () }
-     | T_FOR T_lparen T_name T_comma range T_rparen stmt { () }
-     | T_do stmt T_while T_lparen expr T_rparen T_semicolon { () }
-     | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { () }
-     | T_switch T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { () }
-     | T_break T_semicolon { () }
-     | T_continue T_semicolon { () }
+     | T_while stoppable T_lparen expr T_rparen stmt { in_loop := false }
+     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := false }
+     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { in_loop := false }
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := false }
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := false }
+     | T_break T_semicolon { if not !in_loop then (error "not in loop") }
+     | T_continue T_semicolon { if not !in_loop then (error "not in loop") }
      | T_return T_semicolon { () }
      | T_return expr T_semicolon { () }
      | openScope block closeScope { () }
      | write T_lparen T_rparen T_semicolon { () }
      | write T_lparen pformat pformat_list T_rparen T_semicolon { () }
 
+stoppable : {in_loop := true}
 
 assign : T_eq { () }
        | T_plus_equal { () }

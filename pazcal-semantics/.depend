@@ -1,8 +1,10 @@
 Lexer.cmo: Types.cmi Parser.cmi Lexer.cmi 
 Lexer.cmx: Types.cmx Parser.cmx Lexer.cmi 
 Lexer.cmi: Parser.cmi 
-Parser.cmo: Types.cmi Symbol.cmi Semantic.cmi Identifier.cmi Parser.cmi 
-Parser.cmx: Types.cmx Symbol.cmx Semantic.cmx Identifier.cmx Parser.cmi 
+Parser.cmo: Types.cmi Symbol.cmi Semantic.cmi Identifier.cmi Error.cmi \
+    Parser.cmi 
+Parser.cmx: Types.cmx Symbol.cmx Semantic.cmx Identifier.cmx Error.cmx \
+    Parser.cmi 
 Parser.cmi: Types.cmi 
 Main.cmo: Parser.cmi Lexer.cmi 
 Main.cmx: Parser.cmx Lexer.cmx 
