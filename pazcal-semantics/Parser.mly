@@ -40,6 +40,12 @@ let get_type e =
 	(*to be continued...*)
           | _ ->TYPE_int
 
+(*function to get variable's type*)
+let rec get_var_type = function
+    |(var_type, 0) -> var_type
+    |(TYPE_array (t,s), a) -> get_var_type (t, a-1)
+    |_ -> ignore(error "tables sizes"); TYPE_none
+
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
@@ -160,8 +166,8 @@ let get_param_list a =
 %type <Types.typ> ptype
 %type <Types.typ * string> const_expr
 %type <Types.typ * string *string> expr
-%type <entry> l_value
-%type <unit> expr_list
+%type <Types.typ * string *string> l_value
+%type <int> expr_list
 //%type <unit> unop
 //%type <unit> binop
 %type <entry> call 
@@ -262,7 +268,7 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | T_true { (TYPE_bool,"true","") }
      | T_false { (TYPE_bool,"false","") }
      | T_lparen expr T_rparen { ((first_el $2),"test","") }
-     | l_value { (get_type $1,get_name $1,"") }
+     | l_value { $1 }
      | call { (get_type $1,"test","") }
      | T_plus expr { (check_is_number (first_el $2), "test","") }
      | T_minus expr { (check_is_number (first_el $2), "test","") }
@@ -285,10 +291,11 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | expr T_OR expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
      | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
 
-l_value : T_name expr_list { lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true   }
+l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+                                in (get_var_type ((get_type e), $2),get_name e,"")}
 
-expr_list : /*nothing*/ { () }
-	  | T_lbracket expr T_rbracket expr_list { () }
+expr_list : /*nothing*/ { 0 }
+	  | T_lbracket expr T_rbracket expr_list { $4 + 1 }
 
 call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
