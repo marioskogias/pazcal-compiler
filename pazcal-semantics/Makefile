@@ -8,9 +8,9 @@ else
 endif
 
 EXEFILE=gracec$(EXE)
-MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml Semantic.ml\
+MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml Semantic.ml Output.ml\
   Lexer.ml Parser.ml Main.ml
-MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli Symbol.mli Semantic.mli\
+MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli Symbol.mli Semantic.mli Output.mli\
   Parser.mli Lexer.mli
 CMOFILES=$(patsubst %.ml,%.cmo,$(MLFILES))
 CMIFILES=$(patsubst %.ml,%.cmi,$(MLFILES))

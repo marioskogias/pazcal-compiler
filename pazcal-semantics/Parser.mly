@@ -6,6 +6,8 @@ open Identifier
 open Symbol
 open Semantic 
 open Error
+open Parsing
+open Output
 
 let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
 
@@ -59,6 +61,7 @@ let get_param_list a =
 	match a.entry_info with 
 	| ENTRY_function inf -> inf.function_paramlist 
 	| _ -> []
+
 %}
 
 
@@ -325,7 +328,7 @@ stmt : T_semicolon { () }
      | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { in_loop := false }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := false }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := false }
-     | T_break T_semicolon { if not !in_loop then (error "not in loop") }
+     | T_break T_semicolon { if not !in_loop then print_error "not in loop test" (rhs_start_pos 1) }
      | T_continue T_semicolon { if not !in_loop then (error "not in loop") }
      | T_return T_semicolon { () }
      | T_return expr T_semicolon { () }
