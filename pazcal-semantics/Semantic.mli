@@ -1,10 +1,11 @@
-val check_binop_types :  Types.typ -> Types.typ -> Types.typ
-val check_bool_binop_types : Types.typ -> Types.typ -> Types.typ
-val check_int_binop_types :  Types.typ -> Types.typ -> Types.typ
-val check_equalities : Types.typ ->  Types.typ -> Types.typ
-val check_is_number : Types.typ -> Types.typ
-val check_is_bool : Types.typ -> Types.typ
-val table_size : Types.typ -> string -> int
-val check_function_params : Symbol.entry list -> Types.typ list -> bool
+val check_binop_types :  Types.typ -> Types.typ -> Lexing.position -> Types.typ
+val check_bool_binop_types : Types.typ -> Types.typ -> Lexing.position -> Types.typ
+val check_int_binop_types :  Types.typ -> Types.typ -> Lexing.position -> Types.typ
+val check_equalities : Types.typ ->  Types.typ -> Lexing.position -> Types.typ
+val check_is_number : Types.typ -> Lexing.position -> Types.typ
+val check_is_bool : Types.typ -> Lexing.position -> Types.typ
+val table_size : Types.typ -> string -> Lexing.position -> int
+val check_function_params : Symbol.entry list -> Types.typ list -> Lexing.position -> bool
 
+val check_assign : string -> Types.typ -> Types.typ -> Lexing.position -> bool
 val in_loop : bool ref

@@ -69,7 +69,8 @@ rule lexer = parse
   | "/*"(_|white|new_line)* "*/"  {for i = 1 to (count_substring (Lexing.lexeme lexbuf) "\n") do Lexing.new_line lexbuf done;
 				    lexer lexbuf }
 
-  | '='      { T_eq }
+  | '=' as eq    
+             { T_eq(Char.escaped eq) }
   | '('      { T_lparen }
   | ')'      { T_rparen }
   | '+'      { T_plus }
@@ -82,11 +83,16 @@ rule lexer = parse
   | ">="     { T_greater_equal }
   | "!="     { T_not_equal }
   | '%'      { T_mod }
-  | "%="     { T_mod_equal }
-  | "+="     { T_plus_equal }
-  | "-="     { T_minus_equal }
-  | "/="     { T_div_equal }
-  | "*="     { T_times_equal }
+  | "%=" as eq    
+             { T_eq(eq) }
+  | "+="  as eq    
+             { T_eq(eq) }
+  | "-="   as eq    
+             { T_eq(eq) }
+  | "/="    as eq    
+             { T_eq(eq) }
+  | "*="     as eq    
+             { T_eq(eq) }
   | "--"     { T_minus_minus }
   | "++"     { T_plus_plus }
   | "||"     { T_OR }

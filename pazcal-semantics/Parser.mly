@@ -62,6 +62,8 @@ let get_param_list a =
 	| ENTRY_function inf -> inf.function_paramlist 
 	| _ -> []
 
+(*function to test printing*)
+
 %}
 
 
@@ -99,7 +101,7 @@ let get_param_list a =
 %token T_WRITELN
 %token T_WRITESP 
 %token T_WRITESPLN 
-%token T_eq 
+%token <string> T_eq 
 %token T_lparen 
 %token T_rparen 
 %token T_plus 
@@ -112,11 +114,11 @@ let get_param_list a =
 %token T_greater_equal 
 %token T_not_equal 
 %token T_mod 
-%token T_mod_equal 
-%token T_plus_equal 
-%token T_minus_equal 
-%token T_div_equal 
-%token T_times_equal
+%token <string> T_mod_equal 
+%token <string> T_plus_equal 
+%token <string> T_minus_equal 
+%token <string> T_div_equal 
+%token <string> T_times_equal
 %token T_minus_minus 
 %token T_plus_plus 
 %token T_OR 
@@ -182,7 +184,7 @@ let get_param_list a =
 %type <unit> inner_switch 
 %type <unit> switch_exp 
 %type <unit> pformat_list
-%type <unit> assign
+%type <string> assign
 %type <unit> range
 %type <unit> clause
 %type <unit> stmt_list 
@@ -225,7 +227,7 @@ var_init : T_name { ($1,[]) }
 
 
 var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string (snd $2)] } //(*make sure to return only int*)
-		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2)::$4) }
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
 routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
 
@@ -240,11 +242,11 @@ routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2)
 
 formal : T_name { ($1,PASS_BY_VALUE,[]) }
        | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
-       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(table_size (fst $3) (snd $3)::$5)) }
+       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(table_size (fst $3) (snd $3) (rhs_start_pos 1)::$5)) }
        | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
 formal_end : /*nothing*/ { [] }
-	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2)::$4) }
+	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
 routine : routine_header T_semicolon closeScope { forwardFunction $1 }
 	| routine_header block closeScope { () }
@@ -273,26 +275,26 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | T_lparen expr T_rparen { ((first_el $2),"test","") }
      | l_value { $1 }
      | call { (get_type $1,"test","") }
-     | T_plus expr { (check_is_number (first_el $2), "test","") }
-     | T_minus expr { (check_is_number (first_el $2), "test","") }
-     | T_NOT expr { (check_is_bool (first_el $2), "test","") }
-     | T_not expr { (check_is_bool (first_el $2), "test","") } 
-     | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3),"test","") }
-     | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3),"test","") }
-     | expr T_times expr { (check_binop_types (first_el $1) (first_el $3),"test","") }
-     | expr T_div expr { (check_binop_types (first_el $1) (first_el $3), "test","") }
-     | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) ,"test","") }
-     | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) ,"test","") }
-     | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
-     | expr T_not_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
-     | expr T_greater expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
-     | expr T_less expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
-     | expr T_less_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
-     | expr T_greater_equal expr { (check_equalities (first_el $1) (first_el $3) ,"test","") }
-     | expr T_and expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
-     | expr T_AND expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
-     | expr T_OR expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
-     | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) ,"test","") }
+     | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
+     | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
+     | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") }
+     | T_not expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") } 
+     | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), "test","") }
+     | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_not_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_greater expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_less expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_less_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_greater_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_and expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_AND expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_OR expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
 
 l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
                                 in (get_var_type ((get_type e), $2),get_name e,"")}
@@ -302,7 +304,7 @@ expr_list : /*nothing*/ { 0 }
 
 call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-							in ignore(check_function_params (get_param_list e) ((first_el $3)::$4)) ; e  }
+							in ignore(check_function_params (get_param_list e) ((first_el $3)::$4) (rhs_start_pos 1)) ; e  }
 
 expressions : /*nothing*/ { [] }
 	    | T_comma expr expressions { first_el $2::$3 }
@@ -317,19 +319,19 @@ local_def : const_def { () }
 	  | var_def { () }
 
 stmt : T_semicolon { () }
-     | l_value assign expr T_semicolon { () }
-     | l_value T_plus_plus T_semicolon{ () }
-     | l_value T_minus_minus T_semicolon { () }
+     | l_value assign expr T_semicolon {ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)) }
+     | l_value T_plus_plus T_semicolon{ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)) } /*same as above same operant*/
+     | l_value T_minus_minus T_semicolon { ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)) }
      | call T_semicolon { () }
-     | T_if T_lparen expr T_rparen stmt T_else stmt { () }
-     | T_if T_lparen expr T_rparen stmt { () } 
-     | T_while stoppable T_lparen expr T_rparen stmt { in_loop := false }
+     | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)) }
+     | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)) } 
+     | T_while stoppable T_lparen expr T_rparen stmt { (ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; in_loop := false) }
      | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := false }
-     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { in_loop := false }
+     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := false) }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := false }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := false }
-     | T_break T_semicolon { if not !in_loop then print_error "not in loop test" (rhs_start_pos 1) }
-     | T_continue T_semicolon { if not !in_loop then (error "not in loop") }
+     | T_break T_semicolon { if not !in_loop then print_error "break not in loop" (rhs_start_pos 1) }
+     | T_continue T_semicolon { if not !in_loop then print_error "continus not in loop" (rhs_start_pos 1) }
      | T_return T_semicolon { () }
      | T_return expr T_semicolon { () }
      | openScope block closeScope { () }
@@ -338,12 +340,12 @@ stmt : T_semicolon { () }
 
 stoppable : {in_loop := true}
 
-assign : T_eq { () }
-       | T_plus_equal { () }
-       | T_minus_equal { ()}
-       | T_mod_equal { () }
-       | T_div_equal { () }
-       | T_times_equal { () }
+assign : T_eq { $1 }
+       | T_plus_equal { $1 }
+       | T_minus_equal { $1 }
+       | T_mod_equal { $1 }
+       | T_div_equal { $1 }
+       | T_times_equal { $1 }
 
 range : expr T_TO expr { () }
       | expr T_TO expr T_STEP expr { () }
