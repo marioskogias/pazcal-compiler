@@ -36,7 +36,7 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 (*function to get entry's type*)
 let get_type e = 
 	match e.entry_info with
-	  | ENTRY_variable inf -> inf.variable_type
+	      | ENTRY_variable inf -> inf.variable_type
           | ENTRY_parameter inf -> inf.parameter_type
           | ENTRY_function inf -> inf.function_result
 	(*to be continued...*)
@@ -175,7 +175,7 @@ let get_param_list a =
 %type <int> expr_list
 //%type <unit> unop
 //%type <unit> binop
-%type <entry> call 
+%type <Types.typ * string * string> call 
 %type <Types.typ list> expressions
 %type <unit> block
 %type <unit> inner_block
@@ -274,7 +274,7 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | T_false { (TYPE_bool,"false","") }
      | T_lparen expr T_rparen { ((first_el $2),"test","") }
      | l_value { $1 }
-     | call { (get_type $1,"test","") }
+     | call { (first_el $1,"test","") }
      | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
      | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
      | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") }
@@ -302,9 +302,11 @@ l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
 expr_list : /*nothing*/ { 0 }
 	  | T_lbracket expr T_rbracket expr_list { $4 + 1 }
 
-call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
+call : T_name T_lparen T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true
+                                    in (get_type e, get_name e, "") }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-							in ignore(check_function_params (get_param_list e) ((first_el $3)::$4) (rhs_start_pos 1)) ; e  }
+							in ignore(check_function_params (get_param_list e) ((first_el $3)::$4) (rhs_start_pos 1)) ; 
+                                    (get_type e, get_name e, "")  }
 
 expressions : /*nothing*/ { [] }
 	    | T_comma expr expressions { first_el $2::$3 }
