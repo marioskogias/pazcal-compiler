@@ -176,7 +176,7 @@ let get_param_list a =
 //%type <unit> unop
 //%type <unit> binop
 %type <Types.typ * string * string> call 
-%type <Types.typ list> expressions
+%type <(Types.typ * string) list> expressions
 %type <unit> block
 %type <unit> inner_block
 %type <unit> local_def
@@ -305,11 +305,11 @@ expr_list : /*nothing*/ { 0 }
 call : T_name T_lparen T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true
                                     in (get_type e, get_name e, "") }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-							in ignore(check_function_params (get_param_list e) ((first_el $3)::$4) (rhs_start_pos 1)) ; 
+							in ignore(check_function_params (get_param_list e) (first_el $3::(List.map fst $4)) (rhs_start_pos 1)) ; 
                                     (get_type e, get_name e, "")  }
 
 expressions : /*nothing*/ { [] }
-	    | T_comma expr expressions { first_el $2::$3 }
+	    | T_comma expr expressions { (first_el $2, "")::$3 }
 
 block : T_lbrace  inner_block T_rbrace { () }
 
