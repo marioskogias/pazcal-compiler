@@ -62,7 +62,14 @@ let get_param_list a =
 	| ENTRY_function inf -> inf.function_paramlist 
 	| _ -> []
 
-(*function to test printing*)
+(*function to evaulate expression*)
+let eval_expr a b op = 
+    match op with
+    | "+" -> "test"
+    | "-" -> "test"
+    | "*" -> "test"
+    | "/" -> "test"
+    | "mod" -> "test"
 
 %}
 
@@ -272,14 +279,14 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | T_string_const { (TYPE_array (TYPE_char,0),$1, "")}
      | T_true { (TYPE_bool,"true","") }
      | T_false { (TYPE_bool,"false","") }
-     | T_lparen expr T_rparen { ((first_el $2),"test","") }
+     | T_lparen expr T_rparen { ((first_el $2),second_el $2,"") }
      | l_value { $1 }
      | call { (first_el $1,"test","") }
      | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
      | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
      | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") }
      | T_not expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") } 
-     | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),eval_expr (second_el $1) (second_el $3) "+","") }
      | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
      | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
      | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), "test","") }
