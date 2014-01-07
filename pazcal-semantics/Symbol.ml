@@ -26,7 +26,9 @@ type scope = {
 
 and variable_info = {
   variable_type   : Types.typ;
-  variable_offset : int
+  variable_offset : int;
+  is_const : bool;
+  value : string
 }
 
 and function_info = {
@@ -160,7 +162,19 @@ let newVariable id typ err =
   !currentScope.sco_negofs <- !currentScope.sco_negofs - sizeOfType typ;
   let inf = {
     variable_type = typ;
-    variable_offset = !currentScope.sco_negofs
+    variable_offset = !currentScope.sco_negofs;
+    is_const = false;
+    value = ""
+  } in
+  newEntry id (ENTRY_variable inf) err
+
+let newConst id typ c_val err =
+  !currentScope.sco_negofs <- !currentScope.sco_negofs - sizeOfType typ;
+  let inf = {
+    variable_type = typ;
+    variable_offset = !currentScope.sco_negofs;
+    is_const = true;
+    value = c_val
   } in
   newEntry id (ENTRY_variable inf) err
 
