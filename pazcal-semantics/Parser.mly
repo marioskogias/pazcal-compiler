@@ -63,13 +63,18 @@ let get_param_list a =
 	| _ -> []
 
 (*function to evaulate expression*)
+
 let eval_expr a b op = 
-    match op with
-    | "+" -> "test"
-    | "-" -> "test"
-    | "*" -> "test"
-    | "/" -> "test"
-    | "mod" -> "test"
+    try
+        let a_val = int_of_string a in
+        let b_val = int_of_string b in
+            match op with
+            | "+" -> string_of_int (a_val + b_val)
+            | "-" ->  string_of_int (a_val - b_val)
+            | "*" ->  string_of_int (a_val * b_val)
+            | "/" ->  string_of_int (a_val / b_val)
+            | "mod" ->  string_of_int (a_val mod b_val)
+        with Failure "int_of_string" -> "eval_expr_error" (*change this*)
 
 %}
 
@@ -233,7 +238,7 @@ var_init : T_name { ($1,[]) }
 	 | T_name var_init_bra_list { ($1,$2) }
 
 
-var_init_bra_list : T_lbracket const_expr T_rbracket { [int_of_string (snd $2)] } //(*make sure to return only int*)
+var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size (fst $2) (snd $2) (rhs_start_pos 1)] } //(*make sure to return only int*)
 		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
 routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
@@ -287,10 +292,10 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") }
      | T_not expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test","") } 
      | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),eval_expr (second_el $1) (second_el $3) "+","") }
-     | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
-     | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
-     | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), "test","") }
-     | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
+     | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),eval_expr (second_el $1) (second_el $3) "-","") }
+     | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),eval_expr (second_el $1) (second_el $3) "*","") }
+     | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), eval_expr (second_el $1) (second_el $3) "/","") }
+     | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),eval_expr (second_el $1) (second_el $3) "mod","") }
      | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
      | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
      | expr T_not_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),"test","") }
