@@ -166,8 +166,8 @@ let eval_expr a b op =
 %type <unit> declaration_list
 %type <unit> declaration
 %type <unit> const_def
-%type <unit> const_inner_def
-%type <unit> const_def_list
+%type <string * string * string> const_inner_def //(*name, val, thanasis*)
+%type <(string * string * string) list> const_def_list
 %type <unit> var_def
 %type <(string * int list) list> var_def_list
 %type <string * int list> var_init
@@ -220,13 +220,13 @@ declaration : const_def { () }
 	    | routine { () }
 	    | program { () }
 
-const_inner_def : T_name T_eq const_expr { () }
+const_inner_def : T_name T_eq const_expr { ($1, (snd $3),"") }
 
 const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
 
 
-const_def_list : /*nothing*/ { () }
-	       | T_comma const_inner_def const_def_list { () }
+const_def_list : /*nothing*/ { [] }
+	       | T_comma const_inner_def const_def_list { $2::$3 }
 
 var_def : ptype var_init var_def_list T_semicolon { ignore(registerVar $1 $2); ignore(List.map (registerVar $1) $3)   }
 
