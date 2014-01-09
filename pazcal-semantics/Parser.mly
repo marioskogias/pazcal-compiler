@@ -25,6 +25,9 @@ let rec table_type var_type = function
 (*function to register a variable*)
 let registerVar var_type (a,b) =  ignore(newVariable (id_make a) (table_type var_type b) true)
 
+(*function to register a const*)
+let registerConst var_type (a,v,_) =  ignore(newConst (id_make a) var_type v true)
+
 (*function to register a param*)
 let register_param anc (param_type, (name, mode, nlist)) = 
 	let var_type = table_type param_type nlist
@@ -222,7 +225,7 @@ declaration : const_def { () }
 
 const_inner_def : T_name T_eq const_expr { ($1, (snd $3),"") }
 
-const_def : T_const ptype const_inner_def const_def_list T_semicolon { () }
+const_def : T_const ptype const_inner_def const_def_list T_semicolon { ignore(registerConst $2 $3); ignore(List.map (registerConst $2) $4) }
 
 
 const_def_list : /*nothing*/ { [] }
