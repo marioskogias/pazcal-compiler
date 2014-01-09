@@ -51,6 +51,14 @@ let rec get_var_type = function
     |(TYPE_array (t,s), a) -> get_var_type (t, a-1)
     |_ -> ignore(error "tables sizes"); TYPE_none
 
+(*function to check entry is const*)
+let is_const name = 
+    let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
+        in
+        match e.entry_info with
+        | ENTRY_variable inf ->  inf.is_const
+        | _ -> false
+
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
@@ -336,7 +344,10 @@ local_def : const_def { () }
 	  | var_def { () }
 
 stmt : T_semicolon { () }
-     | l_value assign expr T_semicolon {ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)) }
+     | l_value assign expr T_semicolon {if (is_const (second_el $1)) 
+                                            then print_error "Assign to a const variable" (rhs_start_pos 1)
+                                        else
+                                            ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)) }
      | l_value T_plus_plus T_semicolon{ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)) } /*same as above same operant*/
      | l_value T_minus_minus T_semicolon { ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)) }
      | call T_semicolon { () }
