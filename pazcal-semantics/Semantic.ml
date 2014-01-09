@@ -52,8 +52,8 @@ let table_size val_type value pos=
     try
         match val_type with
         | TYPE_int -> int_of_string value
-        | _ -> ignore(print_error "Not an integer value" pos); -1
-	with Failure "int_of_string" -> 0
+        | _ -> ignore(print_error "Not an integer value in table size" pos); -1
+	with Failure "int_of_string" -> ignore(print_error "Unknown table size" pos);0 (* if zero then check memory issues...*)
 
 let check_function_params symbol_table_params_list passed_param_list pos= 
 		

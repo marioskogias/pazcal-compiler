@@ -59,6 +59,14 @@ let is_const name =
         | ENTRY_variable inf ->  inf.is_const
         | _ -> false
 
+(*function to get a cont val*)
+let get_const_val name = 
+    let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
+        in
+        match e.entry_info with
+        | ENTRY_variable inf ->  inf.value
+        | _ -> "0"
+
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
@@ -287,7 +295,7 @@ ptype : T_int  { $1 }
       | T_char { $1 }
       | T_REAL { $1 }
 
-const_expr : expr { ((first_el $1), (second_el $1)) }
+const_expr : expr { ((first_el $1), (second_el $1)) } 
 
 expr : T_int_const { (TYPE_int,$1,"") }
      | T_real_const { (TYPE_real,$1,"") }
@@ -296,7 +304,9 @@ expr : T_int_const { (TYPE_int,$1,"") }
      | T_true { (TYPE_bool,"true","") }
      | T_false { (TYPE_bool,"false","") }
      | T_lparen expr T_rparen { ((first_el $2),second_el $2,"") }
-     | l_value { $1 }
+     | l_value { if (is_const (second_el $1))
+                    then ((first_el $1), get_const_val (second_el $1), "")
+                 else $1 }
      | call { (first_el $1,"test","") }
      | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
      | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test","") }
@@ -355,7 +365,7 @@ stmt : T_semicolon { () }
      | l_value T_minus_minus T_semicolon {if (is_const (second_el $1)) 
                                             then print_error "Assign to a const variable" (rhs_start_pos 1)
                                           else
-                                            ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)) }
+                                             ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)) }
      | call T_semicolon { () }
      | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)) }
      | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)) } 
