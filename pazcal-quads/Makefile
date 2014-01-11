@@ -9,7 +9,7 @@ endif
 
 EXEFILE=gracec$(EXE)
 MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml Output.ml Semantic.ml\
-  Lexer.ml Parser.ml Main.ml
+  Lexer.ml Parser.ml QuadTypes.ml Quads.ml Main.ml
 MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli Symbol.mli Output.mli Semantic.mli \
   Parser.mli Lexer.mli
 CMOFILES=$(patsubst %.ml,%.cmo,$(MLFILES))

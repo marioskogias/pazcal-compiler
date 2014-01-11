@@ -1,6 +1,5 @@
 open Types
 open Identifier
-open Printing
 open Symbol
 open Error
 
@@ -35,35 +34,37 @@ type quad_t =
   |Quad_tailCall of Symbol.entry
   |Quad_par of quad_elem_t * Symbol.pass_mode
   |Quad_ret
-  
-(* Return Type of expr *)
-type superexpr = 
-  | expr of expr_ret_type;
-  | cond of cond_ret_type;
-
-
-(* Return Type of an Expression *)
-type expr_ret_type = {
-  code : quad_t list;
-  place : quad_elem_t;
-}
-
-(* Return Type of a Condition 
- * Jumps are handled as relative jumps at first, converted later *)
-type cond_ret_type = {
-  c_code : quad_t list; 
-  q_true: int ref list;   
-  q_false : int ref list;
-}
 
 type stmt_ret_type = {
   code : quad_t list;
   q_cont : int ref list;
-  q_break : int ref list;
+  q_break : int ref list
+} 
+
+(* Return Type of expr *)
+type superexpr = 
+  | Expr of expr_ret_type
+  | Cond of cond_ret_type
+
+
+(* Return Type of an Expression *)
+and expr_ret_type = {
+  code : quad_t list;
+  place : quad_elem_t
 }
 
+(* Return Type of a Condition 
+ * Jumps are handled as relative jumps at first, converted later *)
+and cond_ret_type = {
+  c_code : quad_t list; 
+  q_true: int ref list;   
+  q_false : int ref list
+}
+
+
+
 (* Returning a "null" quad - error handling mostly *)
-let return_null () = {code = []; place = Quad_none}
+let return_null () = Expr{code = []; place = Quad_none}
 
 let find_opposite_condition = function
   | "==" -> "!="
@@ -76,8 +77,8 @@ let find_opposite_condition = function
 
 let equal_quad_elems = function
   | Quad_none, Quad_none -> true
-  | Quad_valof e1, Quad_valof e2
-  | Quad_entry e1, Quad_entry e2 -> Symbol.equalEntries e1 e2
+(*  | Quad_valof e1, Quad_valof e2 *)
+(*  | Quad_entry e1, Quad_entry e2 -> Symbol.equalEntries e1 e2 *)
   | Quad_int s1, Quad_int s2
   | Quad_char s1, Quad_char s2
   | Quad_string s1, Quad_string s2 -> s1 = s2
