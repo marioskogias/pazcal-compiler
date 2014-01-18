@@ -188,7 +188,7 @@ open Printf
         %type <string> assign
         %type <unit> range
         %type <unit> clause
-        %type <unit> stmt_list 
+        %type <QuadTypes.stmt_ret_type> stmt_list 
         %type <unit> write
         %type <unit> pformat
         %%
@@ -197,7 +197,7 @@ open Printf
 
 
 
-        pmodule : initialization declaration_list T_eof { () }
+pmodule : initialization declaration_list T_eof { () }
 
 initialization : { ignore(initSymbolTable 256);  openScope()}
 
@@ -254,7 +254,7 @@ routine : routine_header T_semicolon closeScope { forwardFunction $1 }
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : openScope program_header block closeScope { () }
+program : openScope program_header block closeScope { ignore(List.map print_string (List.map string_of_quad_t $3.s_code)) }
 
 openScope : { openScope() }
 
@@ -267,7 +267,7 @@ ptype : T_int  { $1 }
 
 const_expr : expr { ((first_el $1), (second_el $1)) }
 
-expr:  T_int_const { (TYPE_int,$1, Expr(return_null())) }
+expr:  T_int_const { (TYPE_int,$1, Expr({ code=[]; place= Quad_int ($1)})) }
      | T_real_const { (TYPE_real,$1, Expr(return_null())) }
      | T_const_char { (TYPE_char,$1 , Expr(return_null())) }
      | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr(return_null())) }
@@ -299,7 +299,7 @@ expr:  T_int_const { (TYPE_int,$1, Expr(return_null())) }
 
 l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
                                 in (get_var_type ((get_type (Quad_entry e)), $2),
-                                get_name e,Expr({code=[];place=Quad_none}))}
+                                get_name e,Expr({code=[];place=(Quad_entry (e))}))}
 
 expr_list : /*nothing*/ { 0 }
 	  | T_lbracket expr T_rbracket expr_list { $4 + 1 }
@@ -335,10 +335,10 @@ stmt : T_semicolon { return_null_stmt () }
      | T_break T_semicolon { ignore(if not !in_loop then print_error "break not in loop" (rhs_start_pos 1)); handle_break }
      | T_continue T_semicolon { ignore(if not !in_loop then print_error "continus not in loop" (rhs_start_pos 1)); handle_continue }
      | T_return T_semicolon { return_null_stmt() }
-     | T_return expr T_semicolon { () }
-     | openScope block closeScope { () }
-     | write T_lparen T_rparen T_semicolon { () }
-     | write T_lparen pformat pformat_list T_rparen T_semicolon { () }
+     | T_return expr T_semicolon { return_null_stmt() }
+     | openScope block closeScope { $2 }
+     | write T_lparen T_rparen T_semicolon { return_null_stmt() }
+     | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }
 
 stoppable : {in_loop := true}
 
@@ -354,8 +354,8 @@ range : expr T_TO expr { () }
       | expr T_DOWNTO expr { () }
       | expr T_DOWNTO expr T_STEP expr { () }
 
-stmt_list : /*nothing*/ { () }
-	  | stmt stmt_list { (handle_stmt_merge $1 $2) }
+stmt_list : /*nothing*/ { return_null_stmt() }
+	  | stmt stmt_list { handle_stmt_merge $1 $2 }
 
 clause : stmt_list { () }
        | stmt_list T_NEXT T_semicolon { () }

@@ -114,6 +114,50 @@ let get_id = function
   |Quad_entry (ent) -> id_name ent.entry_id
 
 (* Main function to convert a quad to a string *)
+let string_of_quad_t = function
+  |Quad_unit(ent) -> 
+    Printf.sprintf "unit, %s, -, -"
+    (id_name ent.entry_id)
+  |Quad_endu(ent) -> 
+    Printf.sprintf "endu, %s, -, -" 
+    (id_name ent.entry_id)
+  |Quad_calc (op, q1, q2, q) ->
+    Printf.sprintf "%s, %s, %s, %s"
+      (op)
+      (string_of_quad_elem_t q1)
+      (string_of_quad_elem_t q2)
+      (string_of_quad_elem_t q)
+  |Quad_set(q,qr) ->
+    Printf.sprintf ":=, %s, -, %s" 
+      (string_of_quad_elem_t q)
+      (string_of_quad_elem_t qr)
+  |Quad_array(q1, q2, e) ->
+    Printf.sprintf "array, %s, %s, %s"
+      (string_of_quad_elem_t q1)
+      (string_of_quad_elem_t q2)
+      (id_name e.entry_id)
+  |Quad_cond(op, q1, q2, i) ->
+    Printf.sprintf "%s, %s, %s, %d"
+      (op)
+      (string_of_quad_elem_t q1)
+      (string_of_quad_elem_t q2)
+      !i
+  |Quad_jump i  ->
+    Printf.sprintf "jump, -, -, %d" !i
+  |Quad_tailCall ent ->
+    Printf.sprintf "tailRecursiveCall, -, -, %s"
+      (id_name ent.entry_id)
+  |Quad_call (ent,_) ->
+    Printf.sprintf "call, -, -, %s"
+      (id_name ent.entry_id)
+(*  |Quad_par(q,pm) ->
+    Printf.sprintf "par, %s, %s, -"
+      (string_of_quad_elem_t q)
+      (string_of_pass_mode pm)
+*)  |Quad_ret -> "ret, -, -, -" 
+  |Quad_dummy -> ""
+
+
 
 (* ----------------------------------------------------------------------------- *)
 
@@ -376,6 +420,7 @@ let handle_or cond1 cond2 =
         q_false = c2.q_false;
       }
   | _ -> return_null_cond()
+
 (* Handle assignmenet *)
 let handle_assignment lval exp (sp,ep) =
  (* let t1 = get_type lval.place in
@@ -388,14 +433,13 @@ let handle_assignment lval exp (sp,ep) =
     let new_quad = 
       match lval.place with
         |Quad_valof (_)
-        |Quad_entry (_) -> (Quad_set(expr.place,lval.place))    
-        |_ -> internal "Assigning to something not an entry";
+        |Quad_entry (_) -> Quad_set(expr.place,lval.place)  
+        | _ -> internal "Assigning to something not an entry";
           raise Terminate
-      in {
-      s_code=new_quad::lval.code@expr.code;
+      in 
+      {s_code=new_quad::lval.code@expr.code;
       q_break=[];
       q_cont=[]
-
       }
       end
   | Cond cond -> return_null_stmt() 
