@@ -1,34 +1,12 @@
 open Types
 open Error
 open Symbol
+open Printing
 open Identifier
 open Semantic
 open Lexing
 open QuadTypes
 
-(* Get Type of a quad_elem_t *)
-let get_type = function
-  |Quad_none -> TYPE_none
-  |Quad_int (_) -> TYPE_int
-  |Quad_char(_) -> TYPE_char
-  |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
-  |Quad_valof (ent) 
-  |Quad_entry (ent) -> 
-    match ent.entry_info with
-    |ENTRY_none -> TYPE_none
-    |ENTRY_variable (info) -> info.variable_type
-    |ENTRY_parameter (info) -> info.parameter_type
-    |ENTRY_function (info) -> info.function_result
-    |ENTRY_temporary (info) -> info.temporary_type
-(* function to get entry's type)                                        
-let get_type e =                                                        
-  match e.entry_info with                                                 
-  | ENTRY_variable inf -> inf.variable_type                               
-  | ENTRY_parameter inf -> inf.parameter_type                             
-  | ENTRY_function inf -> inf.function_result                             
-   (*to be continued...*)                                                  
-  | _ ->TYPE_int
-*)
 (* Small Function To Check if Quad is en entry or not *)
 let is_entry quad =
   match quad with
@@ -85,19 +63,33 @@ let is_parameter_by_reference quad =
 
 (* Handling [x] case *)
 let dereference x = 
-  match x with 
-  | Expr ex ->
-    begin
-      match ex.code with
-      |(Quad_array(_, _, ent)::_)->
-        {ex with place = Quad_valof(ent)}
-      |_ -> ex
-    end
-  | Cond cond -> return_null () 
+  match x.code with
+  |(Quad_array(_, _, ent)::_) ->
+    {x with place = Quad_valof(ent)}
+  |_ -> x
 
 (* Get Type of a quad_elem_t *)
+let get_type = function
+  |Quad_none -> TYPE_none
+  |Quad_int (_) -> TYPE_int
+  |Quad_char(_) -> TYPE_byte
+  |Quad_string (str) -> TYPE_array(TYPE_byte, String.length str)
+  |Quad_valof (ent) 
+  |Quad_entry (ent) -> 
+    match ent.entry_info with
+    |ENTRY_none -> TYPE_none
+    |ENTRY_variable (info) -> extractType info.variable_type
+    |ENTRY_parameter (info) -> extractType info.parameter_type
+    |ENTRY_function (info) -> extractType info.function_result
+    |ENTRY_temporary (info) -> extractType info.temporary_type
+  
 
 (* Get Size Description from a quad_elem_t *)
+let get_size q = 
+  match (get_type q) with
+  | TYPE_byte -> "byte"
+  | _ -> "word"
+
 (* Extract the Entry from a quad_elem_t *)
 let extract_entry = function
   |Quad_entry (ent) -> ent
@@ -114,6 +106,48 @@ let get_id = function
   |Quad_entry (ent) -> id_name ent.entry_id
 
 (* Main function to convert a quad to a string *)
+let string_of_quad_t = function
+  |Quad_unit(ent) -> 
+    Printf.sprintf "unit, %s, -, -"
+    (id_name ent.entry_id)
+  |Quad_endu(ent) -> 
+    Printf.sprintf "endu, %s, -, -" 
+    (id_name ent.entry_id)
+  |Quad_calc (op, q1, q2, q) ->
+    Printf.sprintf "%s, %s, %s, %s"
+      (op)
+      (string_of_quad_elem_t q1)
+      (string_of_quad_elem_t q2)
+      (string_of_quad_elem_t q)
+  |Quad_set(q,qr) ->
+    Printf.sprintf ":=, %s, -, %s" 
+      (string_of_quad_elem_t q)
+      (string_of_quad_elem_t qr)
+  |Quad_array(q1, q2, e) ->
+    Printf.sprintf "array, %s, %s, %s"
+      (string_of_quad_elem_t q1)
+      (string_of_quad_elem_t q2)
+      (id_name e.entry_id)
+  |Quad_cond(op, q1, q2, i) ->
+    Printf.sprintf "%s, %s, %s, %d"
+      (op)
+      (string_of_quad_elem_t q1)
+      (string_of_quad_elem_t q2)
+      !i
+  |Quad_jump i  ->
+    Printf.sprintf "jump, -, -, %d" !i
+  |Quad_tailCall ent ->
+    Printf.sprintf "tailRecursiveCall, -, -, %s"
+      (id_name ent.entry_id)
+  |Quad_call (ent,_) ->
+    Printf.sprintf "call, -, -, %s"
+      (id_name ent.entry_id)
+  |Quad_par(q,pm) ->
+    Printf.sprintf "par, %s, %s, -"
+      (string_of_quad_elem_t q)
+      (string_of_pass_mode pm)
+  |Quad_ret -> "ret, -, -, -" 
+  |Quad_dummy -> ""
 
 (* ----------------------------------------------------------------------------- *)
 
@@ -122,94 +156,91 @@ let get_id = function
 (* IMPORTANT: Intermediate code in the lists must be inverted *)
 
 (* Handle statement merge *) 
-let handle_stmt_merge stmt1 stmt2 =
-  let len = List.length stmt1.s_code in
-  let len2 = List.length stmt2.s_code in
-  List.iter (fun x -> x := !x - len) stmt2.q_cont;
-  List.iter (fun x -> x := !x + len2) stmt1.q_cont;
-  List.iter (fun x -> x := !x + len) stmt2.q_break;
+let handle_stmt_merge c1 c2 =
+  let len = List.length c1.code in
+  let len2 = List.lenght c2.code in
+  List.iter (fun x -> x := !x - len) c2.q_cont;
+  List.iter (fun x -> x := !x + len2) c1.q_cont;
+  Lis5.iter (fun x -> x := !x + len) c2.q_break;
   { 
-    s_code = stmt2.s_code @ stmt1.s_code;
-    q_cont = stmt1.q_cont@stmt2.q_cont;
-    q_break = stmt1.q_break @ stmt2.q_break;
+    code = c2.c_code @ c1.c_code;
+    q_cont = c1.q_cont@c2.q_cont;
+    q_break = c1.q_break @ c2.q_break;
   }
 
 
 (* Handle break *)
 let handle_break =
-  let break_ref = ref 1 in
+  let break_ref = 1 in
   let code_break = (Quad_jump (break_ref)) in {
-    s_code = [code_break];
+    code = code_break;
     q_cont = [];
     q_break = [break_ref];
   }
 
 (* Handle continue *)
 let handle_continue =
-  let cont_ref = ref 0 in
+  let cont_ref = 0 in
   let code_cont = (Quad_jump (cont_ref)) in {
-    s_code = [code_cont];
+    code = code_cont;
     q_cont = [cont_ref];
     q_break = [];
   }
 
-
-(* Handle Not *)
-let handle_not expr =
-  match expr with
-    | Expr expr -> return_null_cond ()
-    | Cond cond -> {
-      c_code = cond.c_code;
-      q_true = cond.q_false;
-      q_false = cond.q_true;
-      }
-
+(* Handle for stmt ???range first *)
 
 (* Handle an arithmetical expression 
  * Get the 2 types, semantically check them and create the intermediate code 
  * required *)
-let handle_expression op expr1 expr2 (sp,ep) =
-  match expr1, expr2 with
-  |  Expr e1, Expr e2 ->
-    let t1 = get_type e1.place in
-    let temp = newTemporary t1 in {
-      code  = Quad_calc(op,e1.place, e2.place, Quad_entry(temp))
-              ::(e2.code)@(e1.code);
-      place = Quad_entry(temp);
-    }
-  | _ -> return_null ()
+let handle_expression op e1 e2 (sp,ep) = 
+  let t1 = get_type e1.place in
+  let t2 = get_type e2.place in
+  if (check_types op t1 t2 sp ep)
+  then let temp = newTemporary t1 in {
+    code  = Quad_calc(op,e1.place, e2.place, Quad_entry(temp))
+            ::(e2.code)@(e1.code);
+    place = Quad_entry(temp);
+  }
+  else return_null ()
+
+(* Handle Not *)
+let handle_not expr =
+  match expr with
+    | cond_ret_type cond -> {
+      code = cond.c_code;
+      q_true = cond.q_false;
+      q_false = cond.q_true;
+      }
+    | _ -> return_null
 
 (* Handle signs in expression *)
-let handle_unary_expression op expr pos =
-  match expr with
-  | Expr exp ->
-    let t = get_type exp.place in
-    if (t==TYPE_int) 
-    then match op with
-      |"+" -> 
-        exp
-      |"-" -> 
-        let temp = newTemporary TYPE_int in
-        let new_quad = Quad_calc("-",Quad_int("0"), exp.place, Quad_entry(temp)) in
-          { code = (new_quad :: exp.code); place = Quad_entry(temp) }
-      |_ -> internal "wrong unary expression"; raise Terminate
-    else (
-     (* print_unary_type_error op t pos;*)
-      return_null ()
-    )
-  | _ -> return_null ()
+let handle_unary_expression op exp pos =
+  let t = get_type exp.place in
+  if (t==TYPE_int) 
+  then match op with
+    |"+" -> 
+      exp
+    |"-" -> 
+      let temp = newTemporary TYPE_int in
+      let new_quad = Quad_calc("-",Quad_int("0"), exp.place, Quad_entry(temp)) in
+        { code = (new_quad :: exp.code); place = Quad_entry(temp) }
+    |_ -> internal "wrong unary expression"; raise Terminate
+  else (
+    print_unary_type_error op t pos;
+    return_null ()
+  )
 
 (* Handle L-Values *)
 
-(* Non-array l-value needs no code 
+(* Non-array l-value needs no code *)
 let handle_simple_lvalue id pos =
   let (ent, _, correct) = check_lvalue id pos false in
   if (correct) 
     then {code = []; place = Quad_entry(ent)}
   else return_null ()
-*)
+
 (* Handle an array lvalue 
- * Array lvalue needs to be dereferenced 
+ * Array lvalue needs to be dereferenced *)
 let handle_array_lvalue id pos context q_t =
   let t = get_type q_t.place in
   if (t==TYPE_int) 
@@ -227,11 +258,8 @@ let handle_array_lvalue id pos context q_t =
     (sp.pos_lnum) (sp.pos_cnum - sp.pos_bol)
     (ep.pos_lnum) (ep.pos_cnum - ep.pos_bol);
     return_null ()
-*)
-
 
 (* Ugliest function yet - Handle function calls *)
-(*
 let handle_func_call id pos expr_list =
 
   (* Get function entry from id *)
@@ -284,9 +312,9 @@ let handle_func_call id pos expr_list =
   match ent.entry_info with
   |ENTRY_function (info) ->
     (* Check for semantic correctness *)
-    (*if (check_func_call info id type_list pos)
+    if (check_func_call info id type_list pos)
     then (
-  *)
+  
       (* Generate par_quads *)
       let par_code = create_par_quads [] 
         (info.function_paramlist, param_list) in 
@@ -301,7 +329,7 @@ let handle_func_call id pos expr_list =
           place = Quad_none
         }
       | TYPE_int
-      | TYPE_char -> 
+      | TYPE_byte -> 
         let temp = newTemporary info.function_result in 
         let ret_place = Quad_entry temp in
         let par_q = Quad_par ( ret_place , PASS_RET) in {
@@ -309,32 +337,37 @@ let handle_func_call id pos expr_list =
           place = Quad_entry(temp)
         }
       | _ -> return_null ()         
-    (*  )
+      )
     else 
-      return_null () *)
+      return_null ()
   |_ ->   
     error "Invalid Function call. Identifier %s is not a function \
       at line %d, position %d."
       id (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
-*)  
+  
 (* Handle Comparisons *)
-let handle_comparison op exp1 exp2 (sp,ep) =
+let handle_comparison op e1 e2 (sp,ep) =
   (* First Check the types of the compared things *)
-  match exp1, exp2 with
-  | Expr e1, Expr e2 ->
-        (* Invariant for Jumps :
-         * Everything points to the beginning of the next block
-         * with a relative offset. Backpatching is done additively *)
-        let true_ref = ref 2 in 
-        let false_ref = ref 1 in
-        let code_true = (Quad_cond(op, e1.place, e2.place, true_ref))
-        in let code_false = (Quad_jump (false_ref)) in {
-          c_code = code_false::code_true::e2.code@e1.code;
-          q_true = [true_ref];
-          q_false = [false_ref];
-        }
-  | _ -> return_null_cond ()
+  let t1 = get_type e1.place in
+  let t2 = get_type e2.place in
+  if (check_types op t1 t2 sp ep) 
+  then
+    (* Invariant for Jumps :
+     * Everything points to the beginning of the next block
+     * with a relative offset. Backpatching is done additively *)
+    let true_ref = ref 2 in 
+    let false_ref = ref 1 in
+    let code_true = (Quad_cond(op, e1.place, e2.place, true_ref))
+    in let code_false = (Quad_jump (false_ref)) in {
+      c_code = code_false::code_true::e2.code@e1.code;
+      q_true = [true_ref];
+      q_false = [false_ref];
+    }
+  else (
+    internal "Can't recover from condition error";
+    raise Terminate
+  )
   
 (* Handle boolean values 
  * Constant values means no jump in the "opposite" direction 
@@ -347,144 +380,108 @@ let handle_cond_const is_true =
   }
 
 (* Handle an "and" cond *)
-let handle_and cond1 cond2 =
+let handle_and c1 c2 =
   (* The "next" quad will be left unchanged for c2 but c1 will point |c2.code| 
    * later. For immediate evaluation when c1 is false we need to go the end 
    * of everything, when c1 is true we need to evaluate c2. *)
-  match cond1, cond2 with
-  | Cond c1, Cond c2 ->
-    let len = List.length c2.c_code in
-      List.iter (fun x -> x := !x + len) c1.q_false;
-      { 
-        c_code = c2.c_code @ c1.c_code;
-        q_true = c2.q_true;
-        q_false = c1.q_false @ c2.q_false;
-      }
-  | _ -> return_null_cond()
+  let len = List.length c2.c_code in
+  List.iter (fun x -> x := !x + len) c1.q_false;
+  { 
+    c_code = c2.c_code @ c1.c_code;
+    q_true = c2.q_true;
+    q_false = c1.q_false @ c2.q_false;
+  }
 
 (* Handle an "or" cond *)
-let handle_or cond1 cond2 = 
+let handle_or c1 c2 = 
   (* Similarly, add |c2.code| to the relative jumps in c1 but now the "true" 
    * condition is the one that can "short-circuit" *)
-  match cond1, cond2 with
-  | Cond c1, Cond c2 ->
-    let len = List.length c2.c_code in
-      List.iter (fun x -> x := !x + len) c1.q_true;
-      {
-        c_code = c2.c_code @ c1.c_code;
-        q_true = c1.q_true @ c2.q_true;
-        q_false = c2.q_false;
-      }
-  | _ -> return_null_cond()
+  let len = List.length c2.c_code in
+  List.iter (fun x -> x := !x + len) c1.q_true;
+  {
+    c_code = c2.c_code @ c1.c_code;
+    q_true = c1.q_true @ c2.q_true;
+    q_false = c2.q_false;
+  }
+
 (* Handle assignmenet *)
-let handle_assignment lval exp (sp,ep) =
- (* let t1 = get_type lval.place in
+let handle_assignment lval expr (sp,ep) =
+  let t1 = get_type lval.place in
   let t2 = get_type expr.place in
   if (check_types "=" t1 t2 sp ep) 
-  then*) 
-  match exp with
-  | Expr expr ->
-    begin
+  then 
     let new_quad = 
       match lval.place with
-        |Quad_valof (_)
-        |Quad_entry (_) -> (Quad_set(expr.place,lval.place))    
-        |_ -> internal "Assigning to something not an entry";
-          raise Terminate
-      in {
-      s_code=new_quad::lval.code@expr.code;
-      q_break=[];
-      q_cont=[]
-
-      }
-      end
-  | Cond cond -> return_null_stmt() 
-(*  else []*)
+      |Quad_valof (_)
+      |Quad_entry (_) -> (Quad_set(expr.place,lval.place))    
+      |_ -> internal "Assigning to something not an entry";
+        raise Terminate
+    in new_quad::lval.code@expr.code
+  else []
 
 (* Handle if statement *)
-let handle_if_stmt sexpr stmt =
+let handle_if_stmt cond stmt =
   (* An if statement (without an else) is executed when true. Therefore only the
    * "false" relative jumps are increased by the length of the statement *)
-  match sexpr with
-  | Cond cond ->
-  let len = List.length stmt.s_code in
-  let len2 = List.length cond.c_code in
+  let len = List.length stmt.code in
+  let len2 = List.lenght cond.c_code in
   List.iter (fun x -> x := !x + len) cond.q_false;
-  List.iter (fun x -> x := !x + len2) stmt.q_break;
-  List.iter (fun x -> x := !x - len2) stmt.q_cont;
-  {
-  s_code = stmt.s_code @ cond.c_code;
-  q_cont = stmt.q_cont;
-  q_break = stmt.q_break
-  }
-  | Expr expr -> return_null_stmt()
+  List.iter (fun x -> x := !x - len) stmt.q_cont;
+ (* {
+    stmt.code @ cond.c_code;
+    q_cont = stmt.q_cont;
+    q_break = stmt.q_break;
+  } *)
 
 (* Handle if-else statement *)
 (* The true condition is executed directly, and then a jump is added to the end
  * of the entire code (including the else-part). The false-refs are increased by 
  * the if-part + 1 (the new jump quad) *)
-let handle_if_else_stmt sexpr s1 s2 =
-  match sexpr with
-  | Cond cond ->
-  let l1 = List.length s1.s_code in
-  let l2 = List.length s2.s_code in
-  let l3 = List.length cond.c_code in
+let handle_if_else_stmt cond s1 s2 =
+  let l1 = List.length s1.code in
+  let l2 = List.length s2.code in
+  let l3 = List.lenght cond.code in
   let new_quad = Quad_jump (ref (l2+1)) in
   List.iter (fun x -> x := !x + l1 + 1) cond.q_false;
   List.iter (fun x -> x := !x + l2 + l3 + 1) s1.q_break;
   List.iter (fun x -> x := !x + l1 + l3 + 1) s2.q_break;
   List.iter (fun x -> x := !x - l3) s1.q_cont;
   List.iter (fun x -> x := !x - l1 - l3 - 1) s2.q_cont;
-  {
-  s_code = s2.s_code @ (new_quad::(s1.s_code @ cond.c_code));
+(*  {
+  s2.code @ (new_quad::(s1.code @ cond.c_code));
   q_cont = s1.q_cont @ s2.q_cont;
-  q_break = s1.q_break @ s2.q_break
+  q_break = s1.q_break @ s2.q_break;
   }
-  | Expr expr -> return_null_stmt()
-
-
+  *)
 (* Handle while statement *)
 (* The "false" jumps after all the statements plus the jump to the top. The jump to
  * the top must account for the re-evaluation of the condition *)
-let handle_while_stmt sexpr stmt =
-  match sexpr with
-  | Cond cond ->
-  let l = List.length stmt.s_code in
+let handle_while_stmt cond stmt = 
+  let l = List.length stmt.code in
   let lc = List.length cond.c_code in
   List.iter (fun x -> x := !x + l + 1) cond.q_false;
-  List.iter (fun x -> x := !x + lc + 1) stmt.q_break;
+  List.iter (fun x -> x := !x + 1) stmt.q_break;
   List.iter (fun x -> x := !x - lc) stmt.q_cont;
   let new_quad = Quad_jump (ref (-l-lc)) in
-  {
-  s_code = new_quad :: (stmt.s_code @ cond.c_code);
-  q_cont = [];
-  q_break = []
-  }
-  | Expr expr -> return_null_stmt()
-
+  new_quad :: (stmt.code @ cond.c_code)
 
 (* Handle do while statement *)
-let handle_do_while_stmt stmt sexpr = 
-  match sexpr with
-  | Cond cond ->
-  let l = List.length stmt.s_code in
+(* Cont -> do or cont -> condition? *)
+let handle_do_while_stmt stmt cond = 
+  let l = List.length stmt.code in
   let lc = List.length cond.c_code in
   List.iter (fun x -> x := !x + l + 1) cond.q_false;
-  List.iter (fun x -> x := !x + lc + 1) stmt.q_break;
-  List.iter (fun x -> x := !x + l) stmt.q_cont;
+  List.iter (fun x -> x := !x + 1) stmt.q_break;
+  List.iter (fun x -> x := !x - lc) stmt.q_cont;
   let new_quad = Quad_jump (ref (-l-lc)) in
-  {
-  s_code = new_quad :: (cond.c_code @ stmt.s_code);
-  q_cont = [];
-  q_break = []  
-  }
-  | Expr expr -> return_null_stmt()
+  new_quad :: (cond.c_code @ stmt.code)
+
 
 
 (* Handle a return expression *)
 (* After semantically checking the return types, and set to "$$" - the extra 
  * parameter by reference and then return (Quad_ret) *)
-(*let handle_return_expr expr pos=
+let handle_return_expr expr pos=
   let t = get_type expr.place in
   if (equalType t !currentScope.sco_ret_type) 
   then let ret_entry = lookupEntry (id_make "$$") LOOKUP_CURRENT_SCOPE true
@@ -510,7 +507,7 @@ let handle_return_proc pos =
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     []
   )
-*)
+
 (* Function definitions *)
 (* Wrap the body around unit-endu and add the local definitions at the beginning *)
 let handle_func_def id local_def stmt =

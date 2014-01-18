@@ -22,19 +22,30 @@ type quad_t =
 	|Quad_par of quad_elem_t * Symbol.pass_mode
 	|Quad_ret
 	
-type expr_ret_type = {
+type stmt_ret_type = {
+    s_code : quad_t list;
+    q_cont : int ref list;
+    q_break : int ref list;
+} 
+
+type superexpr = 
+    | Expr of expr_ret_type
+    | Cond of cond_ret_type
+
+and expr_ret_type = {
 	code : quad_t list;
 	place : quad_elem_t;
 }
 
-type cond_ret_type = {
+and cond_ret_type = {
 	c_code : quad_t list;	
 	q_true: int ref list;   
 	q_false : int ref list;
 }
 
 val return_null : unit -> expr_ret_type
-
+val return_null_cond : unit -> cond_ret_type 
+val return_null_stmt : unit -> stmt_ret_type
 val find_opposite_condition : string -> string
 
 val equal_quad_elems : quad_elem_t * quad_elem_t -> bool

@@ -36,7 +36,7 @@ type quad_t =
   |Quad_ret
 
 type stmt_ret_type = {
-  code : quad_t list;
+  s_code : quad_t list;
   q_cont : int ref list;
   q_break : int ref list
 } 
@@ -64,7 +64,11 @@ and cond_ret_type = {
 
 
 (* Returning a "null" quad - error handling mostly *)
-let return_null () = Expr{code = []; place = Quad_none}
+let return_null () = {code = []; place = Quad_none}
+
+let return_null_cond () = {c_code = []; q_true = []; q_false = []}
+
+let return_null_stmt () = {s_code = []; q_cont = []; q_break = []}
 
 let find_opposite_condition = function
   | "==" -> "!="
