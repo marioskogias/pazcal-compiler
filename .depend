@@ -1,0 +1,40 @@
+Lexer.cmo: Types.cmi Parser.cmi Lexer.cmi 
+Lexer.cmx: Types.cmx Parser.cmx Lexer.cmi 
+Lexer.cmi: Parser.cmi 
+Parser.cmo: Types.cmi Symbol.cmi Semantic.cmi Quads.cmo QuadTypes.cmi \
+    Output.cmi Identifier.cmi Error.cmi Parser.cmi 
+Parser.cmx: Types.cmx Symbol.cmx Semantic.cmx Quads.cmx QuadTypes.cmx \
+    Output.cmx Identifier.cmx Error.cmx Parser.cmi 
+Parser.cmi: Types.cmi 
+Main.cmo: Parser.cmi Lexer.cmi 
+Main.cmx: Parser.cmx Lexer.cmx 
+Hashcons.cmo: Hashcons.cmi 
+Hashcons.cmx: Hashcons.cmi 
+Identifier.cmo: Hashcons.cmi Identifier.cmi 
+Identifier.cmx: Hashcons.cmx Identifier.cmi 
+Error.cmo: Error.cmi 
+Error.cmx: Error.cmi 
+Types.cmo: Types.cmi 
+Types.cmx: Types.cmi 
+Symbol.cmo: Types.cmi Identifier.cmi Error.cmi Symbol.cmi 
+Symbol.cmx: Types.cmx Identifier.cmx Error.cmx Symbol.cmi 
+Output.cmo: Error.cmi Output.cmi 
+Output.cmx: Error.cmx Output.cmi 
+Semantic.cmo: Types.cmi Symbol.cmi Output.cmi Identifier.cmi Error.cmi \
+    Semantic.cmi 
+Semantic.cmx: Types.cmx Symbol.cmx Output.cmx Identifier.cmx Error.cmx \
+    Semantic.cmi 
+QuadTypes.cmo: Types.cmi Symbol.cmi Identifier.cmi Error.cmi QuadTypes.cmi 
+QuadTypes.cmx: Types.cmx Symbol.cmx Identifier.cmx Error.cmx QuadTypes.cmi 
+Quads.cmo: Types.cmi Symbol.cmi Semantic.cmi QuadTypes.cmi Identifier.cmi \
+    Error.cmi 
+Quads.cmx: Types.cmx Symbol.cmx Semantic.cmx QuadTypes.cmx Identifier.cmx \
+    Error.cmx 
+Hashcons.cmi: 
+Identifier.cmi: 
+Error.cmi: 
+Types.cmi: 
+Symbol.cmi: Types.cmi Identifier.cmi 
+Output.cmi: 
+Semantic.cmi: Types.cmi Symbol.cmi 
+QuadTypes.cmi: Symbol.cmi 
