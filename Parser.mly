@@ -100,7 +100,7 @@ let eval_expr a b op =
             | "*" ->  string_of_int (a_val * b_val)
             | "/" ->  string_of_int (a_val / b_val)
             | "mod" ->  string_of_int (a_val mod b_val)
-        with Failure "int_of_string" -> "eval_expr_error" (*change this*)
+        with Failure "float_of_string" -> "this is not a number" (*change this*)
 
 %}
 
@@ -331,22 +331,22 @@ expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
      | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test", Cond(handle_not (third_el $2))) }
      | T_not expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test", Cond(handle_not (third_el $2)))  }
      | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                           "test", 
+                           eval_expr (second_el $1) (second_el $3) "+", 
                            Expr(handle_expression "+" (third_el $1) (third_el $3) (get_binop_pos())))}
      | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                            "test", 
+                            eval_expr (second_el $1) (second_el $3) "-", 
                             Expr(handle_expression "-" (third_el $1) (third_el $3) (get_binop_pos()))) }
      | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                            "test", 
+                            eval_expr (second_el $1) (second_el $3) "*", 
                             Expr(handle_expression "*" (third_el $1) (third_el $3) (get_binop_pos()))) }
      | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), 
-                          "test", 
+                          eval_expr (second_el $1) (second_el $3) "/", 
                           Expr(handle_expression "/" (third_el $1) (third_el $3) (get_binop_pos()))) }
      | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                          "test", 
+                          eval_expr (second_el $1) (second_el $3) "mod", 
                           Expr(handle_expression "%" (third_el $1) (third_el $3) (get_binop_pos()))) }
      | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                          "test", 
+                          eval_expr (second_el $1) (second_el $3) "mod", 
                           Expr(handle_expression "%" (third_el $1) (third_el $3) (get_binop_pos()))) }
      | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                             "test", 
