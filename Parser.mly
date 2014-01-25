@@ -32,7 +32,7 @@ let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 let registerVar var_type (a,b) =  ignore(newVariable (id_make a) (table_type var_type b) true)
 
 (*function to register a const*)
-let registerConst var_type (a,v,_) =  ignore(newConst (id_make a) var_type v true)
+let registerConst var_type (a,v) =  ignore(newConst (id_make a) var_type v true)
 
 (*function to register a param*)
 let register_param anc (param_type, (name, mode, nlist)) = 
@@ -42,15 +42,6 @@ let register_param anc (param_type, (name, mode, nlist)) =
 (*function to register a function/proc and its params*)
 let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type); fun_entry
 
-(*function to get entry's type*) (*TODO*)
-(*let get_type e = 
-	match e.entry_info with
-	      | ENTRY_variable inf -> inf.variable_type
-          | ENTRY_parameter inf -> inf.parameter_type
-          | ENTRY_function inf -> inf.function_result
-	(*to be continued...*)
-          | _ ->TYPE_int
-*)
 (*function to get variable's type*)
 let rec get_var_type = function
     |(var_type, 0) -> var_type
@@ -193,8 +184,8 @@ let eval_expr a b op =
 %type <unit> declaration_list
 %type <unit> declaration
 %type <unit> const_def
-%type <string * string * string> const_inner_def //(*name, val, thanasis*)
-%type <(string * string * string) list> const_def_list
+%type <string * string > const_inner_def //(*name, val, thanasis*)
+%type <(string * string) list> const_def_list
 %type <unit> var_def
 %type <(string * int list) list> var_def_list
 %type <string * int list> var_init
@@ -248,9 +239,9 @@ declaration : const_def { () }
 	    | routine { () }
 	    | program { () }
 
-const_inner_def : T_name T_eq const_expr { ($1, (snd $3),"") (*error*)} 
+const_inner_def : T_name T_eq const_expr { ($1, (snd $3)) } 
 
-const_def : T_const ptype const_inner_def const_def_list T_semicolon { (*error*)ignore(registerConst $2 $3); ignore(List.map (registerConst $2) $4) }
+const_def : T_const ptype const_inner_def const_def_list T_semicolon { ignore(registerConst $2 $3); ignore(List.map (registerConst $2) $4) }
 
 
 const_def_list : /*nothing*/ { [] }
