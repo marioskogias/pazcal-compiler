@@ -29,8 +29,16 @@ let rec table_type var_type = function
 let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 
 (*function to register a variable*)
-let registerVar var_type (a,b) =  ignore(newVariable (id_make a) (table_type var_type b) true)
-
+let registerVar var_type place (a,b,c) = (*match c with
+                                         | Expr(e) -> match e.place with
+                                                        | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
+                                                        | _ -> let quad_e = Expr({code=[]; 
+                                                                                  place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
+                                                                in handle_assignment (dereference quad_e) c place
+                                         |_ -> return_null_stmt()*)
+                        
+                                         let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
+                                            in handle_assignment (dereference quad_e) c place
 (*function to register a const*)
 let registerConst var_type (a,v) =  ignore(newConst (id_make a) var_type v true)
 
@@ -186,9 +194,9 @@ let eval_expr a b op =
 %type <unit> const_def
 %type <string * string > const_inner_def //(*name, val, thanasis*)
 %type <(string * string) list> const_def_list
-%type <unit> var_def
-%type <(string * int list) list> var_def_list
-%type <string * int list> var_init
+%type <QuadTypes.stmt_ret_type> var_def
+%type <(string * int list * QuadTypes.superexpr) list> var_def_list
+%type <string * int list * QuadTypes.superexpr> var_init
 %type <int list> var_init_bra_list
 %type <unit> routine
 %type <entry> routine_header
@@ -210,7 +218,7 @@ let eval_expr a b op =
 %type <Types.typ  list> expressions
 %type <QuadTypes.stmt_ret_type> block
 %type <QuadTypes.stmt_ret_type> inner_block
-%type <unit> local_def
+%type <QuadTypes.stmt_ret_type> local_def
 %type <QuadTypes.stmt_ret_type> stmt
 %type <unit> inner_switch 
 %type <unit> switch_exp 
@@ -247,14 +255,20 @@ const_def : T_const ptype const_inner_def const_def_list T_semicolon { ignore(re
 const_def_list : /*nothing*/ { [] }
 	       | T_comma const_inner_def const_def_list { $2::$3 }
 
-var_def : ptype var_init var_def_list T_semicolon { ignore(registerVar $1 $2); ignore(List.map (registerVar $1) $3)   }
+var_def : ptype var_init var_def_list T_semicolon { let stmt = registerVar $1 (get_binop_pos()) $2 in 
+                                                    let list_stmt = List.map (registerVar $1 (get_binop_pos())) $3 in
+                                                    let rec help_merge stmt = function 
+                                                            | [] -> stmt
+                                                            |a::b -> help_merge (handle_stmt_merge a stmt) b
+                                                    in help_merge stmt list_stmt
+                                                 }
 
 var_def_list : /*nothing*/ { [] }
 	     | T_comma var_init var_def_list { ($2::$3) }
 
-var_init : T_name { ($1,[]) } 
-	 | T_name T_eq expr { ($1,[]) }
-	 | T_name var_init_bra_list { ($1,$2) }
+var_init : T_name { ($1,[], Expr(return_null())) } 
+	    | T_name T_eq expr { ($1,[],third_el $3)  }
+	    | T_name var_init_bra_list { ($1,$2, Expr(return_null())) }
 
 
 var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size (fst $2) (snd $2) (rhs_start_pos 1)] } //(*make sure to return only int*)
@@ -298,7 +312,7 @@ ptype : T_int  { $1 }
 const_expr : expr { ((first_el $1), (second_el $1)) } 
 
 
-expr:  T_int_const { (TYPE_int,$1, Expr({ code=[]; place= Quad_int ($1)})) }
+expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
     | T_real_const { (TYPE_real,$1, Expr(return_null())) }
     | T_const_char { (TYPE_char,$1 , Expr(return_null())) }
     | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr(return_null())) }
@@ -379,11 +393,11 @@ expressions : /*nothing*/ { [] }
 block : T_lbrace  inner_block T_rbrace { $2 }
 
 inner_block : /*nothing*/ { return_null_stmt () }
-	    | local_def inner_block { $2 }
+	    | local_def inner_block { handle_stmt_merge $1 $2 }
 	    | stmt inner_block {  handle_stmt_merge $1 $2 }
 
-local_def : const_def { () }
-	  | var_def { () }
+local_def : const_def { return_null_stmt() }
+	  | var_def { $1 }
 
 stmt : T_semicolon { return_null_stmt () }
      | l_value assign expr T_semicolon {if (is_const (second_el $1)) 
