@@ -10,6 +10,7 @@ open QuadTypes
 let get_type = function
   |Quad_none -> TYPE_none
   |Quad_int (_) -> TYPE_int
+  |Quad_real (_) -> TYPE_real
   |Quad_char(_) -> TYPE_char
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
   |Quad_valof (ent) 
@@ -108,6 +109,7 @@ let extract_entry = function
 let get_id = function
   |Quad_none -> internal "proc func call"; raise Terminate
   |Quad_int (i) -> i
+  |Quad_real (r) -> r
   |Quad_char (c) -> c
   |Quad_string (s) -> s
   |Quad_valof (ent)
@@ -116,45 +118,45 @@ let get_id = function
 (* Main function to convert a quad to a string *)
 let string_of_quad_t = function
   |Quad_unit(ent) -> 
-    Printf.sprintf "unit, %s, -, -"
+    Printf.sprintf "unit, %s, -, -\n"
     (id_name ent.entry_id)
   |Quad_endu(ent) -> 
-    Printf.sprintf "endu, %s, -, -" 
+    Printf.sprintf "endu, %s, -, -\n" 
     (id_name ent.entry_id)
   |Quad_calc (op, q1, q2, q) ->
-    Printf.sprintf "%s, %s, %s, %s"
+    Printf.sprintf "%s, %s, %s, %s\n"
       (op)
       (string_of_quad_elem_t q1)
       (string_of_quad_elem_t q2)
       (string_of_quad_elem_t q)
   |Quad_set(q,qr) ->
-    Printf.sprintf ":=, %s, -, %s" 
+    Printf.sprintf ":=, %s, -, %s\n" 
       (string_of_quad_elem_t q)
       (string_of_quad_elem_t qr)
   |Quad_array(q1, q2, e) ->
-    Printf.sprintf "array, %s, %s, %s"
+    Printf.sprintf "array, %s, %s, %s\n"
       (string_of_quad_elem_t q1)
       (string_of_quad_elem_t q2)
       (id_name e.entry_id)
   |Quad_cond(op, q1, q2, i) ->
-    Printf.sprintf "%s, %s, %s, %d"
+    Printf.sprintf "%s, %s, %s, %d\n"
       (op)
       (string_of_quad_elem_t q1)
       (string_of_quad_elem_t q2)
       !i
   |Quad_jump i  ->
-    Printf.sprintf "jump, -, -, %d" !i
+    Printf.sprintf "jump, -, -, %d\n" !i
   |Quad_tailCall ent ->
-    Printf.sprintf "tailRecursiveCall, -, -, %s"
+    Printf.sprintf "tailRecursiveCall, -, -, %s\n"
       (id_name ent.entry_id)
   |Quad_call (ent,_) ->
-    Printf.sprintf "call, -, -, %s"
+    Printf.sprintf "call, -, -, %s\n"
       (id_name ent.entry_id)
 (*  |Quad_par(q,pm) ->
     Printf.sprintf "par, %s, %s, -"
       (string_of_quad_elem_t q)
       (string_of_pass_mode pm)
-*)  |Quad_ret -> "ret, -, -, -" 
+*)  |Quad_ret -> "ret, -, -, -\n" 
   |Quad_dummy -> ""
 
 
@@ -165,22 +167,27 @@ let string_of_quad_t = function
 
 (* IMPORTANT: Intermediate code in the lists must be inverted *)
 
+let handle_expr_to_stmt sexpr =
+  match sexpr with 
+  |Expr expr -> {s_code= expr.code; q_break=[]; q_cont=[]}
+  |Cond cond -> return_null_stmt()
+
+
 (* Handle statement merge *) 
 let handle_stmt_merge stmt1 stmt2 =
   let len = List.length stmt1.s_code in
   let len2 = List.length stmt2.s_code in
   List.iter (fun x -> x := !x - len) stmt2.q_cont;
-  List.iter (fun x -> x := !x + len2) stmt1.q_cont;
-  List.iter (fun x -> x := !x + len) stmt2.q_break;
+  List.iter (fun x -> x := !x + len2) stmt1.q_break;
   { 
-    s_code = stmt2.s_code @ stmt1.s_code;
-    q_cont = stmt1.q_cont@stmt2.q_cont;
-    q_break = stmt1.q_break @ stmt2.q_break;
+   s_code = stmt2.s_code @ stmt1.s_code;
+   q_cont = stmt1.q_cont@stmt2.q_cont;
+   q_break = stmt1.q_break @ stmt2.q_break;
   }
 
 
 (* Handle break *)
-let handle_break =
+let handle_break () =
   let break_ref = ref 1 in
   let code_break = (Quad_jump (break_ref)) in {
     s_code = [code_break];
@@ -189,7 +196,7 @@ let handle_break =
   }
 
 (* Handle continue *)
-let handle_continue =
+let handle_continue ()=
   let cont_ref = ref 0 in
   let code_cont = (Quad_jump (cont_ref)) in {
     s_code = [code_cont];
@@ -222,6 +229,43 @@ let handle_expression op expr1 expr2 (sp,ep) =
       place = Quad_entry(temp);
     }
   | _ -> return_null ()
+
+(* Handle Plus Plus *)
+let handle_plus_plus sexpr =
+    match sexpr with
+    | Expr expr -> let temp = newTemporary TYPE_int in
+                let plus_quad = Quad_calc("+", Quad_int("1"), expr.place, Quad_entry(temp)) in
+                let assign_quad = 
+                    match expr.place with
+                    |Quad_valof (_)
+                    |Quad_entry (_) -> Quad_set(Quad_entry(temp),expr.place)  
+                    | _ -> internal "Assigning to something not an entry";
+                     raise Terminate
+      in {
+        s_code = assign_quad::[plus_quad];
+        q_cont = [];
+        q_break = [];
+      }
+    | Cond cond -> return_null_stmt()
+
+(* Handle Minus Minus *)
+let handle_minus_minus sexpr =
+    match sexpr with
+    | Expr expr -> let temp = newTemporary TYPE_int in
+                let plus_quad = Quad_calc("-", expr.place, Quad_int("1"), Quad_entry(temp)) in
+                let assign_quad = 
+                    match expr.place with
+                    |Quad_valof (_)
+                    |Quad_entry (_) -> Quad_set(Quad_entry(temp),expr.place)  
+                    | _ -> internal "Assigning to something not an entry";
+                     raise Terminate
+      in {
+        s_code = assign_quad::[plus_quad];
+        q_cont = [];
+        q_break = [];
+      }
+    | Cond cond -> return_null_stmt()
+
 
 (* Handle signs in expression *)
 let handle_unary_expression op expr pos =
@@ -454,7 +498,6 @@ let handle_if_stmt sexpr stmt =
   let len = List.length stmt.s_code in
   let len2 = List.length cond.c_code in
   List.iter (fun x -> x := !x + len) cond.q_false;
-  List.iter (fun x -> x := !x + len2) stmt.q_break;
   List.iter (fun x -> x := !x - len2) stmt.q_cont;
   {
   s_code = stmt.s_code @ cond.c_code;
@@ -475,10 +518,9 @@ let handle_if_else_stmt sexpr s1 s2 =
   let l3 = List.length cond.c_code in
   let new_quad = Quad_jump (ref (l2+1)) in
   List.iter (fun x -> x := !x + l1 + 1) cond.q_false;
-  List.iter (fun x -> x := !x + l2 + l3 + 1) s1.q_break;
-  List.iter (fun x -> x := !x + l1 + l3 + 1) s2.q_break;
-  List.iter (fun x -> x := !x - l3) s1.q_cont;
-  List.iter (fun x -> x := !x - l1 - l3 - 1) s2.q_cont;
+  List.iter (fun x -> x := !x + l2 + 1) s1.q_break;
+  List.iter (fun x -> x := !x - l3 -1) s1.q_cont;
+  List.iter (fun x -> x := !x - l1 - l3 - 2) s2.q_cont;
   {
   s_code = s2.s_code @ (new_quad::(s1.s_code @ cond.c_code));
   q_cont = s1.q_cont @ s2.q_cont;
@@ -496,15 +538,15 @@ let handle_while_stmt sexpr stmt =
   let l = List.length stmt.s_code in
   let lc = List.length cond.c_code in
   List.iter (fun x -> x := !x + l + 1) cond.q_false;
-  List.iter (fun x -> x := !x + lc + 1) stmt.q_break;
   List.iter (fun x -> x := !x - lc) stmt.q_cont;
+  List.iter (fun x -> x := !x + 1) stmt.q_break;
   let new_quad = Quad_jump (ref (-l-lc)) in
   {
   s_code = new_quad :: (stmt.s_code @ cond.c_code);
   q_cont = [];
   q_break = []
   }
-  | Expr expr -> return_null_stmt()
+  | Expr exp -> return_null_stmt()
 
 
 (* Handle do while statement *)
@@ -513,12 +555,11 @@ let handle_do_while_stmt stmt sexpr =
   | Cond cond ->
   let l = List.length stmt.s_code in
   let lc = List.length cond.c_code in
-  List.iter (fun x -> x := !x + l + 1) cond.q_false;
-  List.iter (fun x -> x := !x + lc + 1) stmt.q_break;
+  List.iter (fun x -> x := !x - l - lc) cond.q_true;
+  List.iter (fun x -> x := !x + lc) stmt.q_break;
   List.iter (fun x -> x := !x + l) stmt.q_cont;
-  let new_quad = Quad_jump (ref (-l-lc)) in
   {
-  s_code = new_quad :: (cond.c_code @ stmt.s_code);
+  s_code =  (cond.c_code @ stmt.s_code);
   q_cont = [];
   q_break = []  
   }

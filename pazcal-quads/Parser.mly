@@ -268,7 +268,7 @@ ptype : T_int  { $1 }
 const_expr : expr { ((first_el $1), (second_el $1)) }
 
 expr:  T_int_const { (TYPE_int,$1, Expr({ code=[]; place= Quad_int ($1)})) }
-     | T_real_const { (TYPE_real,$1, Expr(return_null())) }
+     | T_real_const { (TYPE_real,$1, Expr({code=[]; place= Quad_int ($1)})) }
      | T_const_char { (TYPE_char,$1 , Expr(return_null())) }
      | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr(return_null())) }
      | T_true { (TYPE_bool,"true", Expr(return_null())) }
@@ -322,8 +322,8 @@ local_def : const_def { () }
 
 stmt : T_semicolon { return_null_stmt () }
      | l_value assign expr T_semicolon {ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); handle_assignment (dereference (third_el $1)) (third_el $3) (get_binop_pos())  }
-     | l_value T_plus_plus T_semicolon{ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)); return_null_stmt() } /*same as above same operant*/
-     | l_value T_minus_minus T_semicolon { ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)); return_null_stmt() }
+     | l_value T_plus_plus T_semicolon{ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)); handle_plus_plus (third_el $1) } /*same as above same operant*/
+     | l_value T_minus_minus T_semicolon { ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)); handle_minus_minus (third_el $1) }
      | call T_semicolon { return_null_stmt() }
      | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); handle_if_else_stmt (third_el $3) $5 $7}
      | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); handle_if_stmt (third_el $3) $5} 
@@ -332,10 +332,10 @@ stmt : T_semicolon { return_null_stmt () }
      | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := false); handle_do_while_stmt $3 (third_el $6) }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := false; return_null_stmt() }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := false; return_null_stmt() }
-     | T_break T_semicolon { ignore(if not !in_loop then print_error "break not in loop" (rhs_start_pos 1)); handle_break }
-     | T_continue T_semicolon { ignore(if not !in_loop then print_error "continus not in loop" (rhs_start_pos 1)); handle_continue }
+     | T_break T_semicolon { ignore(if not !in_loop then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
+     | T_continue T_semicolon { ignore(if not !in_loop then print_error "continus not in loop" (rhs_start_pos 1)); handle_continue() }
      | T_return T_semicolon { return_null_stmt() }
-     | T_return expr T_semicolon { return_null_stmt() }
+     | T_return expr T_semicolon { handle_expr_to_stmt (third_el $2)}
      | openScope block closeScope { $2 }
      | write T_lparen T_rparen T_semicolon { return_null_stmt() }
      | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }

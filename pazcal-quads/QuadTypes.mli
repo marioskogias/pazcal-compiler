@@ -2,8 +2,9 @@ type quad_elem_t =
 	|Quad_none                        (* Error Handling              *)
 	|Quad_entry of Symbol.entry       (* Symbol Table Entries        *)
 	|Quad_valof of Symbol.entry       (* Dereferenced Symbol Entries *)
-	|Quad_int of string               (* Constant Integers           *)
-	|Quad_char of string              (* Constant Characters         *)
+	|Quad_real of string
+    |Quad_int of string               (* Constant Integers           *)
+    |Quad_char of string              (* Constant Characters         *)
 	|Quad_string of string	          (* Constant Strings            *)
 
 val string_of_quad_elem_t : quad_elem_t -> string

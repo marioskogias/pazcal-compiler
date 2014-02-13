@@ -1,8 +1,14 @@
 PROGRAM bubbles ()
-
 {
     int seed, i;
-    seed = 2;
-    i = 5;
-    seed = i + 8;
+    do{ 
+        break;
+        seed = 5;
+        break;
+        continue;
+        i++;
+        continue;
+        break;
+    }
+    while (i>0);
 }
