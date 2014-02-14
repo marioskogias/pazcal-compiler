@@ -215,7 +215,7 @@ let eval_expr a b op =
 //%type <unit> binop
 //%type <Types.typ * string * string> call 
 %type <entry> call 
-%type <Types.typ  list> expressions
+%type <QuadTypes.superexpr  list> expressions
 %type <QuadTypes.stmt_ret_type> block
 %type <QuadTypes.stmt_ret_type> inner_block
 %type <QuadTypes.stmt_ret_type> local_def
@@ -385,10 +385,15 @@ expr_list : /*nothing*/ { 0 }
 
 call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-							in ignore(check_function_params (get_param_list e) (first_el $3::$4) (rhs_start_pos 1)) ; e }
+							                        in let get_type_from_expr a = 
+                                                        match a with
+                                                        | Expr e -> get_type e.place
+                                                        | _ -> TYPE_int (*this is wrong*)
+                                                    in let expr_list = List.map get_type_from_expr (third_el $3::$4)
+                                                    in ignore(check_function_params (get_param_list e) expr_list (rhs_start_pos 1)) ; e }
 
 expressions : /*nothing*/ { [] }
-	    | T_comma expr expressions { first_el $2::$3 }
+	    | T_comma expr expressions { third_el $2::$3 }
 
 block : T_lbrace  inner_block T_rbrace { $2 }
 
