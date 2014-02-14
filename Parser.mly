@@ -385,12 +385,15 @@ expr_list : /*nothing*/ { 0 }
 
 call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-							                        in let get_type_from_expr a = 
-                                                        match a with
-                                                        | Expr e -> get_type e.place
-                                                        | _ -> TYPE_int (*this is wrong*)
-                                                    in let expr_list = List.map get_type_from_expr (third_el $3::$4)
-                                                    in ignore(check_function_params (get_param_list e) expr_list (rhs_start_pos 1)) ; e }
+                                                    in let get_expr e = 
+                                                        match e with
+                                                        | Expr e -> e
+                                                        | _ -> return_null()
+                                                    in let get_place e = e.place
+                                                    in let expr_list = List.map get_expr (third_el $3::$4)
+                                                    in let expr_types = List.map get_type (List.map get_place expr_list) 
+                                                    in ignore(check_function_params (get_param_list e) expr_types (rhs_start_pos 1)) ;
+                                                        ignore(handle_func_call e (rhs_start_pos 1) expr_list ) ; e }
 
 expressions : /*nothing*/ { [] }
 	    | T_comma expr expressions { third_el $2::$3 }
