@@ -214,7 +214,7 @@ let eval_expr a b op =
 //%type <unit> unop
 //%type <unit> binop
 //%type <Types.typ * string * string> call 
-%type <entry> call 
+%type <QuadTypes.superexpr> call 
 %type <QuadTypes.superexpr  list> expressions
 %type <QuadTypes.stmt_ret_type> block
 %type <QuadTypes.stmt_ret_type> inner_block
@@ -324,7 +324,10 @@ expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
      | l_value { if (is_const (second_el $1))
                     then ((first_el $1), get_const_val (second_el $1), Expr(return_null ()))
                  else $1 }
-     | call { (get_type (Quad_entry $1),"test", Expr(return_null())) }
+     | call { let c = match $1 with
+                      | Expr e -> e
+               in (get_type c.place,"test", $1) 
+            }
 
      | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test", Expr(handle_unary_expression "+" (third_el $2) (rhs_start_pos 2)))}
      | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test", Expr(handle_unary_expression "-" (third_el $2) (rhs_start_pos 2)))}
@@ -383,7 +386,7 @@ l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
 expr_list : /*nothing*/ { 0 }
 	  | T_lbracket expr T_rbracket expr_list { $4 + 1 }
 
-call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true }
+call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true *) Expr(return_null()) }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
                                                     in let get_expr e = 
                                                         match e with
@@ -393,7 +396,8 @@ call : T_name T_lparen T_rparen {  lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES t
                                                     in let expr_list = List.map get_expr (third_el $3::$4)
                                                     in let expr_types = List.map get_type (List.map get_place expr_list) 
                                                     in ignore(check_function_params (get_param_list e) expr_types (rhs_start_pos 1)) ;
-                                                        ignore(handle_func_call e (rhs_start_pos 1) expr_list ) ; e }
+                                                        Expr(handle_func_call e (rhs_start_pos 1) expr_list )
+                                                 }
 
 expressions : /*nothing*/ { [] }
 	    | T_comma expr expressions { third_el $2::$3 }
