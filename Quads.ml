@@ -275,12 +275,9 @@ let handle_array_lvalue id pos context q_t =
 
 
 (* Ugliest function yet - Handle function calls *)
-(*
-let handle_func_call id pos expr_list =
 
-  (* Get function entry from id *)
-  let ent = lookupEntry (id_make id) LOOKUP_ALL_SCOPES true in
-  
+let handle_func_call ent pos expr_list =
+
   (* Unzip expression list 
    * Takes expression list - reverse order 
    * Returns a triplet : code, place and types, correct order *)
@@ -302,8 +299,8 @@ let handle_func_call id pos expr_list =
         match hfi.entry_info with
         | ENTRY_parameter (par_info) ->
           let new_quad = Quad_par (hp, par_info.parameter_mode) in
-          if par_info.parameter_mode = PASS_BY_REFERENCE 
-          then check_param_by_reference hp id;
+          (*if par_info.parameter_mode = PASS_BY_REFERENCE 
+          then check_param_by_reference hp id;*)
           create_par_quads (new_quad::acc) (tfi, tp)
         | _ -> 
           internal "Function parameter not a parameter"; 
@@ -327,10 +324,6 @@ let handle_func_call id pos expr_list =
   
   match ent.entry_info with
   |ENTRY_function (info) ->
-    (* Check for semantic correctness *)
-    (*if (check_func_call info id type_list pos)
-    then (
-  *)
       (* Generate par_quads *)
       let par_code = create_par_quads [] 
         (info.function_paramlist, param_list) in 
@@ -353,15 +346,12 @@ let handle_func_call id pos expr_list =
           place = Quad_entry(temp)
         }
       | _ -> return_null ()         
-    (*  )
-    else 
-      return_null () *)
   |_ ->   
-    error "Invalid Function call. Identifier %s is not a function \
+    error "Invalid Function call. Identifier is not a function \
       at line %d, position %d."
-      id (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
+      (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
-*)  
+
 (* Handle Comparisons *)
 let handle_comparison op exp1 exp2 (sp,ep) =
   (* First Check the types of the compared things *)

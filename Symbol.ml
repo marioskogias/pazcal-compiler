@@ -10,7 +10,7 @@ module H = Hashtbl.Make (
   end
 )
 
-type pass_mode = PASS_BY_VALUE | PASS_BY_REFERENCE
+type pass_mode = PASS_BY_VALUE | PASS_BY_REFERENCE | PASS_RET
 
 type param_status =
   | PARDEF_COMPLETE
