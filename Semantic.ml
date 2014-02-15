@@ -105,6 +105,6 @@ let check_assign operator type_1 type_2 pos=
         else (ignore(print_error "Wrong types in assignment\n" pos);false)
 
 (*bool val if in loop*)
-let in_loop = ref false
+let in_loop = ref 0
 
 

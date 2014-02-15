@@ -432,22 +432,22 @@ stmt : T_semicolon { return_null_stmt () }
                                                       handle_if_else_stmt (third_el $3) $5 $7 }
      | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); 
                                           handle_if_stmt (third_el $3) $5 } 
-     | T_while stoppable T_lparen expr T_rparen stmt { (ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; in_loop := false);
+     | T_while stoppable T_lparen expr T_rparen stmt { (ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; in_loop := !in_loop -1);
                                                         handle_while_stmt (third_el $4) $6 }
-     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := false ; return_null_stmt () }
-     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := false);
+     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := !in_loop - 1 ; return_null_stmt () }
+     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := !in_loop - 1);
                                                                          handle_do_while_stmt $3 (third_el $6) }
-     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := false ; return_null_stmt()}
-     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := false ; return_null_stmt()}
-     | T_break T_semicolon { ignore(if not !in_loop then print_error "break not in loop" (rhs_start_pos 1)); handle_break }
-     | T_continue T_semicolon { ignore(if not !in_loop then print_error "continus not in loop" (rhs_start_pos 1)); handle_continue }
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; return_null_stmt()}
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1 ; return_null_stmt()}
+     | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break }
+     | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue }
      | T_return T_semicolon { return_null_stmt() }
      | T_return expr T_semicolon { return_null_stmt() }
      | openScope block closeScope { $2 }
      | write T_lparen T_rparen T_semicolon { return_null_stmt() }
      | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }
 
-stoppable : {in_loop := true}
+stoppable : {in_loop := !in_loop + 1}
 
 assign : T_eq { $1 }
        | T_plus_equal { $1 }
