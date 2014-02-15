@@ -6,6 +6,10 @@ open Semantic
 open Lexing
 open QuadTypes
 
+
+
+
+
 (* Get Type of a quad_elem_t *)
 let get_type = function
   |Quad_none -> TYPE_none
@@ -158,7 +162,6 @@ let string_of_quad_t = function
       (string_of_pass_mode pm)
 *)  |Quad_ret -> "ret, -, -, -\n" 
   |Quad_dummy -> ""
-
 
 
 (* ----------------------------------------------------------------------------- *)
@@ -466,13 +469,16 @@ let handle_or cond1 cond2 =
   | _ -> return_null_cond()
 
 (* Handle assignmenet *)
-let handle_assignment lval exp (sp,ep) =
+let handle_assignment assign lval exp (sp,ep) =
  (* let t1 = get_type lval.place in
   let t2 = get_type expr.place in
   if (check_types "=" t1 t2 sp ep) 
   then*) 
   match exp with
   | Expr expr ->
+    begin
+    match assign with
+    |"="->
     begin
     let new_quad = 
       match lval.place with
@@ -486,6 +492,57 @@ let handle_assignment lval exp (sp,ep) =
       q_cont=[]
       }
       end
+    |"+="->
+    begin
+    let temp = newTemporary TYPE_int in                                     
+        let plus_quad = Quad_calc("+",expr.place, lval.place, Quad_entry(temp)) in
+        let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
+        {s_code=assign_quad::plus_quad::lval.code@expr.code;                                    
+         q_break=[];                                                               
+         q_cont=[]    
+        }
+    end
+    |"-="->
+    begin
+    let temp = newTemporary TYPE_int in                                     
+        let minus_quad = Quad_calc("-",expr.place, lval.place, Quad_entry(temp)) in
+        let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
+        {s_code=assign_quad::minus_quad::lval.code@expr.code;                                    
+         q_break=[];                                                               
+         q_cont=[]    
+        }
+    end
+    |"*="->
+    begin
+    let temp = newTemporary TYPE_int in                                     
+        let times_quad = Quad_calc("*",expr.place, lval.place, Quad_entry(temp)) in
+        let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
+        {s_code=assign_quad::times_quad::lval.code@expr.code;                                    
+         q_break=[];                                                               
+         q_cont=[]    
+        }
+    end
+    |"%="->
+    begin
+    let temp = newTemporary TYPE_int in                                     
+        let mod_quad = Quad_calc("%",expr.place, lval.place, Quad_entry(temp)) in
+        let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
+        {s_code=assign_quad::mod_quad::lval.code@expr.code;                                    
+         q_break=[];                                                               
+         q_cont=[]    
+        }
+    end
+    |"/="->
+    begin
+    let temp = newTemporary TYPE_int in                                     
+        let div_quad = Quad_calc("/",expr.place, lval.place, Quad_entry(temp)) in
+        let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
+        {s_code=assign_quad::div_quad::lval.code@expr.code;                                    
+         q_break=[];                                                               
+         q_cont=[]    
+        }
+    end
+  end
   | Cond cond -> return_null_stmt() 
 (*  else []*)
 
@@ -527,6 +584,57 @@ let handle_if_else_stmt sexpr s1 s2 =
   q_break = s1.q_break @ s2.q_break
   }
   | Expr expr -> return_null_stmt()
+
+
+(* Handle switch statement *)
+let handle_switch 
+
+
+(* Handle for statement *)
+let handle_for_stmt indx expr1 expr2 expr3 upordown body pos=
+   match expr1, expr2, expr3, indx with
+   | Expr startfrom, Expr endto, Expr step, Expr index ->
+        begin
+            let assign_quad = 
+                match index.place with
+                |Quad_valof (_)
+                |Quad_entry (_) -> Quad_set(startfrom.place,index.place)  
+                | _ -> internal "Assigning to something not an entry";
+                raise Terminate
+            in match upordown with
+                |"+"-> let comp_quads = handle_comparison "<" (Expr(index)) (Expr(endto)) pos in
+                       let temp = newTemporary TYPE_int in                                     
+                       let plus_quad = Quad_calc("+", step.place, index.place, Quad_entry(temp)) in
+                       let assign_in_loop_quad = Quad_set(Quad_entry(temp), index.place) in
+                       let l1 = List.length body.s_code in
+                       let l2 = List.length comp_quads.c_code in
+                       let cont_jump = Quad_jump (ref (-l1 -l2 - 2)) in
+                       List.iter (fun x -> x := !x + 3) body.q_break;
+                       List.iter (fun x -> x := !x + l1) body.q_cont;
+                       List.iter (fun x -> x := !x + l1 + 3) comp_quads.q_false;
+                         {s_code= cont_jump::assign_in_loop_quad::plus_quad::body.s_code@(comp_quads.c_code@[assign_quad]);   
+                            q_break=[];
+                            q_cont=[]    
+                         }
+                |"-" ->let comp_quads = handle_comparison ">" (Expr(index)) (Expr(endto)) pos in
+                       let temp = newTemporary TYPE_int in                                     
+                       let minus_quad = Quad_calc("-", step.place, index.place, Quad_entry(temp)) in
+                       let assign_in_loop_quad = Quad_set(Quad_entry(temp), index.place) in
+                       let l1 = List.length body.s_code in
+                       let l2 = List.length comp_quads.c_code in
+                       let cont_jump = Quad_jump (ref (-l1 -l2 - 2)) in
+                       List.iter (fun x -> x := !x + l1 + 3) comp_quads.q_false;
+                       List.iter (fun x -> x := !x + l1 + 3) body.q_break;
+                       List.iter (fun x -> x := !x + l1) body.q_cont;
+
+                         {s_code= cont_jump::assign_in_loop_quad::minus_quad::body.s_code@(comp_quads.c_code@[assign_quad]);   
+                            q_break=[];
+                            q_cont=[]
+                         }
+        end
+   | _ -> return_null_stmt()
+
+
 
 
 (* Handle while statement *)

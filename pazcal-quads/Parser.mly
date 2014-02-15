@@ -57,6 +57,11 @@ open Printf
 
         let third_el (_,_,c) = c
 
+        let first (a,_,_,_) = a
+        let second (_,b,_,_) = b
+        let third (_,_,c,_) = c
+        let fourth (_,_,_,d) = d
+
         (*get the parameter list of a function as it is in the symbol table*)
         let get_param_list a = 
         match a.entry_info with 
@@ -186,7 +191,7 @@ open Printf
         %type <unit> switch_exp 
         %type <unit> pformat_list
         %type <string> assign
-        %type <unit> range
+        %type <QuadTypes.superexpr*QuadTypes.superexpr*QuadTypes.superexpr*string> range
         %type <unit> clause
         %type <QuadTypes.stmt_ret_type> stmt_list 
         %type <unit> write
@@ -321,14 +326,15 @@ local_def : const_def { () }
 	  | var_def { () }
 
 stmt : T_semicolon { return_null_stmt () }
-     | l_value assign expr T_semicolon {ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); handle_assignment (dereference (third_el $1)) (third_el $3) (get_binop_pos())  }
+     | l_value assign expr T_semicolon {ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); handle_assignment $2 (dereference (third_el $1)) (third_el $3) (get_binop_pos())  }
      | l_value T_plus_plus T_semicolon{ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)); handle_plus_plus (third_el $1) } /*same as above same operant*/
      | l_value T_minus_minus T_semicolon { ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1)); handle_minus_minus (third_el $1) }
      | call T_semicolon { return_null_stmt() }
      | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); handle_if_else_stmt (third_el $3) $5 $7}
      | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); handle_if_stmt (third_el $3) $5} 
      | T_while stoppable T_lparen expr T_rparen stmt { (ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; in_loop := false); handle_while_stmt (third_el $4) $6 }
-     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { (in_loop := false); return_null_stmt()(*handle_for_stmt*) }
+     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { (in_loop := false); let e = lookupEntry (id_make $4) LOOKUP_ALL_SCOPES true in (
+          handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) (first $6) (second $6) (third $6) (fourth $6) $8 (get_binop_pos()))}
      | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := false); handle_do_while_stmt $3 (third_el $6) }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := false; return_null_stmt() }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := false; return_null_stmt() }
@@ -349,10 +355,10 @@ assign : T_eq { $1 }
        | T_div_equal { $1 }
        | T_times_equal { $1 }
 
-range : expr T_TO expr { () }
-      | expr T_TO expr T_STEP expr { () }
-      | expr T_DOWNTO expr { () }
-      | expr T_DOWNTO expr T_STEP expr { () }
+range : expr T_TO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_int ("1")}), "+") }
+      | expr T_TO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "+") }
+      | expr T_DOWNTO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_int ("1")}), "-") }
+      | expr T_DOWNTO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "-") }
 
 stmt_list : /*nothing*/ { return_null_stmt() }
 	  | stmt stmt_list { handle_stmt_merge $1 $2 }
