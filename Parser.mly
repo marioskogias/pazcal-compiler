@@ -29,16 +29,14 @@ let rec table_type var_type = function
 let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 
 (*function to register a variable*)
-let registerVar var_type place (a,b,c) = (*match c with
+let registerVar var_type place (a,b,c) = match c with
                                          | Expr(e) -> match e.place with
                                                         | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
                                                         | _ -> let quad_e = Expr({code=[]; 
                                                                                   place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                                                in handle_assignment (dereference quad_e) c place
-                                         |_ -> return_null_stmt()*)
+                                                                in handle_assignment "=" (dereference quad_e) c place
+                                         |_ -> return_null_stmt()
                         
-                                         let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                            in handle_assignment "=" (dereference quad_e) c place
 (*function to register a const*)
 let registerConst var_type (a,v) =  ignore(newConst (id_make a) var_type v true)
 
