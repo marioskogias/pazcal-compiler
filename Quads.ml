@@ -116,45 +116,49 @@ let get_id = function
 (* Main function to convert a quad to a string *)
 let string_of_quad_t = function
   |Quad_unit(ent) -> 
-    Printf.sprintf "unit, %s, -, -"
+    Printf.sprintf "unit, %s, -, -\n"
     (id_name ent.entry_id)
   |Quad_endu(ent) -> 
-    Printf.sprintf "endu, %s, -, -" 
+    Printf.sprintf "endu, %s, -, -\n" 
     (id_name ent.entry_id)
   |Quad_calc (op, q1, q2, q) ->
-    Printf.sprintf "%s, %s, %s, %s"
+    Printf.sprintf "%s, %s, %s, %s\n"
       (op)
       (string_of_quad_elem_t q1)
       (string_of_quad_elem_t q2)
       (string_of_quad_elem_t q)
   |Quad_set(q,qr) ->
-    Printf.sprintf ":=, %s, -, %s" 
+    Printf.sprintf ":=, %s, -, %s\n" 
       (string_of_quad_elem_t q)
       (string_of_quad_elem_t qr)
   |Quad_array(q1, q2, e) ->
-    Printf.sprintf "array, %s, %s, %s"
+    Printf.sprintf "array, %s, %s, %s\n"
       (string_of_quad_elem_t q1)
       (string_of_quad_elem_t q2)
       (id_name e.entry_id)
   |Quad_cond(op, q1, q2, i) ->
-    Printf.sprintf "%s, %s, %s, %d"
+    Printf.sprintf "%s, %s, %s, %d\n"
       (op)
       (string_of_quad_elem_t q1)
       (string_of_quad_elem_t q2)
       !i
   |Quad_jump i  ->
-    Printf.sprintf "jump, -, -, %d" !i
+    Printf.sprintf "jump, -, -, %d\n" !i
   |Quad_tailCall ent ->
-    Printf.sprintf "tailRecursiveCall, -, -, %s"
+    Printf.sprintf "tailRecursiveCall, -, -, %s\n"
       (id_name ent.entry_id)
   |Quad_call (ent,_) ->
-    Printf.sprintf "call, -, -, %s"
+    Printf.sprintf "call, -, -, %s\n"
       (id_name ent.entry_id)
-(*  |Quad_par(q,pm) ->
-    Printf.sprintf "par, %s, %s, -"
+  |Quad_par(q,pm) ->
+    let string_of_pass_mode = function
+        |PASS_BY_VALUE -> "V"
+        |PASS_BY_REFERENCE -> "R"
+        |PASS_RET -> "RET" 
+    in Printf.sprintf "par, %s, %s, -\n"
       (string_of_quad_elem_t q)
       (string_of_pass_mode pm)
-*)  |Quad_ret -> "ret, -, -, -" 
+  |Quad_ret -> "ret, -, -, -\n" 
   |Quad_dummy -> ""
 
 
@@ -166,6 +170,12 @@ let string_of_quad_t = function
 (* IMPORTANT: Intermediate code in the lists must be inverted *)
 
 (* Handle statement merge *) 
+let handle_expr_to_stmt sexpr =
+    match sexpr with
+    | Expr expr -> {s_code = expr.code; q_break=[]; q_cont=[]}
+    | Cond cond -> return_null_stmt()
+    | _ -> ignore(print_string("test")); return_null_stmt()
+
 let handle_stmt_merge stmt1 stmt2 =
   let len = List.length stmt1.s_code in
   let len2 = List.length stmt2.s_code in

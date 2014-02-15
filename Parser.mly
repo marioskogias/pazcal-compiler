@@ -427,7 +427,7 @@ stmt : T_semicolon { return_null_stmt () }
                                           else
                                              ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1));
                                              return_null_stmt () }
-     | call T_semicolon { return_null_stmt () }
+     | call T_semicolon { handle_expr_to_stmt $1 }
      | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1));
                                                       handle_if_else_stmt (third_el $3) $5 $7 }
      | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); 
