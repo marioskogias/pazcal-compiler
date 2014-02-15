@@ -105,7 +105,7 @@ let eval_expr a b op =
             | "*" ->  string_of_int (a_val * b_val)
             | "/" ->  string_of_int (a_val / b_val)
             | "mod" ->  string_of_int (a_val mod b_val)
-        with Failure "float_of_string" -> "this is not a number" (*change this*)
+        with Failure "int_of_string" -> "this is not a number" (*change this*)
 
 %}
 
