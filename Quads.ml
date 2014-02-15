@@ -271,6 +271,25 @@ let handle_minus_minus sexpr =
       }
     | Cond cond -> return_null_stmt()
 
+(* Handle signs in expression *)
+let handle_unary_expression op expr pos =
+  match expr with
+  | Expr exp ->
+    let t = get_type exp.place in
+    if (t==TYPE_int) 
+    then match op with
+      |"+" -> 
+        exp
+      |"-" -> 
+        let temp = newTemporary TYPE_int in
+        let new_quad = Quad_calc("-",Quad_int("0"), exp.place, Quad_entry(temp)) in
+          { code = (new_quad :: exp.code); place = Quad_entry(temp) }
+      |_ -> internal "wrong unary expression"; raise Terminate
+    else (
+     (* print_unary_type_error op t pos;*)
+      return_null ()
+    )
+  | _ -> return_null ()
 
 let handle_func_call ent pos expr_list =
 
@@ -521,10 +540,6 @@ let handle_if_else_stmt sexpr s1 s2 =
   q_break = s1.q_break @ s2.q_break
   }
   | Expr expr -> return_null_stmt()
-
-
-(* Handle switch statement *)
-let handle_switch 
 
 
 (* Handle for statement *)

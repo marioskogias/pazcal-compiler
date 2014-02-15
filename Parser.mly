@@ -38,7 +38,7 @@ let registerVar var_type place (a,b,c) = (*match c with
                                          |_ -> return_null_stmt()*)
                         
                                          let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                            in handle_assignment (dereference quad_e) c place
+                                            in handle_assignment "=" (dereference quad_e) c place
 (*function to register a const*)
 let registerConst var_type (a,v) =  ignore(newConst (id_make a) var_type v true)
 
@@ -81,6 +81,11 @@ let first_el (a,_,_) = a
 let second_el (_,b,_) = b
 
 let third_el (_,_,c) = c
+
+let first (a,_,_,_) = a
+let second (_,b,_,_) = b
+let third (_,_,c,_) = c
+let fourth (_,_,_,d) = d
 
 (*get the parameter list of a function as it is in the symbol table*)
 let get_param_list a = 
@@ -224,7 +229,7 @@ let eval_expr a b op =
 %type <unit> switch_exp 
 %type <unit> pformat_list
 %type <string> assign
-%type <unit> range
+%type <QuadTypes.superexpr*QuadTypes.superexpr*QuadTypes.superexpr*string>range
 %type <unit> clause
 %type <QuadTypes.stmt_ret_type> stmt_list 
 %type <unit> write
@@ -417,7 +422,7 @@ stmt : T_semicolon { return_null_stmt () }
                                             then print_error "Assign to a const variable" (rhs_start_pos 1)
                                         else
                                             ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); 
-                                            handle_assignment (dereference (third_el $1)) (third_el $3) (get_binop_pos())}
+                                            handle_assignment $2 (dereference (third_el $1)) (third_el $3) (get_binop_pos())}
      | l_value T_plus_plus T_semicolon{if (is_const (second_el $1)) 
                                             then print_error "Assign to a const variable" (rhs_start_pos 1) 
                                        else
