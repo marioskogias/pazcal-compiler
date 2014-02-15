@@ -44,6 +44,16 @@ and cond_ret_type = {
 	q_false : int ref list;
 }
 
+type switch_exp_ret_type = {
+   case_list : string list;
+   jump_list : int ref list
+}
+ 
+type inner_switch_ret_type = {
+    cond_list : string list;
+    true_list : int ref list;
+    code_list : quad_t list
+}
 val return_null : unit -> expr_ret_type
 val return_null_cond : unit -> cond_ret_type 
 val return_null_stmt : unit -> stmt_ret_type

@@ -542,6 +542,51 @@ let handle_if_else_stmt sexpr s1 s2 =
   | Expr expr -> return_null_stmt()
 
 
+let create_cond_quads expr switch =
+    let rec merge_lists = function
+        | ([], [], l) -> l
+        | ((h1::t1), (h2::t2), l) -> merge_lists (t1, t2, l@[(h1,h2)])
+    in let create_quad (a, b) = Quad_cond("=", expr.place, Quad_int(a), b)
+    in let mylist = merge_lists (switch.cond_list, switch.true_list, [])
+    in List.map create_quad mylist
+    
+
+(* Handle switch statement *)
+let handle_switch sexpr inner_switch =
+     match sexpr with
+     | Expr expr ->
+         let cond_quads = create_cond_quads expr inner_switch
+         in {
+             s_code = (inner_switch.code_list)@(cond_quads@expr.code);
+             q_break = [];
+             q_cont = [];
+         }
+     | Cond cond -> return_null_stmt()
+ 
+
+let handle_inner_switch switch_expr body next_switch =
+   let l1 = List.length next_switch.cond_list in
+    let l2 = List.length next_switch.code_list in
+    let l3 = List.length body.s_code in
+    List.iter (fun x -> x := !x + l1) switch_expr.jump_list;
+    List.iter (fun x -> x := !x + l3) next_switch.true_list;
+    List.iter (fun x -> x := !x + l2) body.q_break;
+    {
+    cond_list = (next_switch.cond_list)@(switch_expr.case_list);
+    true_list = next_switch.true_list@switch_expr.jump_list;
+    code_list = next_switch.code_list@(body.s_code)
+    }
+
+
+let handle_switch_exp case switch_exp =
+    let l = List.length switch_exp.case_list in
+    let true_ref=ref (1+l) in
+    {
+    case_list = switch_exp.case_list@[case];
+    jump_list = switch_exp.jump_list@[true_ref];    
+    }
+
+
 (* Handle for statement *)
 let handle_for_stmt indx expr1 expr2 expr3 upordown body pos=
    match expr1, expr2, expr3, indx with

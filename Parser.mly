@@ -1,6 +1,6 @@
 %{
 
-open Printf 
+open Printf
 open Types
 open Identifier
 open Symbol
@@ -225,12 +225,12 @@ let eval_expr a b op =
 %type <QuadTypes.stmt_ret_type> inner_block
 %type <QuadTypes.stmt_ret_type> local_def
 %type <QuadTypes.stmt_ret_type> stmt
-%type <unit> inner_switch 
-%type <unit> switch_exp 
+%type <QuadTypes.inner_switch_ret_type> inner_switch
+%type <QuadTypes.switch_exp_ret_type> switch_exp
 %type <unit> pformat_list
 %type <string> assign
 %type <QuadTypes.superexpr*QuadTypes.superexpr*QuadTypes.superexpr*string>range
-%type <unit> clause
+%type <QuadTypes.stmt_ret_type> clause
 %type <QuadTypes.stmt_ret_type> stmt_list 
 %type <unit> write
 %type <unit> pformat
@@ -447,7 +447,7 @@ stmt : T_semicolon { return_null_stmt () }
      | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := !in_loop - 1);
                                                                          handle_do_while_stmt $3 (third_el $6) }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; return_null_stmt()}
-     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1 ; return_null_stmt()}
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch (third_el $4) $7 }
      | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
      | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
      | T_return T_semicolon { return_null_stmt() }
@@ -471,21 +471,19 @@ range : expr T_TO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_
       | expr T_DOWNTO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "-") }
 
 stmt_list : /*nothing*/ { return_null_stmt() }
-	  | stmt stmt_list { handle_stmt_merge $1 $2 }
+      | stmt_list T_break T_semicolon {let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
+      | stmt_list stmt { handle_stmt_merge $1 $2 }
 
-clause : stmt_list { () }
-       | stmt_list T_NEXT T_semicolon { () }
+clause : stmt_list { ($1) }
+       | stmt_list T_NEXT T_semicolon { ($1) }
+inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]} }
+       | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 
-inner_switch : /*nothing*/ { () }
-	     | switch_exp clause inner_switch { () }
-
-switch_exp : T_case const_expr T_colon  { () }
-	   | T_case const_expr %prec T_colon switch_exp { () } 
+switch_exp : T_case const_expr T_colon  { {case_list=[(snd $2)]; jump_list=[ref 1]} }
+       | T_case const_expr T_colon switch_exp { handle_switch_exp (snd $2) $4 }
 
 pformat_list : /*nothing*/ { () }
 	     | T_comma pformat pformat_list { () }
-
-
 
 write : T_WRITE { () }
       | T_WRITELN { () } 
