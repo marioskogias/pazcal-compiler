@@ -6,10 +6,6 @@ open Semantic
 open Lexing
 open QuadTypes
 
-
-
-
-
 (* Get Type of a quad_elem_t *)
 let get_type = function
   |Quad_none -> TYPE_none
@@ -156,12 +152,17 @@ let string_of_quad_t = function
   |Quad_call (ent,_) ->
     Printf.sprintf "call, -, -, %s\n"
       (id_name ent.entry_id)
-(*  |Quad_par(q,pm) ->
-    Printf.sprintf "par, %s, %s, -"
+  |Quad_par(q,pm) ->
+    let string_of_pass_mode = function
+        |PASS_BY_VALUE -> "V"
+        |PASS_BY_REFERENCE -> "R"
+        |PASS_RET -> "RET" 
+    in Printf.sprintf "par, %s, %s, -\n"
       (string_of_quad_elem_t q)
       (string_of_pass_mode pm)
-*)  |Quad_ret -> "ret, -, -, -\n" 
+  |Quad_ret -> "ret, -, -, -\n" 
   |Quad_dummy -> ""
+
 
 
 (* ----------------------------------------------------------------------------- *)
@@ -177,6 +178,7 @@ let handle_expr_to_stmt sexpr =
 
 
 (* Handle statement merge *) 
+
 let handle_stmt_merge stmt1 stmt2 =
   let len = List.length stmt1.s_code in
   let len2 = List.length stmt2.s_code in
@@ -270,64 +272,8 @@ let handle_minus_minus sexpr =
     | Cond cond -> return_null_stmt()
 
 
-(* Handle signs in expression *)
-let handle_unary_expression op expr pos =
-  match expr with
-  | Expr exp ->
-    let t = get_type exp.place in
-    if (t==TYPE_int) 
-    then match op with
-      |"+" -> 
-        exp
-      |"-" -> 
-        let temp = newTemporary TYPE_int in
-        let new_quad = Quad_calc("-",Quad_int("0"), exp.place, Quad_entry(temp)) in
-          { code = (new_quad :: exp.code); place = Quad_entry(temp) }
-      |_ -> internal "wrong unary expression"; raise Terminate
-    else (
-     (* print_unary_type_error op t pos;*)
-      return_null ()
-    )
-  | _ -> return_null ()
+let handle_func_call ent pos expr_list =
 
-(* Handle L-Values *)
-
-(* Non-array l-value needs no code 
-let handle_simple_lvalue id pos =
-  let (ent, _, correct) = check_lvalue id pos false in
-  if (correct) 
-    then {code = []; place = Quad_entry(ent)}
-  else return_null ()
-*)
-(* Handle an array lvalue 
- * Array lvalue needs to be dereferenced 
-let handle_array_lvalue id pos context q_t =
-  let t = get_type q_t.place in
-  if (t==TYPE_int) 
-    then let (ent, l_typ, correct) = check_lvalue id pos true in
-    if (correct) 
-      (* The new temporary created is a Pointer to l_typ *)
-      then let temp = newTemporary (TYPE_pointer l_typ)  in
-      let new_quad =
-         Quad_array(Quad_entry(ent), q_t.place, temp) in
-      {code = new_quad::q_t.code ; place = Quad_entry(temp)}
-    else return_null ()
-  else let sp = fst context and ep = snd context in  
-    error "Array index must be an integer in expression starting \
-      at line %d, position %d and ending at line %d, position %d."
-    (sp.pos_lnum) (sp.pos_cnum - sp.pos_bol)
-    (ep.pos_lnum) (ep.pos_cnum - ep.pos_bol);
-    return_null ()
-*)
-
-
-(* Ugliest function yet - Handle function calls *)
-(*
-let handle_func_call id pos expr_list =
-
-  (* Get function entry from id *)
-  let ent = lookupEntry (id_make id) LOOKUP_ALL_SCOPES true in
-  
   (* Unzip expression list 
    * Takes expression list - reverse order 
    * Returns a triplet : code, place and types, correct order *)
@@ -349,8 +295,6 @@ let handle_func_call id pos expr_list =
         match hfi.entry_info with
         | ENTRY_parameter (par_info) ->
           let new_quad = Quad_par (hp, par_info.parameter_mode) in
-          if par_info.parameter_mode = PASS_BY_REFERENCE 
-          then check_param_by_reference hp id;
           create_par_quads (new_quad::acc) (tfi, tp)
         | _ -> 
           internal "Function parameter not a parameter"; 
@@ -374,10 +318,6 @@ let handle_func_call id pos expr_list =
   
   match ent.entry_info with
   |ENTRY_function (info) ->
-    (* Check for semantic correctness *)
-    (*if (check_func_call info id type_list pos)
-    then (
-  *)
       (* Generate par_quads *)
       let par_code = create_par_quads [] 
         (info.function_paramlist, param_list) in 
@@ -400,15 +340,12 @@ let handle_func_call id pos expr_list =
           place = Quad_entry(temp)
         }
       | _ -> return_null ()         
-    (*  )
-    else 
-      return_null () *)
   |_ ->   
-    error "Invalid Function call. Identifier %s is not a function \
+    error "Invalid Function call. Identifier is not a function \
       at line %d, position %d."
-      id (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
+      (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
-*)  
+
 (* Handle Comparisons *)
 let handle_comparison op exp1 exp2 (sp,ep) =
   (* First Check the types of the compared things *)

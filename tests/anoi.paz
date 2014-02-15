@@ -1,0 +1,15 @@
+PROC hanoi (int rings, int &x)
+
+{
+    rings++;
+}
+
+
+
+PROGRAM solve ()
+
+{
+    int i = 2;
+	hanoi(22+2, i);
+
+}

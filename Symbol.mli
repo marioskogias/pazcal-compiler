@@ -1,6 +1,6 @@
 (* Symbol table *)
 
-type pass_mode = PASS_BY_VALUE | PASS_BY_REFERENCE
+type pass_mode = PASS_BY_VALUE | PASS_BY_REFERENCE | PASS_RET
 
 type param_status =
   | PARDEF_COMPLETE                             (* Πλήρης ορισμός     *)
@@ -16,7 +16,9 @@ type scope = {
 
 and variable_info = {                         (******* Μεταβλητή *******)
   variable_type   : Types.typ;                (* Τύπος                 *)
-  variable_offset : int                       (* Offset στο Ε.Δ.       *)
+  variable_offset : int;                       (* Offset στο Ε.Δ.       *)
+  is_const : bool;
+  value : string
 }
 
 and function_info = {                         (******* Συνάρτηση *******)
@@ -61,6 +63,7 @@ val initSymbolTable  : int -> unit
 val openScope        : unit -> unit
 val closeScope       : unit -> unit
 val newVariable      : Identifier.id -> Types.typ -> bool -> entry
+val newConst         : Identifier.id -> Types.typ -> string -> bool -> entry
 val newFunction      : Identifier.id -> bool -> entry
 val newParameter     : Identifier.id -> Types.typ -> pass_mode ->
                                         entry -> bool -> entry
