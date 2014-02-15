@@ -71,7 +71,8 @@ type switch_exp_ret_type = {
 type inner_switch_ret_type = {
     cond_list : string list;
     true_list : int ref list;
-    code_list : quad_t list
+    code_list : quad_t list;
+    false_list : int ref list;
 }
 
 
