@@ -461,7 +461,7 @@ let handle_assignment assign lval exp (sp,ep) =
     |"-="->
     begin
     let temp = newTemporary TYPE_int in                                     
-        let minus_quad = Quad_calc("-",expr.place, lval.place, Quad_entry(temp)) in
+        let minus_quad = Quad_calc("-", lval.place, expr.place, Quad_entry(temp)) in
         let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
         {s_code=assign_quad::minus_quad::lval.code@expr.code;                                    
          q_break=[];                                                               
@@ -471,7 +471,7 @@ let handle_assignment assign lval exp (sp,ep) =
     |"*="->
     begin
     let temp = newTemporary TYPE_int in                                     
-        let times_quad = Quad_calc("*",expr.place, lval.place, Quad_entry(temp)) in
+        let times_quad = Quad_calc("*", lval.place, expr.place, Quad_entry(temp)) in
         let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
         {s_code=assign_quad::times_quad::lval.code@expr.code;                                    
          q_break=[];                                                               
@@ -481,7 +481,7 @@ let handle_assignment assign lval exp (sp,ep) =
     |"%="->
     begin
     let temp = newTemporary TYPE_int in                                     
-        let mod_quad = Quad_calc("%",expr.place, lval.place, Quad_entry(temp)) in
+        let mod_quad = Quad_calc("%", lval.place, expr.place, Quad_entry(temp)) in
         let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
         {s_code=assign_quad::mod_quad::lval.code@expr.code;                                    
          q_break=[];                                                               
@@ -491,7 +491,7 @@ let handle_assignment assign lval exp (sp,ep) =
     |"/="->
     begin
     let temp = newTemporary TYPE_int in                                     
-        let div_quad = Quad_calc("/",expr.place, lval.place, Quad_entry(temp)) in
+        let div_quad = Quad_calc("/", lval.place, expr.place, Quad_entry(temp)) in
         let assign_quad = Quad_set(Quad_entry(temp), lval.place) in
         {s_code=assign_quad::div_quad::lval.code@expr.code;                                    
          q_break=[];                                                               
