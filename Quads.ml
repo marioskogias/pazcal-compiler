@@ -562,7 +562,20 @@ let handle_switch sexpr inner_switch =
              q_cont = [];
          }
      | Cond cond -> return_null_stmt()
- 
+
+let handle_switch_default sexpr inner_switch default_clause =
+    match sexpr with
+    | Expr expr ->
+        let l= List.length default_clause.s_code in
+        let l2 = List.length inner_switch.code_list in
+        let cond_quads = create_cond_quads expr inner_switch in
+        List.iter (fun x -> x := !x + l) inner_switch.false_list;
+        {
+         s_code = default_clause.s_code@(inner_switch.code_list@((Quad_jump(ref l2))::(cond_quads@expr.code)));
+         q_break = [];
+         q_cont = [];
+        }
+    | Cond cond -> return_null_stmt()
 
 let handle_inner_switch switch_expr body next_switch =
    let l1 = List.length next_switch.cond_list in
@@ -574,7 +587,8 @@ let handle_inner_switch switch_expr body next_switch =
     {
     cond_list = (next_switch.cond_list)@(switch_expr.case_list);
     true_list = next_switch.true_list@switch_expr.jump_list;
-    code_list = next_switch.code_list@(body.s_code)
+    code_list = next_switch.code_list@(body.s_code);
+    false_list = next_switch.false_list@(body.q_break)
     }
 
 

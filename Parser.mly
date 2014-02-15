@@ -446,7 +446,7 @@ stmt : T_semicolon { return_null_stmt () }
                                                                     }
      | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := !in_loop - 1);
                                                                          handle_do_while_stmt $3 (third_el $6) }
-     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; return_null_stmt()}
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; handle_switch_default (third_el $4) $7 $10}
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch (third_el $4) $7 }
      | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
      | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
@@ -476,7 +476,7 @@ stmt_list : /*nothing*/ { return_null_stmt() }
 
 clause : stmt_list { ($1) }
        | stmt_list T_NEXT T_semicolon { ($1) }
-inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]} }
+inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
        | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 
 switch_exp : T_case const_expr T_colon  { {case_list=[(snd $2)]; jump_list=[ref 1]} }
