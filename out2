@@ -1,75 +1,6 @@
-lost stmt list
-lost stmt
-:=, $3, -, seed
-+, 1, seed, $3
-
-
-printing NEXT clause
-:=, $3, -, seed
-+, 1, seed, $3
-
-lost stmt list
-lost stmt
-:=, $4, -, i
-+, 1, i, $4
-
-
-printing NEXT clause
-:=, $4, -, i
-+, 1, i, $4
-
-lost stmt list
-lost stmt
-jump, -, -, 1
-
-
-printing clause
-jump, -, -, 1
-
-lost stmt list
-lost stmt
-:=, $5, -, i
--, i, 5, $5
-
-lost stmt list
-:=, $5, -, i
--, i, 5, $5
-lost stmt
-:=, $6, -, seed
-*, seed, 3, $6
-
-
-printing NEXT clause
-:=, $6, -, seed
-*, seed, 3, $6
-:=, $5, -, i
--, i, 5, $5
-
-
-printing NEXT clause
-
-
- inner_switch
-
- inner_switch
-:=, $6, -, seed
-*, seed, 3, $6
-:=, $5, -, i
--, i, 5, $5
-
- inner_switch
-jump, -, -, 1
-
- inner_switch
-:=, $4, -, i
-+, 1, i, $4
-
- inner_switch
-:=, $3, -, seed
-+, 1, seed, $3
-jump, -, -, -11
-:=, $8, -, i
-+, 2, i, $8
+jump, -, -, -12
+:=, $10, -, $8
++, 2, $8, $10
 jump, -, -, 4
 jump, -, -, 2
 :=, $7, -, seed
@@ -78,8 +9,10 @@ jump, -, -, 8
 :=, 5, -, seed
 jump, -, -, 10
 jump, -, -, 11
-<, i, 30, 2
-:=, 5, -, i
+<, $8, $9, 2
+:=, $8, -, i
+:=, 30, -, $9
+:=, 5, -, $8
 :=, $6, -, seed
 *, seed, 3, $6
 :=, $5, -, i

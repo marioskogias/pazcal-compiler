@@ -472,16 +472,16 @@ range : expr T_TO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_
       | expr T_DOWNTO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "-") }
 
 stmt_list : /*nothing*/ { return_null_stmt() }
-      | stmt_list T_break T_semicolon {ignore(print_string("\nprinting stmt_list\n");(List.map print_string (List.map string_of_quad_t ($1.s_code)));print_string ("\n") );
+      | stmt_list T_break T_semicolon {
             let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
       
-      | stmt_list stmt { ignore(print_string("lost stmt list\n");(List.map print_string (List.map string_of_quad_t ($1.s_code)));print_string("lost stmt\n");(List.map print_string (List.map string_of_quad_t ($2.s_code)));print_string ("\n"));handle_stmt_merge $1 $2 }
+      | stmt_list stmt { handle_stmt_merge $1 $2 }
 
-clause : stmt_list {ignore(print_string("\nprinting clause\n");(List.map print_string (List.map string_of_quad_t ($1.s_code)));print_string ("\n") ); ($1) }
-       | stmt_list T_NEXT T_semicolon {ignore(print_string("\nprinting NEXT clause\n");(List.map print_string (List.map string_of_quad_t ($1.s_code)));print_string ("\n") ); ($1) }
+clause : stmt_list { ($1) }
+       | stmt_list T_NEXT T_semicolon {($1) }
 
 inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
-       | switch_exp clause inner_switch { ignore(print_string("\n inner_switch\n");(List.map print_string (List.map string_of_quad_t ($2.s_code)))); handle_inner_switch $1 $2 $3 }
+       | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 
 switch_exp : T_case const_expr T_colon  { {case_list=[(snd $2)]; jump_list=[ref 1]} }
        | T_case const_expr T_colon switch_exp { handle_switch_exp (snd $2) $4 }
