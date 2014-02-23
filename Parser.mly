@@ -301,7 +301,9 @@ routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); re
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : openScope program_header block closeScope { $3 }
+program : openScope program_header block closeScope { ignore(newFunction (id_make "PROGRAM") true);
+                                                      { s_code = handle_func_def "PROGRAM" [] $3.s_code; q_cont = []; q_break = [] } 
+                                                    }
 
 openScope : { openScope() }
 
