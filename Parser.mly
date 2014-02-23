@@ -316,11 +316,11 @@ const_expr : expr { ((first_el $1), (second_el $1)) }
 
 
 expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
-    | T_real_const { (TYPE_real,$1, Expr(return_null())) }
-    | T_const_char { (TYPE_char,$1 , Expr(return_null())) }
-    | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr(return_null())) }
-    | T_true { (TYPE_bool,"true", Expr(return_null())) }
-    | T_false { (TYPE_bool,"false", Expr(return_null())) }
+    | T_real_const { (TYPE_real,$1, Expr( {code=[]; place= Quad_real ($1)})) }
+    | T_const_char { (TYPE_char,$1 , Expr( {code=[]; place= Quad_char ($1)})) }
+    | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr({code=[]; place = Quad_char($1)})) }
+    | T_true { (TYPE_bool,"true", Cond(handle_cond_const true)) }
+    | T_false { (TYPE_bool,"false", Cond(handle_cond_const true)) }
     | T_lparen expr T_rparen { ((first_el $2),"test", third_el $2) }
 
 
@@ -424,13 +424,14 @@ stmt : T_semicolon { return_null_stmt () }
      | l_value T_plus_plus T_semicolon{if (is_const (second_el $1)) 
                                             then print_error "Assign to a const variable" (rhs_start_pos 1) 
                                        else
-                                           ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1));
-                                           return_null_stmt () } /*same as above same operant*/
+                                           ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)); 
+                                           handle_plus_plus (third_el $1) 
+                                            } 
      | l_value T_minus_minus T_semicolon {if (is_const (second_el $1)) 
                                             then print_error "Assign to a const variable" (rhs_start_pos 1)
                                           else
                                              ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1));
-                                             return_null_stmt () }
+                                             handle_minus_minus (third_el $1)}
      | call T_semicolon { handle_expr_to_stmt $1 }
      | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1));
                                                       handle_if_else_stmt (third_el $3) $5 $7 }
@@ -469,11 +470,14 @@ range : expr T_TO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_
       | expr T_DOWNTO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "-") }
 
 stmt_list : /*nothing*/ { return_null_stmt() }
-      | stmt_list T_break T_semicolon {let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
+      | stmt_list T_break T_semicolon {
+            let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
+      
       | stmt_list stmt { handle_stmt_merge $1 $2 }
 
 clause : stmt_list { ($1) }
-       | stmt_list T_NEXT T_semicolon { ($1) }
+       | stmt_list T_NEXT T_semicolon {($1) }
+
 inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
        | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 

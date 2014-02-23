@@ -1,0 +1,34 @@
+PROGRAM bubbles ()
+{
+    int seed, i,x=3,y,z;
+    seed = 5;
+    seed %= 8;
+    switch (seed/i){
+    case 3: seed ++;
+            NEXT;
+    case 6: i++;
+            NEXT;
+    case 5:
+    break;
+    case 7: 
+            i-=5;
+            seed *=3;
+            NEXT;
+    case 8: NEXT;
+    default: 
+     seed = 9;
+     i = seed;
+     seed += 5;
+     NEXT;
+    }
+    
+    
+    FOR (i, 5 TO 30 STEP 2){ 
+        break;
+        seed = 5;
+        break;
+        seed += 7;
+        continue;
+        break;
+    }
+}

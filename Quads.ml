@@ -546,7 +546,7 @@ let create_cond_quads expr switch =
     let rec merge_lists = function
         | ([], [], l) -> l
         | ((h1::t1), (h2::t2), l) -> merge_lists (t1, t2, l@[(h1,h2)])
-    in let create_quad (a, b) = Quad_cond("=", expr.place, Quad_int(a), b)
+    in let create_quad (a, b) = Quad_cond("==", expr.place, Quad_int(a), b)
     in let mylist = merge_lists (switch.cond_list, switch.true_list, [])
     in List.map create_quad mylist
     
@@ -569,7 +569,9 @@ let handle_switch_default sexpr inner_switch default_clause =
         let l= List.length default_clause.s_code in
         let l2 = List.length inner_switch.code_list in
         let cond_quads = create_cond_quads expr inner_switch in
+        List.iter (fun x -> x := !x + 1) inner_switch.true_list;
         List.iter (fun x -> x := !x + l) inner_switch.false_list;
+
         {
          s_code = default_clause.s_code@(inner_switch.code_list@((Quad_jump(ref l2))::(cond_quads@expr.code)));
          q_break = [];
@@ -606,39 +608,43 @@ let handle_for_stmt indx expr1 expr2 expr3 upordown body pos=
    match expr1, expr2, expr3, indx with
    | Expr startfrom, Expr endto, Expr step, Expr index ->
         begin
+            let temp_index = newTemporary TYPE_int in
+            let temp_endto = newTemporary TYPE_int in
+            let set_start_quad = Quad_set(startfrom.place, Quad_entry(temp_index)) in
+            let set_end_quad = Quad_set(endto.place, Quad_entry(temp_endto)) in
             let assign_quad = 
                 match index.place with
                 |Quad_valof (_)
-                |Quad_entry (_) -> Quad_set(startfrom.place,index.place)  
+                |Quad_entry (_) -> Quad_set(Quad_entry(temp_index),index.place)  
                 | _ -> internal "Assigning to something not an entry";
                 raise Terminate
             in match upordown with
-                |"+"-> let comp_quads = handle_comparison "<" (Expr(index)) (Expr(endto)) pos in
+                |"+"-> let comp_quads = handle_comparison "<" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
                        let temp = newTemporary TYPE_int in                                     
-                       let plus_quad = Quad_calc("+", step.place, index.place, Quad_entry(temp)) in
-                       let assign_in_loop_quad = Quad_set(Quad_entry(temp), index.place) in
+                       let plus_quad = Quad_calc("+", step.place, Quad_entry(temp_index), Quad_entry(temp)) in
+                       let assign_in_loop_quad = Quad_set(Quad_entry(temp), Quad_entry(temp_index)) in
                        let l1 = List.length body.s_code in
                        let l2 = List.length comp_quads.c_code in
-                       let cont_jump = Quad_jump (ref (-l1 -l2 - 2)) in
+                       let cont_jump = Quad_jump (ref (-l1 -l2 - 3)) in
                        List.iter (fun x -> x := !x + 3) body.q_break;
                        List.iter (fun x -> x := !x + l1) body.q_cont;
                        List.iter (fun x -> x := !x + l1 + 3) comp_quads.q_false;
-                         {s_code= cont_jump::assign_in_loop_quad::plus_quad::body.s_code@(comp_quads.c_code@[assign_quad]);   
+                         {s_code= cont_jump::assign_in_loop_quad::plus_quad::body.s_code@(comp_quads.c_code@(assign_quad::set_end_quad::[set_start_quad]));   
                             q_break=[];
                             q_cont=[]    
                          }
-                |"-" ->let comp_quads = handle_comparison ">" (Expr(index)) (Expr(endto)) pos in
+                |"-" ->let comp_quads = handle_comparison ">" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
                        let temp = newTemporary TYPE_int in                                     
-                       let minus_quad = Quad_calc("-", step.place, index.place, Quad_entry(temp)) in
-                       let assign_in_loop_quad = Quad_set(Quad_entry(temp), index.place) in
+                       let minus_quad = Quad_calc("-", step.place, Quad_entry(temp_index), Quad_entry(temp)) in
+                       let assign_in_loop_quad = Quad_set(Quad_entry(temp), Quad_entry(temp_index)) in
                        let l1 = List.length body.s_code in
                        let l2 = List.length comp_quads.c_code in
-                       let cont_jump = Quad_jump (ref (-l1 -l2 - 2)) in
+                       let cont_jump = Quad_jump (ref (-l1 -l2 - 3)) in
                        List.iter (fun x -> x := !x + l1 + 3) comp_quads.q_false;
                        List.iter (fun x -> x := !x + l1 + 3) body.q_break;
                        List.iter (fun x -> x := !x + l1) body.q_cont;
 
-                         {s_code= cont_jump::assign_in_loop_quad::minus_quad::body.s_code@(comp_quads.c_code@[assign_quad]);   
+                         {s_code= cont_jump::assign_in_loop_quad::minus_quad::body.s_code@(comp_quads.c_code@(assign_quad::set_end_quad::[set_start_quad]));   
                             q_break=[];
                             q_cont=[]
                          }
