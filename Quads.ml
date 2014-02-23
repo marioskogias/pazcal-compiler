@@ -351,7 +351,8 @@ let handle_func_call ent pos expr_list =
           place = Quad_none
         }
       | TYPE_int
-      | TYPE_char -> 
+      | TYPE_char 
+      | TYPE_bool -> 
         let temp = newTemporary info.function_result in 
         let ret_place = Quad_entry temp in
         let par_q = Quad_par ( ret_place , PASS_RET) in {
@@ -723,8 +724,7 @@ let handle_return_proc pos =
 *)
 (* Function definitions *)
 (* Wrap the body around unit-endu and add the local definitions at the beginning *)
-let handle_func_def id local_def stmt =
-  let ent = lookupEntry (id_make id) LOOKUP_ALL_SCOPES true in
+let handle_func_def ent local_def stmt =
   let s_quad = Quad_unit(ent) in
   let e_quad = Quad_endu(ent) in
   e_quad :: (stmt @ (s_quad :: local_def))

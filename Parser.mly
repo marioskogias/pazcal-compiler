@@ -297,12 +297,12 @@ formal_end : /*nothing*/ { [] }
 	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
 routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
-	| routine_header block closeScope { return_null_stmt() }
+	| routine_header block closeScope {  { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } } 
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : openScope program_header block closeScope { ignore(newFunction (id_make "PROGRAM") true);
-                                                      { s_code = handle_func_def "PROGRAM" [] $3.s_code; q_cont = []; q_break = [] } 
+program : openScope program_header block closeScope { let p = newFunction (id_make "PROGRAM") true 
+                                                      in { s_code = handle_func_def p [] $3.s_code; q_cont = []; q_break = [] } 
                                                     }
 
 openScope : { openScope() }
