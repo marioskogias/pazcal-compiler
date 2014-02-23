@@ -192,8 +192,8 @@ let eval_expr a b op =
 
 %start pmodule
 %type <unit> pmodule
-%type <unit> declaration_list
-%type <unit> declaration
+%type <QuadTypes.stmt_ret_type> declaration_list
+%type <QuadTypes.stmt_ret_type> declaration
 %type <unit> const_def
 %type <string * string > const_inner_def //(*name, val, thanasis*)
 %type <(string * string) list> const_def_list
@@ -201,14 +201,14 @@ let eval_expr a b op =
 %type <(string * int list * QuadTypes.superexpr) list> var_def_list
 %type <string * int list * QuadTypes.superexpr> var_init
 %type <int list> var_init_bra_list
-%type <unit> routine
+%type <QuadTypes.stmt_ret_type> routine
 %type <entry> routine_header
 %type <Types.typ * entry> routine_header_beg
 %type <(Types.typ * (string * Symbol.pass_mode * int list)) list> routine_header_body
 %type <(Types.typ * (string * Symbol.pass_mode * int list)) list> routine_header_list
 %type <string * Symbol.pass_mode * int list> formal
 %type <int list> formal_end
-%type <unit> program
+%type <QuadTypes.stmt_ret_type> program
 %type <Types.typ> ptype
 %type <Types.typ * string> const_expr
 %type <Types.typ * string * QuadTypes.superexpr> expr
@@ -238,17 +238,17 @@ let eval_expr a b op =
 
 
 
-pmodule : initialization declaration_list T_eof { () }
+pmodule : initialization declaration_list T_eof { ignore(List.map print_string (List.map string_of_quad_t $2.s_code)) }
 
 initialization : { ignore(initSymbolTable 256);  openScope()}
 
-declaration_list : /*nothing */ { () }
-|declaration declaration_list { () }
+declaration_list : /*nothing */ { return_null_stmt() }
+|declaration declaration_list { handle_stmt_merge $1 $2 }
 
-declaration : const_def { () }
-	    | var_def { () }
-	    | routine { () }
-	    | program { () }
+declaration : const_def { return_null_stmt() }
+	    | var_def { $1 }
+	    | routine { $1 }
+	    | program { $1 }
 
 const_inner_def : T_name T_eq const_expr { ($1, (snd $3)) } 
 
@@ -296,12 +296,12 @@ formal : T_name { ($1,PASS_BY_VALUE,[]) }
 formal_end : /*nothing*/ { [] }
 	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
-routine : routine_header T_semicolon closeScope { forwardFunction $1 }
-	| routine_header block closeScope { () }
+routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
+	| routine_header block closeScope { return_null_stmt() }
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : openScope program_header block closeScope {  ignore(List.map print_string (List.map string_of_quad_t $3.s_code)) }
+program : openScope program_header block closeScope { $3 }
 
 openScope : { openScope() }
 

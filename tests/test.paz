@@ -2,7 +2,7 @@ PROGRAM bubbles ()
 
 {
 
-	int seed = 65;
+	int x,y,z,seed = 65;
     seed = seed + 2;
 
 
