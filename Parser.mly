@@ -191,7 +191,7 @@ let eval_expr a b op =
 %right T_not T_NOT
 
 %start pmodule
-%type <unit> pmodule
+%type <QuadTypes.quad_t list> pmodule
 %type <QuadTypes.stmt_ret_type> declaration_list
 %type <QuadTypes.stmt_ret_type> declaration
 %type <unit> const_def
@@ -238,7 +238,7 @@ let eval_expr a b op =
 
 
 
-pmodule : initialization declaration_list T_eof { ignore(List.map print_string (List.map string_of_quad_t $2.s_code)) }
+pmodule : initialization declaration_list T_eof { ignore(List.map print_string (List.map string_of_quad_t $2.s_code));  $2.s_code }
 
 initialization : { ignore(initSymbolTable 256);  openScope()}
 
