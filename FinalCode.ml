@@ -14,7 +14,11 @@ let local e =
     | _ -> true
 
 (* get_AR function to get bp for non local data -> global data *)
-let get_ar = [ Mov (Register Si, Num (string_of_int !global_bp)) ] 
+let get_ar = [ Mov (Register Si, Num (string_of_int !global_bp)) ]
+
+(* Update links but no nested functions so np = nx *)
+let update_al = 
+    [Push (Register Ax); Mov (Register Ax, Mem_loc ("word", Bp, 4))]
 
 (* Start code *)
 let start_code program_label= 
