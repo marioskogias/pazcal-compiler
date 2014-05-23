@@ -51,7 +51,21 @@ let rec load a reg =
     )
     |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
         ((Mov(Register reg, Mem_loc("word", Di, 0)))::l)
+    (* {x}? *)
 
+(* load address in reg *)
+let load_addr addr reg = 
+    match addr with
+    |Quad_string(s) -> [] (* missing constant string handle *)
+    |Quad_valof(ent) -> load (Quad_entry(ent)) reg
+    |Quad_entry(e) ->( let l = local e in
+        let (offset, is_reference) = get_info e.entry_info in
+        match (l, is_reference) with
+        |(true, false) -> [Lea (Register reg, Mem_loc("word", Bp, offset))] 
+        |(true, true) ->  [Mov (Register reg, Mem_loc("word", Bp, offset))] 
+        |(false,_) -> let ar = get_ar in 
+            (Mov(Register reg, Mem_loc("word", Si,offset))::ar)
+    )
 (* Start code *)
 let start_code program_label= 
   let start = Printf.sprintf "\
