@@ -1,6 +1,21 @@
 open FinalSupport
 open Symbol
 
+(* this it the global bp. Go there to access global data *)
+let global_bp = ref 0
+
+(* Implementation of basic helper functions *)
+
+(* Function to check if an entry is local to a function *)
+(* Entries can either be local or global and we have no nested functions *)
+let local e = 
+    match e.entry_scope.sco_parent with
+    | None -> false
+    | _ -> true
+
+(* get_AR function to get bp for non local data -> global data *)
+let get_ar = [ Mov (Register Si, Num (string_of_int !global_bp)) ] 
+
 (* Start code *)
 let start_code program_label= 
   let start = Printf.sprintf "\
@@ -17,17 +32,6 @@ let start_code program_label=
 
 (* End code *)
 let end_code = End "xseg ends\n\tend  main\n"
-
-(* Implementation of basic helper functions *)
-
-(* Function to check if an entry is local to a function *)
-(* Entries can either be local or global and we have no nested functions *)
-let local e = 
-    match e.entry_scope.sco_parent with
-    | None -> false
-    | _ -> true
-
-
 let final_code_of_quad = function 
     |_ -> [start_code "test"]
     
