@@ -1,5 +1,6 @@
 open FinalSupport
 open Symbol
+open QuadTypes
 
 (* this it the global bp. Go there to access global data *)
 let global_bp = ref 0
@@ -13,12 +14,43 @@ let local e =
     | None -> false
     | _ -> true
 
+let get_info = function 
+  |ENTRY_variable (info) ->
+    let offset = info.variable_offset in
+    (offset, false)
+  |ENTRY_temporary (info) ->
+    let offset = info.temporary_offset in
+    (offset, false)
+  |ENTRY_parameter (info) ->
+    let offset = info.parameter_offset in
+    let mode = (info.parameter_mode = PASS_BY_REFERENCE)
+    in (offset,mode)
+
 (* get_AR function to get bp for non local data -> global data *)
 let get_ar = [ Mov (Register Si, Num (string_of_int !global_bp)) ]
 
 (* Update links but no nested functions so np = nx *)
 let update_al = 
     [Push (Register Ax); Mov (Register Ax, Mem_loc ("word", Bp, 4))]
+
+(* load a to reg *)
+let rec load a reg = 
+    match a with
+    |Quad_int(str) -> [Mov (Register reg, Num str)]
+    |Quad_char(str) -> let asci = string_of_int (Char.code str.[0]) in
+        [Mov (Register reg, Num asci)]
+    (*Missing boolean*)
+    |Quad_entry(e) ->( let l = local e in
+        let (offset, is_reference) = get_info e.entry_info in
+        match (l, is_reference) with
+        |(true, false) -> [Mov (Register reg, Mem_loc("word", Bp, offset))]
+        |(true, true) ->  [Mov (Register reg, Mem_loc("word", Si, 0)); 
+            Mov (Register Si, Mem_loc("word", Bp, offset))]
+        |(false,_) -> let ar = get_ar in 
+            (Mov(Register reg, Mem_loc("word", Si,offset))::ar)
+    )
+    |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
+        ((Mov(Register reg, Mem_loc("word", Di, 0)))::l)
 
 (* Start code *)
 let start_code program_label= 
