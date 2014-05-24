@@ -66,6 +66,22 @@ let load_addr addr reg =
         |(false,_) -> let ar = get_ar in 
             (Mov(Register reg, Mem_loc("word", Si,offset))::ar)
     )
+
+(* store from reg to mem *)
+let store a reg = 
+    match a with
+    |Quad_entry(e) ->( let l = local e in
+        let (offset, is_reference) = get_info e.entry_info in
+        match (l, is_reference) with
+        |(true, false) -> [Mov (Mem_loc("word", Bp, offset), Register reg)] 
+        |(true, true) ->  [Mov (Mem_loc("word", Si, 0), Register reg); 
+                            Mov(Register Si, Mem_loc("word", Bp, offset))] 
+        |(false,_) -> let ar = get_ar in 
+            (Mov(Mem_loc("word", Si,offset), Register reg)::ar)
+    )
+    |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
+        (Mov(Mem_loc("word", Di, 0), Register reg)::l)
+
 (* Start code *)
 let start_code program_label= 
   let start = Printf.sprintf "\
