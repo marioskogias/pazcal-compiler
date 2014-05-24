@@ -82,6 +82,31 @@ let store a reg =
     |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
         (Mov(Mem_loc("word", Di, 0), Register reg)::l)
 
+(* function labels follow _p_num naming format *)
+let func_labels = Hashtbl.create 30
+let func_count = ref 0  
+
+(* get or set function label *)
+let name n = 
+    try
+        Hashtbl.find func_labels n
+    with
+        Not_found -> 
+            incr(func_count);
+            let l = Printf.sprintf "_%s_%d" n !func_count in
+            Hashtbl.add func_labels n l;
+            l
+
+(* end of routine label *)
+let endof n = 
+    let l = Hashtbl.find func_labels n in
+    Printf.sprintf "@%s" l
+
+(* label help routine *)
+let quad_count = ref 0
+let label = incr (quad_count);
+    Printf.sprintf "@%d" !quad_count
+
 (* Start code *)
 let start_code program_label= 
   let start = Printf.sprintf "\
