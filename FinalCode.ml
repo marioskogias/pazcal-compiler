@@ -119,23 +119,35 @@ let start_code program_label=
   \tint\t21h\n\
   main endp\n"
     program_label
-  in (Start start)
+  in [(Start start)]
+
 
 (* End code *)
-let end_code = End "xseg ends\n\tend  main\n"
+let end_code = [End "xseg ends\n\tend  main\n"]
+
+let rec merge_lists = function
+    |(l, []) -> l
+    |(l1, ((h1::tail1)::tail)) -> merge_lists((h1::l1), (tail1::tail))
+    |(l1, ([]::tail)) -> merge_lists(l1, tail)
+
 let final_code_of_quad = function 
-    |_ -> [start_code "test"]
+    |Quad_set(q,e) -> merge_lists([], [ store e Ax ;load q Ax ])
+    |_ -> []
     
 let rec create_assembly = function
     | ([], assembly_list) -> assembly_list
-    | (a::quad_list, assembly_list) -> create_assembly (quad_list, assembly_list@(final_code_of_quad a))
+    | (a::quad_list, assembly_list) -> 
+            let assembly_so_far = (final_code_of_quad a)@ assembly_list
+            in create_assembly (quad_list, assembly_so_far)
 
 let rec print_final_code file_d code =
     let rec print_help d = function
         | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
         | [] -> () 
     in 
-    let assembly_list = create_assembly(code, []) in
-    let assembly_string = (List.map string_of_final_t assembly_list) in
-    print_help file_d assembly_string ; 
-    Printf.fprintf file_d "Final code is coming soon...\n"
+    let assembly = end_code in
+    let assembly_list = create_assembly(code, assembly) in
+    let final_assembly = merge_lists(assembly_list, [start_code "main_prog"]) in 
+    let assembly_string = (List.map string_of_final_t final_assembly) in
+    Printf.fprintf file_d "\n\n\n\nFinal code is \n";
+    print_help file_d assembly_string 
