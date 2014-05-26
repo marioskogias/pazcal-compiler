@@ -1,6 +1,7 @@
 open FinalSupport
 open Symbol
 open QuadTypes
+open Error
 
 (* this it the global bp. Go there to access global data *)
 let global_bp = ref 0
@@ -132,6 +133,17 @@ let rec merge_lists = function
 
 let final_code_of_quad = function 
     |Quad_set(q,e) -> merge_lists([], [ store e Ax ;load q Ax ])
+    |Quad_array(x,y,z) ->
+        let lval = match x with
+            |Quad_entry x -> x
+            |_ -> internal "Error"; raise Terminate
+        in let size = 2 
+        in let code = [store (Quad_entry(z)) Ax; 
+                      [Add (Action_reg Ax, Action_reg Cx )];
+                      load_addr x Cx;
+                      [IMul Cx]; 
+                      [Mov(Register Cx, Num(string_of_int size))]]
+        in merge_lists([], code)
     |_ -> []
     
 let rec create_assembly = function
