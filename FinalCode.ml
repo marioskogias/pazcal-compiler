@@ -105,7 +105,9 @@ let endof n =
 
 (* label help routine *)
 let quad_count = ref 0
-let label = incr (quad_count);
+let label = function
+    |Some a -> Printf.sprintf "@%d" a
+    |None ->incr (quad_count);
     Printf.sprintf "@%d" !quad_count
 
 (* Start code *)
@@ -175,6 +177,19 @@ let final_code_of_quad = function
               in merge_lists([], code)
        |_ -> internal "No operator"; raise Terminate 
     )
+    |Quad_cond(op,x,y,l) -> 
+        let jump_kind = match op with
+                        |"==" -> "je"
+                        |"!=" -> "jne"
+                        |"<=" -> "jle"
+                        |"<" -> "jl"
+                        |">=" -> "jge"
+                        | ">" -> "jg"
+                        |_ -> internal "Not a comparator"; 
+                              raise Terminate
+        in let code = [[Cond_jump(jump_kind, label (Some(!l)))];
+             [Cmp(Ax, Dx)];load y Dx;load x Ax] 
+        in merge_lists([], code)
     |_ -> []
     
 let rec create_assembly = function
