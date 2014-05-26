@@ -144,6 +144,37 @@ let final_code_of_quad = function
                       [IMul Cx]; 
                       [Mov(Register Cx, Num(string_of_int size))]]
         in merge_lists([], code)
+    |Quad_calc(op,x,y,z) ->(
+        match op with
+        |"+"-> let code = [store z Ax;
+                          [Add (Action_reg Ax, Action_reg Dx)];
+                          load y Dx;
+                          load x Ax]
+              in merge_lists([], code)
+        |"+"-> let code = [store z Ax;
+                          [Sub (Action_reg Ax, Action_reg Dx)];
+                          load y Dx;
+                          load x Ax]
+              in merge_lists([], code)
+        |"*"-> let code = [store z Ax;
+                          [IMul Cx];
+                          load y Cx;
+                          load x Ax]
+              in merge_lists([], code)
+        |"*"-> let code = [store z Ax;
+                          [IDiv Cx];
+                          load y Cx;
+                          [Cwd];
+                          load x Ax]
+              in merge_lists([], code)
+        |"%"-> let code = [store z Dx;
+                          [IDiv Cx];
+                          load y Cx;
+                          [Cwd];
+                          load x Ax]
+              in merge_lists([], code)
+       |_ -> internal "No operator"; raise Terminate 
+    )
     |_ -> []
     
 let rec create_assembly = function
