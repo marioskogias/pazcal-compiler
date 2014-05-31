@@ -103,7 +103,10 @@ let endof n =
     let l = Hashtbl.find func_labels n in
     Printf.sprintf "@%s" l
 
-(* label help routine *)
+(* label help routine 
+ with a given number return @<number> else 
+ produce the next label
+ *)
 let quad_count = ref 0
 let label = function
     |Some a -> Printf.sprintf "@%d" a
@@ -190,6 +193,7 @@ let final_code_of_quad = function
         in let code = [[Cond_jump(jump_kind, label (Some(!l)))];
              [Cmp(Ax, Dx)];load y Dx;load x Ax] 
         in merge_lists([], code)
+    |Quad_jump(l) -> [Jump(label (Some(!l)))]
     |_ -> []
     
 let rec create_assembly = function
