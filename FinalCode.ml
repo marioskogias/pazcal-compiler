@@ -87,7 +87,7 @@ let store a reg =
 let func_labels = Hashtbl.create 30
 let func_count = ref 0  
 
-(* get or set function label *)
+(* get or set function label the input is a string *)
 let name n = 
     try
         Hashtbl.find func_labels n
@@ -194,7 +194,18 @@ let final_code_of_quad = function
              [Cmp(Ax, Dx)];load y Dx;load x Ax] 
         in merge_lists([], code)
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
-    |Quad_unit(x) -> []
+    |Quad_unit(x) -> 
+        let size = match x.entry_info with
+          | ENTRY_function (info) -> - info.function_scope.sco_negofs
+          | _ -> internal "Function not a function"; raise Terminate
+        in let code = [[Sub(Action_reg Sp, Constat size)];
+                       [Mov(Registe Bp, RegisterSp)]; 
+                       [Push(Register Bp)];
+                       [Proc(id_name x.entry_id)]]
+        in mege_lists([], code)
+    
+    
+    
     |_ -> []
     
 let rec create_assembly = function
