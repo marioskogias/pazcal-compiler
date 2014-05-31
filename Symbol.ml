@@ -37,7 +37,8 @@ and function_info = {
   mutable function_redeflist : entry list;
   mutable function_result    : Types.typ;
   mutable function_pstatus   : param_status;
-  mutable function_initquad  : int
+  mutable function_initquad  : int;
+  mutable function_scope : scope
 }
 
 and parameter_info = {
@@ -116,6 +117,13 @@ let closeScope () =
       currentScope := scp
   | None ->
       internal "cannot close the outer scope!"
+
+let closeFunctionScope entry =
+    (match entry with
+    |ENTRY_function(info) ->
+        info.function_scope <- !currentScope
+    |_ -> internal "Not a function"; raise Terminate;
+    closeScope())
 
 exception Failure_NewEntry of entry
 
@@ -205,7 +213,8 @@ let newFunction id err =
       function_redeflist = [];
       function_result = TYPE_none;
       function_pstatus = PARDEF_DEFINE;
-      function_initquad = 0
+      function_initquad = 0;
+      function_scope = !currentScope
     } in
     newEntry id (ENTRY_function inf) false
 

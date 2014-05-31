@@ -27,7 +27,8 @@ and function_info = {                         (******* Συνάρτηση *******)
   mutable function_redeflist : entry list;    (* Λίστα παραμέτρων (2η) *)
   mutable function_result    : Types.typ;     (* Τύπος αποτελέσματος   *)
   mutable function_pstatus   : param_status;  (* Κατάσταση παραμέτρων  *)
-  mutable function_initquad  : int            (* Αρχική τετράδα        *)
+  mutable function_initquad  : int;            (* Αρχική τετράδα        *)
+  mutable function_scope     : scope            (* Αρχική τετράδα        *)
 }
 
 and parameter_info = {                        (****** Παράμετρος *******)
@@ -59,9 +60,10 @@ val currentScope : scope ref              (* Τρέχουσα εμβέλεια         *)
 val quadNext : int ref                    (* Αριθμός επόμενης τετράδας *)
 val tempNumber : int ref                  (* Αρίθμηση των temporaries  *)
 
-val initSymbolTable  : int -> unit
-val openScope        : unit -> unit
-val closeScope       : unit -> unit
+val initSymbolTable    : int -> unit
+val openScope          : unit -> unit
+val closeScope         : unit -> unit
+val closeFunctionScope : entry_info -> unit
 val newVariable      : Identifier.id -> Types.typ -> bool -> entry
 val newConst         : Identifier.id -> Types.typ -> string -> bool -> entry
 val newFunction      : Identifier.id -> bool -> entry

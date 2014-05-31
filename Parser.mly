@@ -240,7 +240,7 @@ let eval_expr a b op =
 
 pmodule : initialization declaration_list T_eof { ignore(List.map print_string (List.map string_of_quad_t $2.s_code));  $2.s_code }
 
-initialization : { ignore(initSymbolTable 256);  openScope()}
+initialization : { ignore(initSymbolTable 256); }
 
 declaration_list : /*nothing */ { return_null_stmt() }
 |declaration declaration_list { handle_stmt_merge $1 $2 }
@@ -297,12 +297,14 @@ formal_end : /*nothing*/ { [] }
 	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
 routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
-	| routine_header block closeScope {  { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } } 
+	| routine_header block closeScope {  (*before closing scope pass to fun_entry the size of the scope*)
+                                        ignore(closeFunctionScope $1.entry_info);
+                                        { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } } 
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { () }
 
-program : openScope program_header block closeScope { let p = newFunction (id_make "PROGRAM") true 
-                                                      in { s_code = handle_func_def p [] $3.s_code; q_cont = []; q_break = [] } 
+program : program_header block  { let p = newFunction (id_make "PROGRAM") true 
+                                                      in { s_code = handle_func_def p [] $2.s_code; q_cont = []; q_break = [] } 
                                                     }
 
 openScope : { openScope() }
