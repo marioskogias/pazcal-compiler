@@ -92,11 +92,13 @@ let initSymbolTable size =
    currentScope := the_outer_scope
 
 let openScope () =
+  let base_offset = if (!currentScope = the_outer_scope) then !currentScope.sco_negofs
+                    else start_negative_offset in
   let sco = {
     sco_parent = Some !currentScope;
     sco_nesting = !currentScope.sco_nesting + 1;
     sco_entries = [];
-    sco_negofs = start_negative_offset
+    sco_negofs = base_offset
   } in
   currentScope := sco
 
@@ -106,6 +108,11 @@ let closeScope () =
   List.iter manyentry sco.sco_entries;
   match sco.sco_parent with
   | Some scp ->
+      (* if not program or function adjust the sco_negofs*)
+      if scp != the_outer_scope then 
+          scp.sco_negofs <- sco.sco_negofs
+      else
+          ();
       currentScope := scp
   | None ->
       internal "cannot close the outer scope!"

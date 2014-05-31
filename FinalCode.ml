@@ -194,6 +194,7 @@ let final_code_of_quad = function
              [Cmp(Ax, Dx)];load y Dx;load x Ax] 
         in merge_lists([], code)
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
+    |Quad_unit(x) -> []
     |_ -> []
     
 let rec create_assembly = function
