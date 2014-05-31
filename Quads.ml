@@ -431,8 +431,20 @@ let handle_assignment assign lval exp (sp,ep) =
   let t2 = get_type expr.place in
   if (check_types "=" t1 t2 sp ep) 
   then*) 
-  match exp with
-  | Expr expr ->
+  let expr = match exp with
+  | Expr ex -> ex
+  | Cond c ->
+    let temp = newTemporary TYPE_bool
+    in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let jump_quad = Quad_jump (ref (3)) in
+    let new_quad = Quad_jump (ref (2)) in
+    List.iter (fun x -> x := !x + 2) c.q_false;
+    {
+        code = quad_false :: (new_quad::(quad_true :: c.c_code));
+        place = Quad_entry(temp)
+    }
+  in
     begin
     match assign with
     |"="->
@@ -500,7 +512,6 @@ let handle_assignment assign lval exp (sp,ep) =
         }
     end
   end
-  | Cond cond -> return_null_stmt() 
 (*  else []*)
 
 (* Handle if statement *)

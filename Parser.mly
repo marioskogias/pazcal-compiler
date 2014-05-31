@@ -30,11 +30,17 @@ let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 
 (*function to register a variable*)
 let registerVar var_type place (a,b,c) = match c with
-                                         | Expr(e) -> match e.place with
-                                                        | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
-                                                        | _ -> let quad_e = Expr({code=[]; 
-                                                                                  place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                                                in handle_assignment "=" (dereference quad_e) c place
+                                         | Expr(e) -> 
+                                         begin 
+                                            match e.place with
+                                                | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
+                                                | _ -> 
+                                                    let quad_e = Expr({code=[]; 
+                                                    place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
+                                                    in handle_assignment "=" (dereference quad_e) c place
+                                         end
+                                         | Cond(cond) -> let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
+                                            in handle_assignment "=" (dereference quad_e) c (get_binop_pos())
                                          |_ -> return_null_stmt()
                         
 (*function to register a const*)
