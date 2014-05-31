@@ -204,8 +204,16 @@ let final_code_of_quad = function
                        [Push(Register Bp)];
                        [Proc(id_name x.entry_id)]]
         in merge_lists([], code)
-    
-    
+    |Quad_endu(x) -> let r_name = id_name x.entry_id in
+                     let u_name = name r_name in
+                     let ending = Printf.sprintf "%s\tendp\n" u_name in
+                     let code = [[Misc ending];
+                                 [Ret];
+                                 [Pop(Bp)];
+                                 [Mov(Register Sp, Register Bp)];
+                                 [Label(endof r_name)]]
+                     in merge_lists([], code)
+
     
     |_ -> []
     
