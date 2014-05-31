@@ -2,6 +2,7 @@ open FinalSupport
 open Symbol
 open QuadTypes
 open Error
+open Identifier
 
 (* this it the global bp. Go there to access global data *)
 let global_bp = ref 0
@@ -198,11 +199,11 @@ let final_code_of_quad = function
         let size = match x.entry_info with
           | ENTRY_function (info) -> - info.function_scope.sco_negofs
           | _ -> internal "Function not a function"; raise Terminate
-        in let code = [[Sub(Action_reg Sp, Constat size)];
-                       [Mov(Registe Bp, RegisterSp)]; 
+        in let code = [[Sub(Action_reg Sp, Constant size)];
+                       [Mov(Register Bp, Register Sp)]; 
                        [Push(Register Bp)];
                        [Proc(id_name x.entry_id)]]
-        in mege_lists([], code)
+        in merge_lists([], code)
     
     
     
