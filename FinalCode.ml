@@ -3,6 +3,7 @@ open Symbol
 open QuadTypes
 open Error
 open Identifier
+open Types
 
 (* this it the global bp. Go there to access global data *)
 let global_bp = ref 0
@@ -137,6 +138,12 @@ let rec merge_lists = function
     |(l1, ((h1::tail1)::tail)) -> merge_lists((h1::l1), (tail1::tail))
     |(l1, ([]::tail)) -> merge_lists(l1, tail)
 
+let param_size x = 
+        let size = match x.entry_info with
+          | ENTRY_function (info) -> - info.function_scope.sco_negofs
+          | _ -> internal "Function not a function"; raise Terminate
+        in size
+
 let final_code_of_quad = function 
     |Quad_set(q,e) -> merge_lists([], [ store e Ax ;load q Ax ])
     |Quad_array(x,y,z) ->
@@ -196,13 +203,11 @@ let final_code_of_quad = function
         in merge_lists([], code)
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
     |Quad_unit(x) -> 
-        let size = match x.entry_info with
-          | ENTRY_function (info) -> - info.function_scope.sco_negofs
-          | _ -> internal "Function not a function"; raise Terminate
-        in let code = [[Sub(Action_reg Sp, Constant size)];
+        let size = param_size x in
+        let code = [[Sub(Action_reg Sp, Constant size)];
                        [Mov(Register Bp, Register Sp)]; 
                        [Push(Register Bp)];
-                       [Proc(id_name x.entry_id)]]
+                       [Proc(name (id_name x.entry_id))]]
         in merge_lists([], code)
     |Quad_endu(x) -> let r_name = id_name x.entry_id in
                      let u_name = name r_name in
@@ -213,7 +218,19 @@ let final_code_of_quad = function
                                  [Mov(Register Sp, Register Bp)];
                                  [Label(endof r_name)]]
                      in merge_lists([], code)
-
+    |Quad_call(e,_) -> let function_type  = match e.entry_info with
+                                           | ENTRY_function info ->
+                                                   info.function_result
+                                           | _ -> internal "Call not a funtion";
+                                                raise Terminate
+                        in
+                        let sub_size = if (function_type = TYPE_proc) then 2 else 0 in
+                        let p_size = param_size e in                   
+                        let code = [[Add(Action_reg Sp, Constant(p_size+4))];
+                                    [Call name(id_name e.entry_id)];
+                                    update_al;
+                                    [Sub(Action_reg Sp, Constant sub_size)]]
+                        in merge_lists([], code)                        
     
     |_ -> []
     
