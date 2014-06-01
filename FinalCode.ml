@@ -4,6 +4,7 @@ open QuadTypes
 open Error
 open Identifier
 open Types
+open Quads
 
 (* this it the global bp. Go there to access global data *)
 let global_bp = ref 0
@@ -237,6 +238,22 @@ let final_code_of_quad = function
                         in merge_lists([], code)                        
     
     |Quad_ret -> [Jump endof(!current_fun)]
+    |Quad_par(v,pm) -> let v_type = get_type v in
+                       match (v_type, pm) with
+                       |(TYPE_int, PASS_BY_VALUE) -> 
+                               let code =  [[Push (Register Ax)]; load v Ax] 
+                               in merge_lists([], code)
+                       |(_, PASS_BY_VALUE) -> 
+                               let code = [[Mov(Mem_loc("byte", Si, 0),Register Al)];
+                                           [Mov(Register Si, Register Sp)];
+                                           [Sub(Action_reg Sp, Constant 1)];
+                                           load v Al]
+                               in merge_lists([], code)
+                       |(_, PASS_BY_REFERENCE) 
+                       |(_, PASS_RET) -> 
+                               let code = [[Push(Register Si)];
+                                            load_addr v Si]
+                               in merge_lists([], code)
     |_ -> []
     
 let rec create_assembly = function
