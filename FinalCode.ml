@@ -144,6 +144,8 @@ let param_size x =
           | _ -> internal "Function not a function"; raise Terminate
         in size
 
+let current_fun = ref "fun_name"
+
 let final_code_of_quad = function 
     |Quad_set(q,e) -> merge_lists([], [ store e Ax ;load q Ax ])
     |Quad_array(x,y,z) ->
@@ -204,10 +206,12 @@ let final_code_of_quad = function
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
     |Quad_unit(x) -> 
         let size = param_size x in
+        let fun_name = name (id_name x.entry_id) in
+        current_fun := fun_name ;
         let code = [[Sub(Action_reg Sp, Constant size)];
                        [Mov(Register Bp, Register Sp)]; 
                        [Push(Register Bp)];
-                       [Proc(name (id_name x.entry_id))]]
+                       [Proc(!current_fun)]]
         in merge_lists([], code)
     |Quad_endu(x) -> let r_name = id_name x.entry_id in
                      let u_name = name r_name in
@@ -232,6 +236,7 @@ let final_code_of_quad = function
                                     [Sub(Action_reg Sp, Constant sub_size)]]
                         in merge_lists([], code)                        
     
+    |Quad_ret -> [Jump endof(!current_fun)]
     |_ -> []
     
 let rec create_assembly = function
