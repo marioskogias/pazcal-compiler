@@ -6,9 +6,6 @@ open Identifier
 open Types
 open Quads
 
-(* this it the global bp. Go there to access global data *)
-let global_bp = ref 0
-
 (* Implementation of basic helper functions *)
 
 (* Function to check if an entry is local to a function *)
@@ -31,7 +28,8 @@ let get_info = function
     in (offset,mode)
 
 (* get_AR function to get bp for non local data -> global data *)
-let get_ar = [ Mov (Register Si, Num (string_of_int !global_bp)) ]
+(* we have no nested funtions so ncur = na + 1 where na global scope *)
+let get_ar = [ Mov (Register Si, Mem_loc("word", Bp, 4)) ]
 
 (* Update links but no nested functions so np = nx *)
 let update_al = 
