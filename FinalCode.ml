@@ -114,18 +114,26 @@ let label = function
     |None ->incr (quad_count);
     Printf.sprintf "@%d" !quad_count
 
+(*create a dummy ar to begin with and register the globals*)
+let register_globals size = 
+    let code = Printf.sprintf "\
+    \tmov BP, SP\n\tsub BP, 4\n\
+    \tpush BP\n\tsub SP, 2\n\
+    \tmov BP, SP\n\tsub SP, %d\n" size
+    in code
+
 (* Start code *)
-let start_code program_label= 
+let start_code program_label global_size = 
   let start = Printf.sprintf "\
   xseg\tsegment\tpublic 'code'\n\
   \tassume\tcs : xseg, ds : xseg, ss : xseg\n\
   \torg\t100h\n\
   main\tproc\tnear\n\
-  \tcall\tnear ptr %s\n\
+  %s\tcall\tnear ptr %s\n\
   \tmov\tax, 4C00h\n\
   \tint\t21h\n\
   main endp\n"
-    program_label
+   (register_globals global_size) program_label
   in [(Start start)]
 
 
@@ -267,7 +275,9 @@ let rec print_final_code file_d code =
     in 
     let assembly = end_code in
     let assembly_list = create_assembly(code, assembly) in
-    let final_assembly = merge_lists(assembly_list, [start_code "main_prog"]) in 
+    let globals_size = -(!currentScope.sco_negofs) in
+    print_string (string_of_int globals_size);
+    let final_assembly = merge_lists(assembly_list, [start_code "main_prog" globals_size]) in 
     let assembly_string = (List.map string_of_final_t final_assembly) in
     Printf.fprintf file_d "\n\n\n\nFinal code is \n";
     print_help file_d assembly_string 
