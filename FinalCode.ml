@@ -273,6 +273,15 @@ let rec create_assembly = function
             let assembly_so_far = (final_code_of_quad a)@ assembly_list
             in create_assembly (quad_list, assembly_so_far)
 
+let register_lib_functions = 
+    let command name = Printf.sprintf "extern %s : proc\n" name in
+    let rec help_lib l = 
+        try
+            let lib = command (Stack.pop lib_funcs) in
+            help_lib (lib::l)
+        with Stack.Empty -> l
+    in help_lib []
+
 let rec print_final_code file_d code =
     let rec print_help d = function
         | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
@@ -285,4 +294,5 @@ let rec print_final_code file_d code =
     let final_assembly = merge_lists(assembly_list, [start_code "main_prog" globals_size]) in 
     let assembly_string = (List.map string_of_final_t final_assembly) in
     Printf.fprintf file_d "\n\n\n\nFinal code is \n";
-    print_help file_d assembly_string 
+    print_help file_d assembly_string; 
+    print_help file_d register_lib_functions 
