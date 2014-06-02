@@ -93,8 +93,11 @@ let initSymbolTable size =
    currentScope := the_outer_scope
 
 let openScope () =
-  let base_offset = if (!currentScope = the_outer_scope) then !currentScope.sco_negofs
+  print_string "open scope\n";
+  
+  let base_offset = if (!currentScope.sco_parent != None ) then !currentScope.sco_negofs
                     else start_negative_offset in
+      
   let sco = {
     sco_parent = Some !currentScope;
     sco_nesting = !currentScope.sco_nesting + 1;
@@ -104,6 +107,7 @@ let openScope () =
   currentScope := sco
 
 let closeScope () =
+  print_string "close scope\n";
   let sco = !currentScope in
   let manyentry e = H.remove !tab e.entry_id in
   List.iter manyentry sco.sco_entries;
@@ -122,8 +126,8 @@ let closeFunctionScope entry =
     (match entry with
     |ENTRY_function(info) ->
         info.function_scope <- !currentScope
-    |_ -> internal "Not a function"; raise Terminate;
-    closeScope())
+    |_ -> internal "Not a function"; raise Terminate);
+    closeScope()
 
 exception Failure_NewEntry of entry
 
