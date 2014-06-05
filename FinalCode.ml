@@ -268,16 +268,34 @@ let rec create_assembly = function
             let assembly_so_far = (final_code_of_quad a)@ assembly_list
             in create_assembly (quad_list, assembly_so_far)
 
-let register_lib_functions = 
-    let command name = Printf.sprintf "extern %s : proc\n" name in
-    let rec help_lib l = 
-        try
-            let lib = command (Stack.pop lib_funcs) in
-            help_lib (lib::l)
-        with Stack.Empty -> l
-    in help_lib []
+(* functions to register lib functions *)
+let lib_funcs = ["putchar";"puts";"PROC WRITE_INT";"PROC WRITE_BOOL";
+                 "PROC WRITE_CHAR";"PROC WRITE_STRING";"READ_INT";
+                 "READ_BOOL";"getchar";"REAL READ_REAL";"PROC READ_STRING";
+                 "strlen";"strcmp";"strcpy";"strcat"]
 
+let declare_lib_functions = 
+    let command name = Printf.sprintf "extern %s : proc\n" name in
+    let rec help_lib l = function
+      |[] -> l
+      |(h::t) -> let lib = command h in
+            help_lib (lib::l) t
+    in help_lib [] lib_funcs
+
+let rec register_lib_functions = function
+  |[] -> ()
+  |(h::t) ->  match h with
+     |"putchar" -> ignore(name "print_char"); register_lib_functions t
+     |"puts" -> ignore(name "print_string"); register_lib_functions t
+     |"READ_INT" -> ignore(name "read_int"); register_lib_functions t
+     |"READ_BOOL" -> ignore(name "read_bool"); register_lib_functions t
+     |"getchar" -> ignore(name "read_char"); register_lib_functions t
+     |_ -> ignore(name h); register_lib_functions t
+    
 let rec print_final_code file_d code =
+   
+    (*register lib functions*)
+    register_lib_functions lib_funcs; 
     let rec print_help d = function
         | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
         | [] -> () 
@@ -290,4 +308,4 @@ let rec print_final_code file_d code =
     let assembly_string = (List.map string_of_final_t final_assembly) in
     Printf.fprintf file_d "\n\n\n\nFinal code is \n";
     print_help file_d assembly_string; 
-    print_help file_d register_lib_functions 
+    print_help file_d declare_lib_functions 
