@@ -87,22 +87,17 @@ let store a reg =
 (* function labels follow _p_num naming format *)
 let func_labels = Hashtbl.create 30
 let func_count = ref 0  
-let lib_funcs = Stack.create ()
 
-(* create function label the input is a string *)
-let give_name n =  
-            incr(func_count);
-            let l = Printf.sprintf "_%s_%d" n !func_count in
-            Hashtbl.add func_labels n l;
-            l
-
-(* get function label the input is a string *)
+(* get or set function label the input is a string *)
 let name n = 
     try
         Hashtbl.find func_labels n
     with
-        Not_found -> (* if not found it hasn't been registered -> library function*)
-            Stack.push n lib_funcs;n
+        Not_found -> 
+            incr(func_count);
+            let l = Printf.sprintf "_%s_%d" n !func_count in
+            Hashtbl.add func_labels n l;
+            l
 
 (* end of routine label *)
 let endof n = 
@@ -218,7 +213,7 @@ let final_code_of_quad = function
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
     |Quad_unit(x) -> 
         let size = param_size x in
-        let fun_name = give_name (id_name x.entry_id) in
+        let fun_name = name (id_name x.entry_id) in
         current_fun := fun_name ;
         let code = [[Sub(Action_reg Sp, Constant size)];
                        [Mov(Register Bp, Register Sp)]; 
