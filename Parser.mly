@@ -15,17 +15,17 @@ open Quads
 let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
 
 let rec printList = function 
-    | [] -> ()
-    | [(a,b)] -> printTup (a,b)
-    | (a::b) -> printTup a ;  printList b;;
+  | [] -> ()
+  | [(a,b)] -> printTup (a,b)
+  | (a::b) -> printTup a ;  printList b;;
 
 (*function to create table type*)
 
 let rec table_type var_type = function 
-    | [] -> var_type
+  | [] -> var_type
   | (a::b) -> let x = table_type var_type b in TYPE_array(x,a)
 
-  (* Simple Function to get Expression Position *)
+(* Simple Function to get Expression Position *)
 let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 
 (*function to register a variable*)
@@ -34,18 +34,18 @@ let registerVar var_type place (a,b,c) = match c with
                                                         | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
                                                         | _ -> let quad_e = Expr({code=[]; 
                                                                                   place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-  in handle_assignment "=" (dereference quad_e) c place
-                                                        |_ -> return_null_stmt()
-
-                                                        (*function to register a const*)
+                                                                in handle_assignment "=" (dereference quad_e) c place
+                                         |_ -> return_null_stmt()
+                        
+(*function to register a const*)
 let registerConst var_type (a,v) =  ignore(newConst (id_make a) var_type v true)
 
 (*function to register a param*)
 let register_param anc (param_type, (name, mode, nlist)) = 
-    let var_type = table_type param_type nlist
-        in ignore(newParameter (id_make name)var_type mode anc true)
+	let var_type = table_type param_type nlist
+	in ignore(newParameter (id_make name)var_type mode anc true)
 
-        (*function to register a function/proc and its params*)
+(*function to register a function/proc and its params*)
 let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type); fun_entry
 
 (*function to get variable's type*)
@@ -54,7 +54,7 @@ let rec get_var_type = function
     |(TYPE_array (t,s), a) -> get_var_type (t, a-1)
     |_ -> ignore(error "tables sizes"); TYPE_none
 
-    (*function to check entry is const*)
+(*function to check entry is const*)
 let is_const name = 
     let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
         in
@@ -62,7 +62,7 @@ let is_const name =
         | ENTRY_variable inf ->  inf.is_const
         | _ -> false
 
-        (*function to get a cont val*)
+(*function to get a cont val*)
 let get_const_val name = 
     let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
         in
@@ -70,7 +70,7 @@ let get_const_val name =
         | ENTRY_variable inf ->  inf.value
         | _ -> "0"
 
-        (*function to get entry's name*)
+(*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
 (*handle tuples with 3 elements*)
@@ -87,17 +87,17 @@ let fourth (_,_,_,d) = d
 
 (*get the parameter list of a function as it is in the symbol table*)
 let get_param_list a = 
-    match a.entry_info with 
-        | ENTRY_function inf -> inf.function_paramlist 
-        | _ -> []
+	match a.entry_info with 
+	| ENTRY_function inf -> inf.function_paramlist 
+	| _ -> []
 
-        (*function to evaulate expression*)
+(*function to evaulate expression*)
 
 let eval_expr a b op = 
     try
         let a_val = int_of_string a in
         let b_val = int_of_string b in
-        match op with
+            match op with
             | "+" -> string_of_int (a_val + b_val)
             | "-" ->  string_of_int (a_val - b_val)
             | "*" ->  string_of_int (a_val * b_val)
@@ -105,45 +105,45 @@ let eval_expr a b op =
             | "mod" ->  string_of_int (a_val mod b_val)
         with Failure "int_of_string" -> "this is not a number" (*change this*)
 
-        (* register all library functions *)
+(* register all library functions *)
 let registerLiraryFunctions = 
     let v = (TYPE_proc, newFunction (id_make "putchar") true) in
-    ignore(registerFun v [(TYPE_char, ("c", PASS_BY_VALUE, []))]);
+    ignore(registerFun v [(TYPE_char, ("c", PASS_BY_VALUE, []))])
     let v = (TYPE_proc, newFunction (id_make "puts") true) in
-    ignore(registerFun v [(TYPE_char, ("c", PASS_BY_REFERENCE, [0]))]);
+    ignore(registerFun v [(TYPE_char, ("c", PASS_BY_REFERENCE, [0]))])
     let v = (TYPE_proc, newFunction (id_make "WRITE_INT") true) in
     ignore(registerFun v [(TYPE_int, ("n", PASS_BY_VALUE, []));
-    (TYPE_int, ("w", PASS_BY_VALUE, []))]);
-   let v = (TYPE_proc, newFunction (id_make "WRITE_BOOL") true) in
-   ignore(registerFun v [(TYPE_bool, ("b", PASS_BY_VALUE, []));
-   (TYPE_int, ("w", PASS_BY_VALUE, []))]);
-   let v = (TYPE_proc, newFunction (id_make "WRITE_CHAR") true) in
-   ignore(registerFun v [(TYPE_char, ("c", PASS_BY_VALUE, []));
-   (TYPE_int, ("w", PASS_BY_VALUE, []))]);
-   let v = (TYPE_proc, newFunction (id_make "WRITE_STRING") true) in
-   ignore(registerFun v [(TYPE_char, ("n", PASS_BY_REFERENCE, [0]));
-   (TYPE_int, ("w", PASS_BY_VALUE, []))]);
-   let v = (TYPE_int, newFunction (id_make "READ_INT") true) in
-   ignore(registerFun v []);
-   let v = (TYPE_bool, newFunction (id_make "READ_BOOL") true) in
-   ignore(registerFun v []);
-   let v = (TYPE_char, newFunction (id_make "get_char") true) in
-   ignore(registerFun v []);
-   let v = (TYPE_proc, newFunction (id_make "READ_STRING") true) in
-   ignore(registerFun v [(TYPE_int, ("w", PASS_BY_VALUE, []));
-   (TYPE_char, ("n", PASS_BY_REFERENCE, [0]))]);
-   let v = (TYPE_int, newFunction (id_make "strlen") true) in
-   ignore(registerFun v [(TYPE_char, ("s", PASS_BY_REFERENCE, [0]))]);
-   let v = (TYPE_int, newFunction (id_make "strcmp") true) in
-   ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]));
-   (TYPE_char, ("s2", PASS_BY_REFERENCE, [0]))]);
-   let v = (TYPE_proc, newFunction (id_make "strcpy") true) in
-   ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]));
-   (TYPE_char, ("s2", PASS_BY_REFERENCE, [0]))]);
-   let v = (TYPE_proc, newFunction (id_make "strcat") true) in
-   ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]));
-   (TYPE_char, ("s2", PASS_BY_REFERENCE, [0]))]);
-
+                          (TYPE_int, ("w", PASS_BY_VALUE, []))])
+    let v = (TYPE_proc, newFunction (id_make "WRITE_BOOL") true) in
+    ignore(registerFun v [(TYPE_bool, ("b", PASS_BY_VALUE, []));
+                          (TYPE_int, ("w", PASS_BY_VALUE, []))])
+    let v = (TYPE_proc, newFunction (id_make "WRITE_CHAR") true) in
+    ignore(registerFun v [(TYPE_char, ("c", PASS_BY_VALUE, []));
+                          (TYPE_int, ("w", PASS_BY_VALUE, []))])
+    let v = (TYPE_proc, newFunction (id_make "WRITE_STRING") true) in
+    ignore(registerFun v [(TYPE_char, ("n", PASS_BY_REFERENCE, [0]));
+                          (TYPE_int, ("w", PASS_BY_VALUE, []))])
+    let v = (TYPE_int, newFunction (id_make "READ_INT") true) in
+    ignore(registerFun v [])
+    let v = (TYPE_bool, newFunction (id_make "READ_BOOL") true) in
+    ignore(registerFun v [])
+    let v = (TYPE_char, newFunction (id_make "get_char") true) in
+    ignore(registerFun v [])
+    let v = (TYPE_proc, newFunction (id_make "READ_STRING") true) in
+    ignore(registerFun v [(TYPE_int, ("w", PASS_BY_VALUE, []));
+                          (TYPE_char, ("n", PASS_BY_REFERENCE, [0]))])
+    let v = (TYPE_int, newFunction (id_make "strlen") true) in
+    ignore(registerFun v [(TYPE_char, ("s", PASS_BY_REFERENCE, [0]))])
+    let v = (TYPE_int, newFunction (id_make "strcmp") true) in
+    ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]));
+                          (TYPE_char, ("s2", PASS_BY_REFERENCE, [0]))])
+    let v = (TYPE_proc, newFunction (id_make "strcpy") true) in
+    ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]));
+                          (TYPE_char, ("s2", PASS_BY_REFERENCE, [0]))])
+    let v = (TYPE_proc, newFunction (id_make "strcat") true) in
+    ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]));
+                          (TYPE_char, ("s2", PASS_BY_REFERENCE, [0]))])
+    
 %}
 
 
@@ -282,259 +282,259 @@ pmodule : initialization declaration_list T_eof { ignore(List.map print_string (
 initialization : { ignore(initSymbolTable 256); }
 
 declaration_list : /*nothing */ { return_null_stmt() }
-            |declaration declaration_list { handle_stmt_merge $1 $2 }
+|declaration declaration_list { handle_stmt_merge $1 $2 }
 
-            declaration : const_def { return_null_stmt() }
-            | var_def { $1 }
-            | routine { $1 }
-            | program { $1 }
+declaration : const_def { return_null_stmt() }
+	    | var_def { $1 }
+	    | routine { $1 }
+	    | program { $1 }
 
-            const_inner_def : T_name T_eq const_expr { ($1, (snd $3)) } 
+const_inner_def : T_name T_eq const_expr { ($1, (snd $3)) } 
 
-            const_def : T_const ptype const_inner_def const_def_list T_semicolon { ignore(registerConst $2 $3); ignore(List.map (registerConst $2) $4) }
+const_def : T_const ptype const_inner_def const_def_list T_semicolon { ignore(registerConst $2 $3); ignore(List.map (registerConst $2) $4) }
 
 
-            const_def_list : /*nothing*/ { [] }
-            | T_comma const_inner_def const_def_list { $2::$3 }
+const_def_list : /*nothing*/ { [] }
+	       | T_comma const_inner_def const_def_list { $2::$3 }
 
-            var_def : ptype var_init var_def_list T_semicolon { let stmt = registerVar $1 (get_binop_pos()) $2 in 
-            let list_stmt = List.map (registerVar $1 (get_binop_pos())) $3 in
-            let rec help_merge stmt = function 
-                | [] -> stmt
+var_def : ptype var_init var_def_list T_semicolon { let stmt = registerVar $1 (get_binop_pos()) $2 in 
+                                                    let list_stmt = List.map (registerVar $1 (get_binop_pos())) $3 in
+                                                    let rec help_merge stmt = function 
+                                                            | [] -> stmt
                                                             |a::b -> help_merge (handle_stmt_merge a stmt) b
-            in help_merge stmt list_stmt
-            }
+                                                    in help_merge stmt list_stmt
+                                                 }
 
-            var_def_list : /*nothing*/ { [] }
-                                                            | T_comma var_init var_def_list { ($2::$3) }
+var_def_list : /*nothing*/ { [] }
+	     | T_comma var_init var_def_list { ($2::$3) }
 
-                                                            var_init : T_name { ($1,[], Expr(return_null())) } 
-                                                            | T_name T_eq expr { ($1,[],third_el $3)  }
-                                                            | T_name var_init_bra_list { ($1,$2, Expr(return_null())) }
+var_init : T_name { ($1,[], Expr(return_null())) } 
+	    | T_name T_eq expr { ($1,[],third_el $3)  }
+	    | T_name var_init_bra_list { ($1,$2, Expr(return_null())) }
 
 
-                                                            var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size (fst $2) (snd $2) (rhs_start_pos 1)] } //(*make sure to return only int*)
-                                                            | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
+var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size (fst $2) (snd $2) (rhs_start_pos 1)] } //(*make sure to return only int*)
+		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
-                                                            routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
+routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
 
-                                                            routine_header_body :/*nothing*/ { [] } 
-                                                            |ptype formal routine_header_list { (($1,$2)::$3) }
+routine_header_body :/*nothing*/ { [] } 
+		    |ptype formal routine_header_list { (($1,$2)::$3) }
 
-                                                            routine_header_list : /*nothing*/ { [] }
-                                                            | T_comma ptype formal routine_header_list { (($2,$3) :: $4) }
+routine_header_list : /*nothing*/ { [] }
+		    | T_comma ptype formal routine_header_list { (($2,$3) :: $4) }
 
-                                                            routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2) true) in ignore(openScope());a }
-                                                            | T_FUNC ptype T_name { let a = ($2,newFunction (id_make $3) true) in ignore(openScope());a }
+routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2) true) in ignore(openScope());a }
+		   | T_FUNC ptype T_name { let a = ($2,newFunction (id_make $3) true) in ignore(openScope());a }
 
-                                                            formal : T_name { ($1,PASS_BY_VALUE,[]) }
-                                                            | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
-                                                            | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(table_size (fst $3) (snd $3) (rhs_start_pos 1)::$5)) }
-                                                            | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
+formal : T_name { ($1,PASS_BY_VALUE,[]) }
+       | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
+       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(table_size (fst $3) (snd $3) (rhs_start_pos 1)::$5)) }
+       | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
-                                                            formal_end : /*nothing*/ { [] }
-                                                            | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
+formal_end : /*nothing*/ { [] }
+	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
-                                                            routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
-                                                            | routine_header block {  (*before closing scope pass to fun_entry the size of the scope*)
-                                                                ignore(closeFunctionScope $1.entry_info);
+routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
+	| routine_header block {  (*before closing scope pass to fun_entry the size of the scope*)
+                                        ignore(closeFunctionScope $1.entry_info);
                                         { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } } 
 
-                                                            program_header : T_PROGRAM T_name T_lparen T_rparen { ignore(openScope()) }
+program_header : T_PROGRAM T_name T_lparen T_rparen { ignore(openScope()) }
 
-                                                            program : program_header block closeScope { let p = newFunction (id_make "PROGRAM") true 
-                                                            in { s_code = handle_func_def p [] $2.s_code; q_cont = []; q_break = [] } 
-                                                            }
+program : program_header block closeScope { let p = newFunction (id_make "PROGRAM") true 
+                                                      in { s_code = handle_func_def p [] $2.s_code; q_cont = []; q_break = [] } 
+                                                    }
 
-                                                            openScope : { openScope() }
+openScope : { openScope() }
 
-                                                            closeScope : { closeScope() }
+closeScope : { closeScope() }
 
-                                                            ptype : T_int  { $1 }
-                                                            | T_bool { $1 }
-                                                            | T_char { $1 }
-                                                            | T_REAL { $1 }
+ptype : T_int  { $1 }
+      | T_bool { $1 }
+      | T_char { $1 }
+      | T_REAL { $1 }
 
-                                                            const_expr : expr { ((first_el $1), (second_el $1)) } 
-
-
-                                                            expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
-                                                            | T_real_const { (TYPE_real,$1, Expr( {code=[]; place= Quad_real ($1)})) }
-                                                            | T_const_char { (TYPE_char,$1 , Expr( {code=[]; place= Quad_char ($1)})) }
-                                                            | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr({code=[]; place = Quad_char($1)})) }
-                                                            | T_true { (TYPE_bool,"true", Cond(handle_cond_const true)) }
-                                                            | T_false { (TYPE_bool,"false", Cond(handle_cond_const true)) }
-                                                            | T_lparen expr T_rparen { ((first_el $2),"test", third_el $2) }
+const_expr : expr { ((first_el $1), (second_el $1)) } 
 
 
-                                                            | l_value { if (is_const (second_el $1))
-                                                            then ((first_el $1), get_const_val (second_el $1), Expr(return_null ()))
-                                                            else $1 }
-                                                            | call { let c = match $1 with
+expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
+    | T_real_const { (TYPE_real,$1, Expr( {code=[]; place= Quad_real ($1)})) }
+    | T_const_char { (TYPE_char,$1 , Expr( {code=[]; place= Quad_char ($1)})) }
+    | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr({code=[]; place = Quad_char($1)})) }
+    | T_true { (TYPE_bool,"true", Cond(handle_cond_const true)) }
+    | T_false { (TYPE_bool,"false", Cond(handle_cond_const true)) }
+    | T_lparen expr T_rparen { ((first_el $2),"test", third_el $2) }
+
+
+     | l_value { if (is_const (second_el $1))
+                    then ((first_el $1), get_const_val (second_el $1), Expr(return_null ()))
+                 else $1 }
+     | call { let c = match $1 with
                       | Expr e -> e
-                                                            in (get_type c.place,"test", $1) 
-                                                            }
+               in (get_type c.place,"test", $1) 
+            }
 
-                      | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test", Expr(handle_unary_expression "+" (third_el $2) (rhs_start_pos 2)))}
-                      | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test", Expr(handle_unary_expression "-" (third_el $2) (rhs_start_pos 2)))}
-                      | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test", Cond(handle_not (third_el $2))) }
-                      | T_not expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test", Cond(handle_not (third_el $2)))  }
-                      | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | T_plus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test", Expr(handle_unary_expression "+" (third_el $2) (rhs_start_pos 2)))}
+     | T_minus expr { (check_is_number (first_el $2) (rhs_start_pos 1), "test", Expr(handle_unary_expression "-" (third_el $2) (rhs_start_pos 2)))}
+     | T_NOT expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test", Cond(handle_not (third_el $2))) }
+     | T_not expr { (check_is_bool (first_el $2) (rhs_start_pos 1), "test", Cond(handle_not (third_el $2)))  }
+     | expr T_plus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                            eval_expr (second_el $1) (second_el $3) "+", 
                            Expr(handle_expression "+" (third_el $1) (third_el $3) (get_binop_pos())))}
-                      | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_minus expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                             eval_expr (second_el $1) (second_el $3) "-", 
                             Expr(handle_expression "-" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_times expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                             eval_expr (second_el $1) (second_el $3) "*", 
                             Expr(handle_expression "*" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), 
+     | expr T_div expr { (check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), 
                           eval_expr (second_el $1) (second_el $3) "/", 
                           Expr(handle_expression "/" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_mod expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                           eval_expr (second_el $1) (second_el $3) "mod", 
                           Expr(handle_expression "%" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_MOD expr { (check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                           eval_expr (second_el $1) (second_el $3) "mod", 
                           Expr(handle_expression "%" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                             "test", 
                             Cond(handle_comparison "==" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_not_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_not_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                                 "test", 
                                 Cond(handle_comparison "!=" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_greater expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_greater expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                               "test", 
                               Cond(handle_comparison ">" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_less expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_less expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                            "test", 
                            Cond(handle_comparison "<" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_less_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_less_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                                  "test", 
                                  Cond(handle_comparison "<=" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_greater_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_greater_equal expr { (check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                                     "test", 
                                     Cond(handle_comparison ">=" (third_el $1) (third_el $3) (get_binop_pos()))) }
-                      | expr T_and expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_and expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                           "test", 
                           Cond(handle_and (third_el $1) (third_el $3))) }
-                      | expr T_AND expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
+     | expr T_AND expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                           "test", 
                           Cond(handle_and (third_el $1) (third_el $3))) }
-                      | expr T_OR expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", Cond(handle_or (third_el $1) (third_el $3))) }
-                      | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", Cond(handle_or (third_el $1) (third_el $3))) }
+     | expr T_OR expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", Cond(handle_or (third_el $1) (third_el $3))) }
+     | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", Cond(handle_or (third_el $1) (third_el $3))) }
 
 
-                      l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-                                                            in (get_var_type ((get_type (Quad_entry e)), $2),get_name e,Expr({code=[];place=(Quad_entry (e))}))}
+l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+                                in (get_var_type ((get_type (Quad_entry e)), $2),get_name e,Expr({code=[];place=(Quad_entry (e))}))}
+                                
 
+expr_list : /*nothing*/ { 0 }
+	  | T_lbracket expr T_rbracket expr_list { $4 + 1 }
 
-                      expr_list : /*nothing*/ { 0 }
-                      | T_lbracket expr T_rbracket expr_list { $4 + 1 }
-
-                      call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true *) Expr(return_null()) }
-                      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-                      in let get_expr e = 
-                          match e with
+call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true *) Expr(return_null()) }
+     | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+                                                    in let get_expr e = 
+                                                        match e with
                                                         | Expr e -> e
                                                         | _ -> return_null()
-                      in let get_place e = e.place
-                      in let expr_list = List.map get_expr (third_el $3::$4)
-                      in let expr_types = List.map get_type (List.map get_place expr_list) 
-                      in ignore(check_function_params (get_param_list e) expr_types (rhs_start_pos 1)) ;
+                                                    in let get_place e = e.place
+                                                    in let expr_list = List.map get_expr (third_el $3::$4)
+                                                    in let expr_types = List.map get_type (List.map get_place expr_list) 
+                                                    in ignore(check_function_params (get_param_list e) expr_types (rhs_start_pos 1)) ;
                                                         Expr(handle_func_call e (rhs_start_pos 1) expr_list )
-                      }
+                                                 }
 
-                      expressions : /*nothing*/ { [] }
-                                                        | T_comma expr expressions { third_el $2::$3 }
+expressions : /*nothing*/ { [] }
+	    | T_comma expr expressions { third_el $2::$3 }
 
-                                                        block : T_lbrace  inner_block T_rbrace { $2 }
+block : T_lbrace  inner_block T_rbrace { $2 }
 
-                                                        inner_block : /*nothing*/ { return_null_stmt () }
+inner_block : /*nothing*/ { return_null_stmt () }
 
-                                                        | local_def inner_block { handle_stmt_merge $1 $2 }
-                                                        | stmt inner_block {  handle_stmt_merge $1 $2 }
+	    | local_def inner_block { handle_stmt_merge $1 $2 }
+	    | stmt inner_block {  handle_stmt_merge $1 $2 }
 
-                                                        local_def : const_def { return_null_stmt() }
-                                                        | var_def { $1 }
+local_def : const_def { return_null_stmt() }
+	  | var_def { $1 }
 
-                                                        stmt : T_semicolon { return_null_stmt () }
-                                                        | l_value assign expr T_semicolon {if (is_const (second_el $1)) 
-                                                            then print_error "Assign to a const variable" (rhs_start_pos 1)
-                                                            else
-                                                                ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); 
+stmt : T_semicolon { return_null_stmt () }
+     | l_value assign expr T_semicolon {if (is_const (second_el $1)) 
+                                            then print_error "Assign to a const variable" (rhs_start_pos 1)
+                                        else
+                                            ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); 
                                             handle_assignment $2 (dereference (third_el $1)) (third_el $3) (get_binop_pos())}
-                                                        | l_value T_plus_plus T_semicolon{if (is_const (second_el $1)) 
-                                                        then print_error "Assign to a const variable" (rhs_start_pos 1) 
-                                                        else
-                                                            ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)); 
+     | l_value T_plus_plus T_semicolon{if (is_const (second_el $1)) 
+                                            then print_error "Assign to a const variable" (rhs_start_pos 1) 
+                                       else
+                                           ignore(check_assign "+=" (first_el $1) (first_el $1) (rhs_start_pos 1)); 
                                            handle_plus_plus (third_el $1) 
-                                                        } 
-                                                        | l_value T_minus_minus T_semicolon {if (is_const (second_el $1)) 
-                                                        then print_error "Assign to a const variable" (rhs_start_pos 1)
-                                                        else
-                                                            ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1));
+                                            } 
+     | l_value T_minus_minus T_semicolon {if (is_const (second_el $1)) 
+                                            then print_error "Assign to a const variable" (rhs_start_pos 1)
+                                          else
+                                             ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1));
                                              handle_minus_minus (third_el $1)}
-                                                        | call T_semicolon { handle_expr_to_stmt $1 }
-                                                        | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1));
+     | call T_semicolon { handle_expr_to_stmt $1 }
+     | T_if T_lparen expr T_rparen stmt T_else stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1));
                                                       handle_if_else_stmt (third_el $3) $5 $7 }
-                                                        | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); 
+     | T_if T_lparen expr T_rparen stmt { ignore(check_is_bool (first_el $3)  (rhs_start_pos 1)); 
                                           handle_if_stmt (third_el $3) $5 } 
-                                                        | T_while stoppable T_lparen expr T_rparen stmt { (ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; in_loop := !in_loop -1);
+     | T_while stoppable T_lparen expr T_rparen stmt { (ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; in_loop := !in_loop -1);
                                                         handle_while_stmt (third_el $4) $6 }
-                                                        | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := !in_loop - 1 ; 
+     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := !in_loop - 1 ; 
                                                                     let e = lookupEntry (id_make $4) LOOKUP_ALL_SCOPES true in (
-                                                                        handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) (first $6) (second $6) (third $6) (fourth $6) $8 (get_binop_pos())) 
-                                                                        }
-                                                        | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := !in_loop - 1);
+                            handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) (first $6) (second $6) (third $6) (fourth $6) $8 (get_binop_pos())) 
+                                                                    }
+     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { (ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ; in_loop := !in_loop - 1);
                                                                          handle_do_while_stmt $3 (third_el $6) }
-                                                        | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; handle_switch_default (third_el $4) $7 $10}
-                                                        | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch (third_el $4) $7 }
-                                                        | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
-                                                        | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
-                                                        | T_return T_semicolon { return_null_stmt() }
-                                                        | T_return expr T_semicolon { handle_expr_to_stmt (third_el $2) }
-                                                        | openScope block closeScope { $2 }
-                                                        | write T_lparen T_rparen T_semicolon { return_null_stmt() }
-                                                        | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; handle_switch_default (third_el $4) $7 $10}
+     | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch (third_el $4) $7 }
+     | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
+     | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
+     | T_return T_semicolon { return_null_stmt() }
+     | T_return expr T_semicolon { handle_expr_to_stmt (third_el $2) }
+     | openScope block closeScope { $2 }
+     | write T_lparen T_rparen T_semicolon { return_null_stmt() }
+     | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }
 
-                                                        stoppable : {in_loop := !in_loop + 1}
+stoppable : {in_loop := !in_loop + 1}
 
-                                                        assign : T_eq { $1 }
-                                                        | T_plus_equal { $1 }
-                                                        | T_minus_equal { $1 }
-                                                        | T_mod_equal { $1 }
-                                                        | T_div_equal { $1 }
-                                                        | T_times_equal { $1 }
+assign : T_eq { $1 }
+       | T_plus_equal { $1 }
+       | T_minus_equal { $1 }
+       | T_mod_equal { $1 }
+       | T_div_equal { $1 }
+       | T_times_equal { $1 }
 
-                                                        range : expr T_TO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_int ("1")}), "+") }
-                                                        | expr T_TO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "+") }
-                                                        | expr T_DOWNTO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_int ("1")}), "-") }
-                                                        | expr T_DOWNTO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "-") }
+range : expr T_TO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_int ("1")}), "+") }
+      | expr T_TO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "+") }
+      | expr T_DOWNTO expr { (third_el $1, third_el $3, Expr({ code=[]; place= Quad_int ("1")}), "-") }
+      | expr T_DOWNTO expr T_STEP expr { (third_el $1, third_el $3, third_el $5, "-") }
 
-                                                        stmt_list : /*nothing*/ { return_null_stmt() }
-                                                        | stmt_list T_break T_semicolon {
-let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
+stmt_list : /*nothing*/ { return_null_stmt() }
+      | stmt_list T_break T_semicolon {
+            let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
+      
+      | stmt_list stmt { handle_stmt_merge $1 $2 }
 
-                                                        | stmt_list stmt { handle_stmt_merge $1 $2 }
+clause : stmt_list { ($1) }
+       | stmt_list T_NEXT T_semicolon {($1) }
 
-                                                        clause : stmt_list { ($1) }
-                                                        | stmt_list T_NEXT T_semicolon {($1) }
+inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
+       | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 
-                                                        inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
-                                                        | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
+switch_exp : T_case const_expr T_colon  { {case_list=[(snd $2)]; jump_list=[ref 1]} }
+       | T_case const_expr T_colon switch_exp { handle_switch_exp (snd $2) $4 }
 
-                                                        switch_exp : T_case const_expr T_colon  { {case_list=[(snd $2)]; jump_list=[ref 1]} }
-                                                        | T_case const_expr T_colon switch_exp { handle_switch_exp (snd $2) $4 }
+pformat_list : /*nothing*/ { () }
+	     | T_comma pformat pformat_list { () }
 
-                                                        pformat_list : /*nothing*/ { () }
-                                                        | T_comma pformat pformat_list { () }
+write : T_WRITE { () }
+      | T_WRITELN { () } 
+      | T_WRITESP { () }
+      | T_WRITESPLN { () }
 
-                                                        write : T_WRITE { () }
-                                                        | T_WRITELN { () } 
-                                                        | T_WRITESP { () }
-                                                        | T_WRITESPLN { () }
-
-                                                        pformat : expr { () }
-                                                        | T_FORM T_lparen expr T_comma expr T_rparen { () }
-                                                        | T_FORM T_lparen expr T_comma expr T_comma expr T_rparen { () }
+pformat : expr { () }
+	| T_FORM T_lparen expr T_comma expr T_rparen { () }
+	| T_FORM T_lparen expr T_comma expr T_comma expr T_rparen { () }
