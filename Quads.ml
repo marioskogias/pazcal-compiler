@@ -332,7 +332,7 @@ let handle_func_call ent pos expr_list =
   
   (* Extract expr_list information *)        
   let (code_list, param_list, type_list) = 
-    unzip_expr_list [] [] []  expr_list in
+    unzip_expr_list [] [] []  (List.rev expr_list) in
 
   
   match ent.entry_info with
