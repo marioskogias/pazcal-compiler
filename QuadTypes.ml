@@ -12,6 +12,7 @@ type quad_elem_t =
   |Quad_int of string               (* Constant Integers           *)
   |Quad_char of string              (* Constant Characters         *)
   |Quad_string of string            (* Constant Strings            *)
+  |Quad_bool of string
 
 let string_of_quad_elem_t = function
   |Quad_none          -> ""
@@ -21,6 +22,7 @@ let string_of_quad_elem_t = function
   |Quad_real str      -> str
   |Quad_char str      -> str
   |Quad_string str    -> Printf.sprintf "\"%s\"" str
+  |Quad_bool str      -> str
 
 (* All quad types of the intermediate code *)
 type quad_t =

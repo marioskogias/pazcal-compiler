@@ -30,11 +30,17 @@ let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 
 (*function to register a variable*)
 let registerVar var_type place (a,b,c) = match c with
-                                         | Expr(e) -> match e.place with
-                                                        | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
-                                                        | _ -> let quad_e = Expr({code=[]; 
-                                                                                  place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                                                in handle_assignment "=" (dereference quad_e) c place
+                                         | Expr(e) -> 
+                                         begin 
+                                            match e.place with
+                                                | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
+                                                | _ -> 
+                                                    let quad_e = Expr({code=[]; 
+                                                    place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
+                                                    in handle_assignment "=" (dereference quad_e) c place
+                                         end
+                                         | Cond(cond) -> let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
+                                            in handle_assignment "=" (dereference quad_e) c (get_binop_pos())
                                          |_ -> return_null_stmt()
                         
 (*function to register a const*)
@@ -365,7 +371,7 @@ expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
     | T_const_char {ignore(print_string "\n\n\n\nfound char \n\n\n\n"); (TYPE_char,$1 , Expr( {code=[]; place= Quad_char ($1)})) }
     | T_string_const { ignore(print_string "\n\n\n\nfound string \n\n\n\n");((TYPE_array (TYPE_char,0)),$1, Expr({code=[]; place = Quad_string($1)})) }
     | T_true { (TYPE_bool,"true", Cond(handle_cond_const true)) }
-    | T_false { (TYPE_bool,"false", Cond(handle_cond_const true)) }
+    | T_false { (TYPE_bool,"false", Cond(handle_cond_const false)) }
     | T_lparen expr T_rparen { ((first_el $2),"test", third_el $2) }
 
 

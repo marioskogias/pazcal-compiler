@@ -395,11 +395,11 @@ let handle_cond_const is_true =
   }
 
 (* Handle an "and" cond *)
-let handle_and cond1 cond2 =
+let handle_and sexpr1 sexpr2 =
   (* The "next" quad will be left unchanged for c2 but c1 will point |c2.code| 
    * later. For immediate evaluation when c1 is false we need to go the end 
    * of everything, when c1 is true we need to evaluate c2. *)
-  match cond1, cond2 with
+  match sexpr1, sexpr2 with
   | Cond c1, Cond c2 ->
     let len = List.length c2.c_code in
       List.iter (fun x -> x := !x + len) c1.q_false;
@@ -408,6 +408,43 @@ let handle_and cond1 cond2 =
         q_true = c2.q_true;
         q_false = c1.q_false @ c2.q_false;
       }
+  | Cond c1, Expr e1 ->
+    let temp = newTemporary TYPE_bool
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+    in let c2 = handle_comparison "==" (Expr(e1)) (true_expr) (1, 3) in
+        let len = List.length c2.c_code in
+          List.iter (fun x -> x := !x + len) c1.q_false;
+          { 
+            c_code = c2.c_code @ c1.c_code;
+            q_true = c2.q_true;
+            q_false = c1.q_false @ c2.q_false;
+          }
+  | Expr e1, Cond c2 ->
+    let temp = newTemporary TYPE_bool
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+    in let c1 = handle_comparison "==" (Expr(e1)) true_expr (1, 3) in
+         let len = List.length c2.c_code in
+          List.iter (fun x -> x := !x + len) c1.q_false;
+          { 
+            c_code = c2.c_code @ c1.c_code;
+            q_true = c2.q_true;
+            q_false = c1.q_false @ c2.q_false;
+          }
+  | Expr e1, Expr e2 -> 
+    let temp = newTemporary TYPE_bool
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+    in let c1 = handle_comparison "==" (Expr(e1)) true_expr (1, 3)
+    in let c2 = handle_comparison "==" (Expr(e2)) true_expr (1, 3) in
+        let len = List.length c2.c_code in
+          List.iter (fun x -> x := !x + len) c1.q_false;
+          { 
+            c_code = c2.c_code @ c1.c_code;
+            q_true = c2.q_true;
+            q_false = c1.q_false @ c2.q_false;
+          }
   | _ -> return_null_cond()
 
 (* Handle an "or" cond *)
@@ -431,8 +468,20 @@ let handle_assignment assign lval exp (sp,ep) =
   let t2 = get_type expr.place in
   if (check_types "=" t1 t2 sp ep) 
   then*) 
-  match exp with
-  | Expr expr ->
+  let expr = match exp with
+  | Expr ex -> ex
+  | Cond c ->
+    let temp = newTemporary TYPE_bool
+    in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let jump_quad = Quad_jump (ref (3)) in
+    let new_quad = Quad_jump (ref (2)) in
+    List.iter (fun x -> x := !x + 2) c.q_false;
+    {
+        code = quad_false :: (new_quad::(quad_true :: c.c_code));
+        place = Quad_entry(temp)
+    }
+  in
     begin
     match assign with
     |"="->
@@ -500,7 +549,6 @@ let handle_assignment assign lval exp (sp,ep) =
         }
     end
   end
-  | Cond cond -> return_null_stmt() 
 (*  else []*)
 
 (* Handle if statement *)
