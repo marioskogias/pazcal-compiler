@@ -116,7 +116,7 @@ let label = function
 
 (* functions to register lib functions *)
 let lib_funcs = ["putchar";"puts";
-                 (*"WRITE_INT";"WRITE_BOOL";
+                 "WRITE_INT";(*"WRITE_BOOL";
                  "WRITE_CHAR";"WRITE_STRING";*)
                  "READ_INT";"READ_BOOL";"getchar"(*;
                  "READ_STRING";*
@@ -132,6 +132,7 @@ let rec register_lib_functions = function
      |"READ_INT" -> ignore(help_reg "READ_INT" "_read_int"); register_lib_functions t
      |"READ_BOOL" -> ignore(help_reg "READ_BOOL" "_read_bool"); register_lib_functions t
      |"getchar" -> ignore(help_reg "getchar" "_read_char"); register_lib_functions t
+     |"WRITE_INT" -> ignore(help_reg "WRITE_INT" "_print_int"); register_lib_functions t
      |_ -> ignore(help_reg h h); register_lib_functions t
 
 let declare_lib_functions () = 

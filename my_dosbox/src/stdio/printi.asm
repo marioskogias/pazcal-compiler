@@ -15,8 +15,9 @@ _print_int    proc  near
               
               mov   ax, OFFSET buffer    ; where to store it
               push  ax
-              push  word ptr [bp+8]      ; 1st parameter (the number)
-              mov   ax, 0000h            ; width = 0, flags = 0
+              push  word ptr [bp+10]     ; 1st parameter (the number)
+              mov   ah, byte ptr [bp+8]  ; 2nd parameter (width) to ah
+              mov   al, 0000h            ; flags = 0
               push  ax
               sub   sp, 1
               mov   si, sp

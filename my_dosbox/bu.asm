@@ -4,6 +4,7 @@ xseg    segment public 'code'
     extrn _read_char : proc
     extrn _read_bool : proc
     extrn _read_int : proc
+    extrn _print_int : proc
     extrn _print_string : proc
     extrn _print_char : proc
 
@@ -22,14 +23,14 @@ _PROGRAM_1  proc    near
     push    bp
     mov bp, sp
     sub sp, 0
-    mov al, 39
-    sub sp, 1
-    mov si, sp
-    mov byte ptr [si], al
+    mov ax, 2
+    push    ax
+    mov ax, 100
+    push    ax
     sub sp, 2
     mov ax, word ptr [bp+4]
     push    ax
-    call    near ptr _print_char
+    call    near ptr _print_int
     add sp, 4
 @_PROGRAM_1:
     mov sp, bp
