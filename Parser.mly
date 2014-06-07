@@ -109,38 +109,38 @@ let eval_expr a b op =
 let registerLibraryFunctions () =
     ignore(print_string "register functions"); 
     let v = (TYPE_proc, newFunction (id_make "putchar") true) in
-    ignore(registerFun v [(TYPE_char, ("c1", PASS_BY_VALUE, []))])
+    ignore(registerFun v [(TYPE_char, ("c1", PASS_BY_VALUE, []))]);
     let v = (TYPE_proc, newFunction (id_make "puts") true) in
-    ignore(registerFun v [(TYPE_char, ("c2", PASS_BY_REFERENCE, [0]))])
+    ignore(registerFun v [(TYPE_char, ("c2", PASS_BY_REFERENCE, [0]))]);
     let v = (TYPE_proc, newFunction (id_make "WRITE_INT") true) in
     ignore(registerFun v [(TYPE_int, ("n1", PASS_BY_VALUE, []));
-                          (TYPE_int, ("w1", PASS_BY_VALUE, []))])
+                          (TYPE_int, ("w1", PASS_BY_VALUE, []))]);
     let v = (TYPE_proc, newFunction (id_make "WRITE_BOOL") true) in
     ignore(registerFun v [(TYPE_bool, ("b1", PASS_BY_VALUE, []));
-                          (TYPE_int, ("w2", PASS_BY_VALUE, []))])
+                          (TYPE_int, ("w2", PASS_BY_VALUE, []))]);
     let v = (TYPE_proc, newFunction (id_make "WRITE_CHAR") true) in
     ignore(registerFun v [(TYPE_char, ("c3", PASS_BY_VALUE, []));
-                          (TYPE_int, ("w3", PASS_BY_VALUE, []))])
+                          (TYPE_int, ("w3", PASS_BY_VALUE, []))]);
     let v = (TYPE_proc, newFunction (id_make "WRITE_STRING") true) in
     ignore(registerFun v [(TYPE_char, ("n2", PASS_BY_REFERENCE, [0]));
-                          (TYPE_int, ("w4", PASS_BY_VALUE, []))])
+                          (TYPE_int, ("w4", PASS_BY_VALUE, []))]);
     let v = (TYPE_int, newFunction (id_make "READ_INT") true) in
-    ignore(registerFun v [])
+    ignore(registerFun v []);
     let v = (TYPE_bool, newFunction (id_make "READ_BOOL") true) in
-    ignore(registerFun v [])
+    ignore(registerFun v []);
     let v = (TYPE_char, newFunction (id_make "get_char") true) in
-    ignore(registerFun v [])
+    ignore(registerFun v []);
     let v = (TYPE_proc, newFunction (id_make "READ_STRING") true) in
     ignore(registerFun v [(TYPE_int, ("w5", PASS_BY_VALUE, []));
-                          (TYPE_char, ("n3", PASS_BY_REFERENCE, [0]))])
+                          (TYPE_char, ("n3", PASS_BY_REFERENCE, [0]))]);
     let v = (TYPE_int, newFunction (id_make "strlen") true) in
-    ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]))])
+    ignore(registerFun v [(TYPE_char, ("s1", PASS_BY_REFERENCE, [0]))]);
     let v = (TYPE_int, newFunction (id_make "strcmp") true) in
     ignore(registerFun v [(TYPE_char, ("s2", PASS_BY_REFERENCE, [0]));
-                          (TYPE_char, ("s3", PASS_BY_REFERENCE, [0]))])
+                          (TYPE_char, ("s3", PASS_BY_REFERENCE, [0]))]);
     let v = (TYPE_proc, newFunction (id_make "strcpy") true) in
     ignore(registerFun v [(TYPE_char, ("s4", PASS_BY_REFERENCE, [0]));
-                          (TYPE_char, ("s5", PASS_BY_REFERENCE, [0]))])
+                          (TYPE_char, ("s5", PASS_BY_REFERENCE, [0]))]);
     let v = (TYPE_proc, newFunction (id_make "strcat") true) in
     ignore(registerFun v [(TYPE_char, ("s6", PASS_BY_REFERENCE, [0]));
                           (TYPE_char, ("s7", PASS_BY_REFERENCE, [0]))])
