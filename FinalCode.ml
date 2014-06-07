@@ -114,6 +114,34 @@ let label = function
     |None ->incr (quad_count);
     Printf.sprintf "@%d" !quad_count
 
+(* functions to register lib functions *)
+let lib_funcs = ["putchar";"puts";
+                 (*"WRITE_INT";"WRITE_BOOL";
+                 "WRITE_CHAR";"WRITE_STRING";*)
+                 "READ_INT";"READ_BOOL";"getchar"(*;
+                 "READ_STRING";*
+                 "strlen";"strcmp";"strcpy";"strcat"*)]
+
+let rec register_lib_functions = function
+  |[] -> ()
+  |(h::t) ->  
+      let help_reg k v = Printf.printf "%s %s\n" k v; Hashtbl.add func_labels k v in
+      match h with
+     |"putchar" -> ignore(help_reg "putchar" "_print_char"); register_lib_functions t
+     |"puts" -> ignore(help_reg "puts" "_print_string"); register_lib_functions t
+     |"READ_INT" -> ignore(help_reg "READ_INT" "_read_int"); register_lib_functions t
+     |"READ_BOOL" -> ignore(help_reg "READ_BOOL" "_read_bool"); register_lib_functions t
+     |"getchar" -> ignore(help_reg "getchar" "_read_char"); register_lib_functions t
+     |_ -> ignore(help_reg h h); register_lib_functions t
+
+let declare_lib_functions () = 
+    let command k = Printf.sprintf "\textrn %s : proc\n" (name k) in
+    let rec help_lib l = function
+      |[] -> l
+      |(h::t) -> let lib = command h in
+            help_lib (lib^l) t
+    in help_lib "" lib_funcs
+
 (*create a dummy ar to begin with and register the globals*)
 let register_globals size = 
     let code = Printf.sprintf "\
@@ -128,11 +156,12 @@ let start_code program_label global_size =
   xseg\tsegment\tpublic 'code'\n\
   \tassume\tcs : xseg, ds : xseg, ss : xseg\n\
   \torg\t100h\n\
-  main\tproc\tnear\n\
+  %s\nmain\tproc\tnear\n\
   %s\tcall\tnear ptr %s\n\
   \tmov\tax, 4C00h\n\
   \tint\t21h\n\
   main endp\n"
+  (declare_lib_functions ())
    (register_globals global_size) program_label
   in [(Start start)]
 
@@ -268,34 +297,10 @@ let rec create_assembly = function
             let assembly_so_far = (final_code_of_quad a)@ assembly_list
             in create_assembly (quad_list, assembly_so_far)
 
-(* functions to register lib functions *)
-let lib_funcs = ["putchar";"puts";"PROC WRITE_INT";"PROC WRITE_BOOL";
-                 "PROC WRITE_CHAR";"PROC WRITE_STRING";"READ_INT";
-                 "READ_BOOL";"getchar";"REAL READ_REAL";"PROC READ_STRING";
-                 "strlen";"strcmp";"strcpy";"strcat"]
-
-let declare_lib_functions = 
-    let command name = Printf.sprintf "extern %s : proc\n" name in
-    let rec help_lib l = function
-      |[] -> l
-      |(h::t) -> let lib = command h in
-            help_lib (lib::l) t
-    in help_lib [] lib_funcs
-
-let rec register_lib_functions = function
-  |[] -> ()
-  |(h::t) ->  match h with
-     |"putchar" -> ignore(name "print_char"); register_lib_functions t
-     |"puts" -> ignore(name "print_string"); register_lib_functions t
-     |"READ_INT" -> ignore(name "read_int"); register_lib_functions t
-     |"READ_BOOL" -> ignore(name "read_bool"); register_lib_functions t
-     |"getchar" -> ignore(name "read_char"); register_lib_functions t
-     |_ -> ignore(name h); register_lib_functions t
     
 let rec print_final_code file_d code =
-   
     (*register lib functions*)
-    register_lib_functions lib_funcs; 
+    register_lib_functions lib_funcs;
     let rec print_help d = function
         | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
         | [] -> () 
@@ -304,8 +309,7 @@ let rec print_final_code file_d code =
     let assembly_list = create_assembly(code, assembly) in
     let globals_size = -(!currentScope.sco_negofs) in
     print_string (string_of_int globals_size);
-    let final_assembly = merge_lists(assembly_list, [start_code "main_prog" globals_size]) in 
+    let final_assembly = merge_lists(assembly_list, [start_code (name "PROGRAM") globals_size]) in 
     let assembly_string = (List.map string_of_final_t final_assembly) in
     Printf.fprintf file_d "\n\n\n\nFinal code is \n";
     print_help file_d assembly_string; 
-    print_help file_d declare_lib_functions 

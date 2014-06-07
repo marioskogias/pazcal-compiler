@@ -1,4 +1,4 @@
 PROGRAM solve ()
 {
-    int i = 2;
+    putchar('a');
 }
