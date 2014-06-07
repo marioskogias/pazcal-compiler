@@ -39,7 +39,7 @@ let update_al =
 let rec load a reg = 
     match a with
     |Quad_int(str) -> [Mov (Register reg, Num str)]
-    |Quad_char(str) -> let asci = string_of_int (Char.code str.[0]) in
+    |Quad_char(str) -> let asci = string_of_int (Char.code str.[1]) in
         [Mov (Register reg, Num asci)]
     (*Missing boolean*)
     |Quad_entry(e) ->( let l = local e in

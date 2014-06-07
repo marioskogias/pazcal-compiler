@@ -1,4 +1,4 @@
 PROGRAM solve ()
 {
-    putchar('a');
+    putchar('t');
 }

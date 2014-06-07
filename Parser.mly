@@ -362,8 +362,8 @@ const_expr : expr { ((first_el $1), (second_el $1)) }
 
 expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
     | T_real_const { (TYPE_real,$1, Expr( {code=[]; place= Quad_real ($1)})) }
-    | T_const_char { (TYPE_char,$1 , Expr( {code=[]; place= Quad_char ($1)})) }
-    | T_string_const { (TYPE_array (TYPE_char,0),$1, Expr({code=[]; place = Quad_char($1)})) }
+    | T_const_char {ignore(print_string "\n\n\n\nfound char \n\n\n\n"); (TYPE_char,$1 , Expr( {code=[]; place= Quad_char ($1)})) }
+    | T_string_const { ignore(print_string "\n\n\n\nfound string \n\n\n\n");((TYPE_array (TYPE_char,0)),$1, Expr({code=[]; place = Quad_string($1)})) }
     | T_true { (TYPE_bool,"true", Cond(handle_cond_const true)) }
     | T_false { (TYPE_bool,"false", Cond(handle_cond_const true)) }
     | T_lparen expr T_rparen { ((first_el $2),"test", third_el $2) }
