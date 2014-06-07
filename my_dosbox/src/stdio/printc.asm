@@ -11,7 +11,17 @@ xseg        segment public 'code'
 _print_char proc  near
             push  bp
             mov   bp, sp
-            mov   dl, byte ptr [bp+8]      ; 1st parameter
+            mov   cx, word ptr [bp+8]      ;2nd parameter width
+            cmp   cl,00h
+            je    no_padd
+            cmp   cl,01h
+            je    no_padd
+            dec   cx
+again:      mov   dl,20h
+            mov   ah,02h
+            int   21h
+            loop  again
+no_padd:    mov   dl, byte ptr [bp+10]     ; 1st parameter
             or    dl, dl                   ; ignore high order byte
             jz    ok                       ; if 0, then ok
             cmp   dl, 0Ah

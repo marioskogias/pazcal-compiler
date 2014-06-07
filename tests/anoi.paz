@@ -1,4 +1,4 @@
 PROGRAM solve ()
 {
-    putchar('t');
+    WRITE_CHAR('2', 100);
 }
