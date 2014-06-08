@@ -411,7 +411,22 @@ call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
                                                  }
 
 expressions : /*nothing*/ { [] }
-	    | T_comma expr expressions { third_el $2::$3 }
+	    | T_comma expr expressions { 
+            let sexpr = match third_el $2 with
+            | Expr exp -> Expr exp
+            | Cond c -> 
+                let temp = newTemporary TYPE_bool                                           
+                in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
+                in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
+                in let jump_quad = Quad_jump (ref (3)) in                                   
+                let new_quad = Quad_jump (ref (2)) in                                       
+                List.iter (fun x -> x := !x + 2) c.q_false;                                 
+                Expr{                                                                           
+                    code = quad_false :: (new_quad::(quad_true :: c.c_code));               
+                    place = Quad_entry(temp)                                                
+                }
+                in
+            sexpr::$3 }
 
 block : T_lbrace  inner_block T_rbrace { $2 }
 
