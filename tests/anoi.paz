@@ -1,4 +1,4 @@
 PROGRAM solve ()
 {
-    WRITE_CHAR('2', 100);
+    WRITE_BOOL(true, 100);
 }

@@ -41,6 +41,10 @@ let rec load a reg =
     |Quad_int(str) -> [Mov (Register reg, Num str)]
     |Quad_char(str) -> let asci = string_of_int (Char.code str.[1]) in
         [Mov (Register reg, Num asci)]
+    |Quad_bool(str) -> (match str with
+       |"true" -> [Mov (Register reg, Num "1")]
+       |"false" -> [Mov (Register reg, Num "0")]
+     )
     (*Missing boolean*)
     |Quad_entry(e) ->( let l = local e in
         let (offset, is_reference) = get_info e.entry_info in
