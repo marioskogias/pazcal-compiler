@@ -70,11 +70,13 @@ let load_addr addr reg =
     |Quad_valof(ent) -> load (Quad_entry(ent)) reg
     |Quad_entry(e) ->( let l = local e in
         let (offset, is_reference) = get_info e.entry_info in
+        let entry_type = get_entry_type e in
+        let length = mem_size entry_type in 
         match (l, is_reference) with
-        |(true, false) -> [Lea (Register reg, Mem_loc("word", Bp, offset))] 
-        |(true, true) ->  [Mov (Register reg, Mem_loc("word", Bp, offset))] 
+        |(true, false) -> [Lea (Register reg, Mem_loc(length, Bp, offset))] 
+        |(true, true) ->  [Mov (Register reg, Mem_loc(length, Bp, offset))] 
         |(false,_) -> let ar = get_ar in 
-            (Mov(Register reg, Mem_loc("word", Si,offset))::ar)
+            (Mov(Register reg, Mem_loc(length, Si,offset))::ar)
     )
 
 (* store from reg to mem *)

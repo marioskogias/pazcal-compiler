@@ -36,6 +36,7 @@ let get_register = function
   |(Cx, _) -> Cl
   |(Dx, TYPE_int) -> Dx
   |(Dx, _) -> Dl
+  |(reg, _) -> reg
 
 (* In calculations we can have either registers or constants *)
 type action_arg = 
