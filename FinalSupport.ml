@@ -53,6 +53,10 @@ type mem_loc =
   | String_addr of string                 (* @strx                  *)
   | Num of string                         (* Constant               *)
 
+let mem_size = function
+  |TYPE_int -> "word"
+  |_ -> "byte"
+
 let string_of_mem_loc = function
   | Register reg -> (string_of_register reg)
   | Mem_loc (size, reg, offset) ->
