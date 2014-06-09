@@ -1,3 +1,6 @@
+open Types
+open QuadTypes
+
 (* This file includes the supportive functions and types for final code generation*)
 
 (* Registers *)
@@ -23,6 +26,16 @@ let string_of_register = function
   | Ch -> "ch"
   | Dl -> "dl"
   | Dh -> "dh"
+
+let get_register = function
+  |(Ax, TYPE_int) -> Ax
+  |(Ax, _) -> Al
+  |(Bx, TYPE_int) -> Bx
+  |(Bx, _) -> Bl
+  |(Cx, TYPE_int) -> Cx
+  |(Cx, _) -> Cl
+  |(Dx, TYPE_int) -> Dx
+  |(Dx, _) -> Dl
 
 (* In calculations we can have either registers or constants *)
 type action_arg = 
