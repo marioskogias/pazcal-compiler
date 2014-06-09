@@ -14,13 +14,7 @@ let get_type = function
   |Quad_char(_) -> TYPE_char
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
   |Quad_valof (ent) 
-  |Quad_entry (ent) -> 
-    match ent.entry_info with
-    |ENTRY_none -> TYPE_none
-    |ENTRY_variable (info) -> info.variable_type
-    |ENTRY_parameter (info) -> info.parameter_type
-    |ENTRY_function (info) -> info.function_result
-    |ENTRY_temporary (info) -> info.temporary_type
+  |Quad_entry (ent) -> get_entry_type ent 
 (* function to get entry's type)                                        
 let get_type e =                                                        
   match e.entry_info with                                                 

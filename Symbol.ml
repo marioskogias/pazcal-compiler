@@ -321,3 +321,11 @@ let endFunctionHeader e typ =
       inf.function_pstatus <- PARDEF_COMPLETE
   | _ ->
       internal "Cannot end parameters in a non-function"
+
+let get_entry_type ent = 
+    match ent.entry_info with
+    |ENTRY_none -> TYPE_none
+    |ENTRY_variable (info) -> info.variable_type
+    |ENTRY_parameter (info) -> info.parameter_type
+    |ENTRY_function (info) -> info.function_result
+    |ENTRY_temporary (info) -> info.temporary_type
