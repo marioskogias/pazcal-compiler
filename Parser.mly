@@ -447,7 +447,20 @@ call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
                                                         | Expr e -> e
                                                         | _ -> return_null()
                                                     in let get_place e = e.place
-                                                    in let expr_list = List.map get_expr (third_el $3::$4)
+                                                    in let sexpr = match third_el $3 with
+                                                    | Expr exp -> Expr exp
+                                                    | Cond c ->
+                                                        let temp = newTemporary TYPE_bool
+                                                        in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
+                                                        in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+                                                        in let jump_quad = Quad_jump (ref (3)) in                       
+                                                        let new_quad = Quad_jump (ref (2)) in                           
+                                                        List.iter (fun x -> x := !x + 2) c.q_false;                     
+                                                        Expr{                                                           
+                                                            code = quad_false :: (new_quad::(quad_true :: c.c_code));
+                                                            place = Quad_entry(temp)
+                                                            }
+                                                    in let expr_list = List.map get_expr (sexpr::$4)
                                                     in let expr_types = List.map get_type (List.map get_place expr_list) 
                                                     in ignore(check_function_params (get_param_list e) expr_types (rhs_start_pos 1)) ;
                                                         Expr(handle_func_call e (rhs_start_pos 1) expr_list )
