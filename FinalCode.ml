@@ -84,15 +84,19 @@ let store a reg =
     match a with
     |Quad_entry(e) ->( let l = local e in
         let (offset, is_reference) = get_info e.entry_info in
+        let entry_type = get_entry_type e in
+        let length = mem_size entry_type in 
         match (l, is_reference) with
-        |(true, false) -> [Mov (Mem_loc("word", Bp, offset), Register reg)] 
-        |(true, true) ->  [Mov (Mem_loc("word", Si, 0), Register reg); 
-                            Mov(Register Si, Mem_loc("word", Bp, offset))] 
+        |(true, false) -> [Mov (Mem_loc(length, Bp, offset), Register get_register(reg, entry_type))] 
+        |(true, true) ->  [Mov (Mem_loc(length, Si, 0), Register get_register(reg, entry_type)); 
+                            Mov(Register Si, Mem_loc(length, Bp, offset))] 
         |(false,_) -> let ar = get_ar in 
             (Mov(Mem_loc("word", Si,offset), Register reg)::ar)
     )
     |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
-        (Mov(Mem_loc("word", Di, 0), Register reg)::l)
+        let entry_type = get_entry_type e in
+        let length = mem_size entry_type in 
+        (Mov(Mem_loc(length, Di, 0), Register get_register(reg, entry_type))::l)
 
 (* function labels follow _p_num naming format *)
 let func_labels = Hashtbl.create 30
