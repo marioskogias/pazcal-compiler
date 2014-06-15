@@ -348,11 +348,13 @@ routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); re
                                         ignore(closeFunctionScope $1.entry_info);
                                         { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } } 
 
-program_header : T_PROGRAM T_name T_lparen T_rparen { ignore(openScope()) }
-
-program : program_header block closeScope { let p = newFunction (id_make "PROGRAM") true 
-                                                      in { s_code = handle_func_def p [] $2.s_code; q_cont = []; q_break = [] } 
+program_header : T_PROGRAM T_name T_lparen T_rparen { let fn =  newFunction (id_make "PROGRAM") true in 
+                                                        ignore(openScope());
+                                                        fn 
                                                     }
+
+program : program_header block { ignore(closeFunctionScope $1.entry_info);
+                                 { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } }
 
 openScope : { openScope() }
 

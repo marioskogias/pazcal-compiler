@@ -273,6 +273,7 @@ let final_code_of_quad = function
     |Quad_unit(x) -> 
         let size = param_size x in
         let fun_name = name (id_name x.entry_id) in
+        Printf.printf "The function is %s\n" fun_name;
         current_fun := fun_name ;
         let code = [[Sub(Action_reg Sp, Constant size)];
                        [Mov(Register Bp, Register Sp)]; 
