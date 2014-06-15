@@ -324,7 +324,7 @@ var_init : T_name { ($1,[], Expr(return_null())) }
 var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size (fst $2) (snd $2) (rhs_start_pos 1)] } //(*make sure to return only int*)
 		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
 
-routine_header : routine_header_beg T_lparen routine_header_body T_rparen { registerFun $1 $3 }
+routine_header : routine_header_beg T_lparen routine_header_body T_rparen {ignore(currentFun := (snd $1)); registerFun $1 $3 }
 
 routine_header_body :/*nothing*/ { [] } 
 		    |ptype formal routine_header_list { (($1,$2)::$3) }
@@ -530,8 +530,12 @@ stmt : T_semicolon { return_null_stmt () }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch (third_el $4) $7 }
      | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
      | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
-     | T_return T_semicolon { return_null_stmt() }
-     | T_return expr T_semicolon { handle_expr_to_stmt (third_el $2) }
+     | T_return T_semicolon { {s_code = handle_return_proc (rhs_start_pos 1); q_cont=[]; q_break=[]} }
+     | T_return expr T_semicolon { let expr = match (third_el $2) with
+                                              |Expr e -> e
+                                              |_ -> error "Not an expression";raise Terminate in
+                                   let ret_code = handle_return_expr expr (rhs_start_pos 1) in
+                                   {s_code = ret_code ; q_cont=[]; q_break=[]}}
      | openScope block closeScope { $2 }
      | write T_lparen T_rparen T_semicolon { return_null_stmt() }
      | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }

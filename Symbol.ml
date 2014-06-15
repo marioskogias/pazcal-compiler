@@ -86,6 +86,8 @@ let currentScope = ref the_outer_scope
 let quadNext = ref 1
 let tempNumber = ref 1
 
+let currentFun = ref (no_entry (id_make "temp"))
+
 let tab = ref (H.create 0)
 
 let initSymbolTable size =
@@ -296,7 +298,22 @@ let endFunctionHeader e typ =
             internal "Cannot end parameters in an already defined function"
         | PARDEF_DEFINE ->
             inf.function_result <- typ;
-            let offset = ref start_positive_offset in
+            let offset = 
+              match typ with 
+  			    	| TYPE_proc -> ref start_positive_offset
+	  			    | TYPE_char
+		  		    | TYPE_bool -> 
+			  		    ignore(newParameter (id_make "$$") 
+				  				     typ PASS_BY_REFERENCE e true);
+					      ref (start_positive_offset - 1);
+		  		    | TYPE_int -> 
+			  		    ignore(newParameter (id_make "$$") 
+				  				     typ PASS_BY_REFERENCE e true);
+					      ref (start_positive_offset - 2);
+				    | _ -> 
+                internal "Return type must be int, char or bool";
+	  				    raise Terminate
+            in 
             let fix_offset e =
               match e.entry_info with
               | ENTRY_parameter inf ->

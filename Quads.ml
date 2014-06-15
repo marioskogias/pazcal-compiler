@@ -737,15 +737,15 @@ let handle_do_while_stmt stmt sexpr =
 (* Handle a return expression *)
 (* After semantically checking the return types, and set to "$$" - the extra 
  * parameter by reference and then return (Quad_ret) *)
-(*let handle_return_expr expr pos=
+let handle_return_expr expr pos=
   let t = get_type expr.place in
-  if (equalType t !currentScope.sco_ret_type) 
+  let fnType =get_entry_type !currentFun in  
+  if (equalType t fnType) 
   then let ret_entry = lookupEntry (id_make "$$") LOOKUP_CURRENT_SCOPE true
     in Quad_ret ::(Quad_set(expr.place, Quad_entry(ret_entry))):: expr.code
   else (
-    error "Attempting to return %s when %s was expected, \
+    error "Wrong types in return, \
       in line %d, position %d" 
-      (string_of_typ t) (string_of_typ !currentScope.sco_ret_type)
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     []
   )
@@ -753,17 +753,16 @@ let handle_do_while_stmt stmt sexpr =
 (* Proc return *)
 (* Make sure nothing should be returned and return *)
 let handle_return_proc pos =
-  if (equalType TYPE_proc !currentScope.sco_ret_type)
+  if (equalType TYPE_proc (get_entry_type !currentFun))
   then
     [Quad_ret]
   else (
-    error "Attemping to return proc when %s was expected, \
+    error "Attemping to return something in a proc, \
       in line %d, position %d"
-      (string_of_typ !currentScope.sco_ret_type)
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     []
   )
-*)
+
 (* Function definitions *)
 (* Wrap the body around unit-endu and add the local definitions at the beginning *)
 let handle_func_def ent local_def stmt =

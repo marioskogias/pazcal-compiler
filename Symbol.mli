@@ -59,6 +59,7 @@ type lookup_type = LOOKUP_CURRENT_SCOPE | LOOKUP_ALL_SCOPES
 val currentScope : scope ref              (* Τρέχουσα εμβέλεια         *)
 val quadNext : int ref                    (* Αριθμός επόμενης τετράδας *)
 val tempNumber : int ref                  (* Αρίθμηση των temporaries  *)
+val currentFun : entry ref
 
 val initSymbolTable    : int -> unit
 val openScope          : unit -> unit
