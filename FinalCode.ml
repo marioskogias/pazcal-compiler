@@ -205,22 +205,32 @@ let final_code_of_quad = function
         let lval = match x with
             |Quad_entry x -> x
             |_ -> internal "Error"; raise Terminate
-        in let size = 2 
+        in let size = 
+          match lval.entry_info with
+          |ENTRY_variable(info)-> sizeOfArrayType info.variable_type
+          |ENTRY_parameter(info) ->sizeOfArrayType info.parameter_type
+          |_ -> internal "Called array with not an array"; raise Terminate
         in let code = [store (Quad_entry(z)) Ax; 
                       [Add (Action_reg Ax, Action_reg Cx )];
                       load_addr x Cx;
                       [IMul Cx]; 
-                      [Mov(Register Cx, Num(string_of_int size))]]
+                      [Mov(Register Cx, Num(string_of_int size))];
+                      load y Ax]
         in merge_lists([], code)
-    |Quad_calc(op,x,y,z) ->(
+    |Quad_calc(op,x,y,z) ->
+        let type_x = get_type x in
+        let type_y = get_type y in 
+        (
         match op with
         |"+"-> let code = [store z Ax;
-                          [Add (Action_reg Ax, Action_reg Dx)];
+                          [Add (Action_reg get_register(Ax, type_x), 
+                                Action_reg get_register(Dx, type_y))];
                           load y Dx;
                           load x Ax]
               in merge_lists([], code)
         |"+"-> let code = [store z Ax;
-                          [Sub (Action_reg Ax, Action_reg Dx)];
+                          [Sub (Action_reg get_register(Ax, type_x), 
+                                Action_reg get_register(Dx, type_y))];
                           load y Dx;
                           load x Ax]
               in merge_lists([], code)
@@ -243,7 +253,8 @@ let final_code_of_quad = function
               in merge_lists([], code)
        |_ -> internal "No operator"; raise Terminate 
     )
-    |Quad_cond(op,x,y,l) -> 
+    |Quad_cond(op,x,y,l) ->
+        let op_type = get_type x in 
         let jump_kind = match op with
                         |"==" -> "je"
                         |"!=" -> "jne"
@@ -254,7 +265,9 @@ let final_code_of_quad = function
                         |_ -> internal "Not a comparator"; 
                               raise Terminate
         in let code = [[Cond_jump(jump_kind, label (Some(!l)))];
-             [Cmp(Ax, Dx)];load y Dx;load x Ax] 
+                       [Cmp(get_register(Ax, op_type), get_register(Dx, op_type))];
+                       load y Dx;
+                       load x Ax] 
         in merge_lists([], code)
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
     |Quad_unit(x) -> 

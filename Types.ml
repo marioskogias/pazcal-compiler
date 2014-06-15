@@ -17,6 +17,11 @@ let rec sizeOfType t =
    | TYPE_array (et, sz) -> sz * sizeOfType et
    | _                   -> 0
 
+let rec sizeOfArrayType t =  
+  match t with
+    |TYPE_array(et, sz) -> sizeOfArrayType et
+    |_ -> sizeOfType t
+
 let rec equalType t1 t2 =
   let printType = function
     |TYPE_array(_,_) ->print_string "array\n"
