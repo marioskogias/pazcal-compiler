@@ -114,7 +114,8 @@ let name n =
             l
 
 (* end of routine label *)
-let endof n = 
+let endof n =
+    Printf.printf "\nIn endof : %s\n" n; 
     let l = Hashtbl.find func_labels n in
     Printf.sprintf "@%s" l
 
@@ -272,13 +273,14 @@ let final_code_of_quad = function
     |Quad_jump(l) -> [Jump(label (Some(!l)))]
     |Quad_unit(x) -> 
         let size = param_size x in
-        let fun_name = name (id_name x.entry_id) in
+        let fun_real_name = id_name x.entry_id in
+        let fun_name = name fun_real_name in
         Printf.printf "The function is %s\n" fun_name;
-        current_fun := fun_name ;
+        current_fun := fun_real_name;
         let code = [[Sub(Action_reg Sp, Constant size)];
                        [Mov(Register Bp, Register Sp)]; 
                        [Push(Register Bp)];
-                       [Proc(!current_fun)]]
+                       [Proc(fun_name)]]
         in merge_lists([], code)
     |Quad_endu(x) -> let r_name = id_name x.entry_id in
                      let u_name = name r_name in
@@ -325,7 +327,7 @@ let final_code_of_quad = function
 let rec create_assembly = function
     | ([], assembly_list) -> assembly_list
     | (a::quad_list, assembly_list) -> 
-            let assembly_so_far = (final_code_of_quad a)@ assembly_list
+            let assembly_so_far = assembly_list @ (final_code_of_quad a)
             in create_assembly (quad_list, assembly_so_far)
 
     
@@ -336,11 +338,12 @@ let rec print_final_code file_d code =
         | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
         | [] -> () 
     in 
-    let assembly = end_code in
-    let assembly_list = create_assembly(code, assembly) in
     let globals_size = -(!currentScope.sco_negofs) in
-    print_string (string_of_int globals_size);
-    let final_assembly = merge_lists(assembly_list, [start_code (name "PROGRAM") globals_size]) in 
-    let assembly_string = (List.map string_of_final_t final_assembly) in
+    let assembly_start = start_code (name "PROGRAM") globals_size in
+    let assembly_mid = create_assembly(code, []) in
+    let assembly_end = end_code in 
+    let assembly_all = assembly_start @ (assembly_mid @ assembly_end) in 
+    
+    let assembly_string = (List.map string_of_final_t assembly_all) in
     Printf.fprintf file_d "\n\n\n\nFinal code is \n";
-    print_help file_d assembly_string; 
+    print_help file_d assembly_string;
