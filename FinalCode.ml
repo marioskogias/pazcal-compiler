@@ -33,6 +33,11 @@ let add_string str = Queue.add str const_strings;
                      let serial = (Queue.length const_strings) in
                      Printf.sprintf "@str%d" serial
 
+(* Strings come with quotes at the beg and end so remove them *)
+let strip str = 
+  let size = String.length str in
+    String.sub str 1 (size-2)
+
 (* get_AR function to get bp for non local data -> global data *)
 (* we have no nested funtions so ncur = na + 1 where na global scope *)
 let get_ar = [ Mov (Register Si, Mem_loc("word", Bp, 4)) ]
@@ -77,7 +82,7 @@ let rec load a reg =
 (* load address in reg *)
 let load_addr addr reg = 
     match addr with
-    |Quad_string(s) -> let addr = add_string s in
+    |Quad_string(s) ->let addr = add_string (strip  s) in
         [Lea (Register reg, String_addr addr)]
     |Quad_valof(ent) -> load (Quad_entry(ent)) reg
     |Quad_entry(e) ->( let l = local e in
@@ -349,12 +354,24 @@ let rec print_final_code file_d code =
     let rec print_help d = function
         | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
         | [] -> () 
-    in 
+    in
+    let count = ref 0 in
+    let rec string_dec_fn res =
+      incr count; 
+      try 
+        let s = Queue.take const_strings in
+        print_string s;
+        let lb = Printf.sprintf "@str%d" !count in
+        let decl = declare_string lb s in
+          string_dec_fn decl^res
+      with Queue.Empty -> res
+    in
     let globals_size = -(!currentScope.sco_negofs) in
     let assembly_start = start_code (name "PROGRAM") globals_size in
     let assembly_mid = create_assembly(code, []) in
     let assembly_end = end_code in 
-    let assembly_all = assembly_start @ (assembly_mid @ assembly_end) in 
+    let assembly_string_dec = [Misc (string_dec_fn "")] in
+    let assembly_all = assembly_start @ assembly_mid @ assembly_string_dec @ assembly_end in 
     
     let assembly_string = (List.map string_of_final_t assembly_all) in
     Printf.fprintf file_d "\n\n\n\nFinal code is \n";
