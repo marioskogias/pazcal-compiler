@@ -27,6 +27,11 @@ let get_info = function
     let mode = (info.parameter_mode = PASS_BY_REFERENCE)
     in (offset,mode)
 
+let const_strings = Queue.create()
+let add_string str = Queue.add str const_strings;
+                     let serial = (Queue.length const_strings) in
+                     Printf.sprintf "@str%d" serial
+
 (* get_AR function to get bp for non local data -> global data *)
 (* we have no nested funtions so ncur = na + 1 where na global scope *)
 let get_ar = [ Mov (Register Si, Mem_loc("word", Bp, 4)) ]
@@ -66,7 +71,8 @@ let rec load a reg =
 (* load address in reg *)
 let load_addr addr reg = 
     match addr with
-    |Quad_string(s) -> [] (* missing constant string handle *)
+    |Quad_string(s) -> let addr = add_string s in
+        [Lea (Register reg, String_addr addr)]
     |Quad_valof(ent) -> load (Quad_entry(ent)) reg
     |Quad_entry(e) ->( let l = local e in
         let (offset, is_reference) = get_info e.entry_info in
