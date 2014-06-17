@@ -15,13 +15,13 @@ _write_string  proc  near
                mov   si, word ptr [bp+10]      ; 1st parameter
                mov   bx, word ptr [bp+8]       ; 2nd parameter
 mloop:
+               dec   bx
+               jz    next_print                ; if 0, then print_next
                mov   dl, byte ptr [si]         ; Load next character
                or    dl, dl
                jz    print_spaces              ; if 0, then print_spaces
                inc   si
-               dec   bx
-               jz    next_print                ; if 0, then print_next
-               jnz   mloop                      ; else loop again 
+               jmp   mloop                      ; else loop again 
 print_spaces:  
                mov   dl, 32
                mov   ah, 2
