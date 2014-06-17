@@ -14,8 +14,6 @@ _strlen     proc  near
             push  bp
             mov   bp, sp
             mov   si, word ptr [bp+8]      ; 1st parameter
-            inc   si                       ; Llama specific, skip array length
-            inc   si
             xor   cx, cx                   ; counter = 0
 next:
             mov   dl, byte ptr [si]        ; Load next character

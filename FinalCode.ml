@@ -151,8 +151,8 @@ let lib_funcs = ["putchar";"puts";
                  "WRITE_INT";"WRITE_CHAR";
                  "WRITE_BOOL";"WRITE_STRING";
                  "READ_INT";"READ_BOOL";"getchar";
-                 "READ_STRING"(*;
-                 "strlen";"strcmp";"strcpy";"strcat"*)]
+                 "READ_STRING";
+                 "strlen";"strcmp";"strcpy";"strcat"]
 
 let rec register_lib_functions = function
   |[] -> ()
@@ -169,6 +169,10 @@ let rec register_lib_functions = function
      |"WRITE_BOOL" -> ignore(help_reg "WRITE_BOOL" "_print_bool"); register_lib_functions t
      |"WRITE_STRING" -> ignore(help_reg "WRITE_STRING" "_write_string"); register_lib_functions t
      |"READ_STRING" -> ignore(help_reg "READ_STRING" "_readString"); register_lib_functions t
+     |"strlen" -> ignore(help_reg "strlen" "_strlen"); register_lib_functions t
+     |"strcmp" -> ignore(help_reg "strcmp" "_strcmp"); register_lib_functions t
+     |"strcpy" -> ignore(help_reg "strcpy" "_strcpy"); register_lib_functions t
+     |"strcat" -> ignore(help_reg "strcat" "_strcat"); register_lib_functions t
      |_ -> ignore(help_reg h h); register_lib_functions t
 
 let declare_lib_functions () = 
