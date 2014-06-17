@@ -11,7 +11,7 @@ xseg           segment public 'code'
 _print_string  proc  near
                push  bp
                mov   bp, sp
-               mov   si, word ptr [bp+8]      ; 1st parameter
+               mov   si, word ptr [bp+8]       ; 1st parameter
 ;               inc   si
 ;               inc   si                       ; text of the string
                push  si

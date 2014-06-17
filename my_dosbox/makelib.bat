@@ -11,12 +11,13 @@ support\masm -mx src\stdio\printr.asm;
 support\masm -mx src\stdio\readr.asm;
 support\masm -mx src\stdio\prints.asm;
 support\masm -mx src\stdio\reads.asm;
+support\masm -mx src\stdio\writes.asm;
 
 support\lib llama.lib /NOIGNORECASE +printi.obj +readi.obj;
 support\lib llama.lib /NOIGNORECASE +printc.obj +readc.obj;
 support\lib llama.lib /NOIGNORECASE +printb.obj +readb.obj;
 support\lib llama.lib /NOIGNORECASE +printr.obj +readr.obj;
-support\lib llama.lib /NOIGNORECASE +prints.obj +reads.obj;
+support\lib llama.lib /NOIGNORECASE +prints.obj +reads.obj +writes.obj;
 
 support\masm -mx src\math\abs.asm;
 support\masm -mx src\math\fabs.asm;
