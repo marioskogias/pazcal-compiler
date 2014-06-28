@@ -4,18 +4,18 @@ let rec absolute_jumps acc idx = function
     | h::t -> 
       begin
         match h with
-          | Quad_jump (x)
-          | Quad_cond (_, _, _, x)
+          | QuadTypes.Quad_jump (x)
+          | QuadTypes.Quad_cond (_, _, _, x)
           -> x := !x + idx; absolute_jumps (acc@[h]) (idx+1) t
           | _ -> absolute_jumps (acc@[h]) (idx+1) t
       end
     | [h] -> 
       begin
         match h with
-          | Quad_jump (x)
-          | Quad_cond (_, _, _, x)
+          | QuadTypes.Quad_jump (x)
+          | QuadTypes.Quad_cond (_, _, _, x)
           -> x := !x + idx; acc@[h]
-          | _ -> acc@h
+          | _ -> acc@[h]
       end
     | [] -> acc
 
