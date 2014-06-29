@@ -244,7 +244,7 @@ let eval_expr a b op =
 
 
 
-pmodule : initialization declaration_list T_eof { ignore(List.map print_string (List.map string_of_quad_t $2.s_code));  $2.s_code }
+pmodule : initialization declaration_list T_eof { (*ignore(List.map print_string (List.map string_of_quad_t $2.s_code));*)  $2.s_code }
 
 initialization : { ignore(initSymbolTable 256);  openScope()}
 
@@ -396,7 +396,8 @@ l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
                                     in match type_of_var with
                                       | TYPE_array (typ, size) -> 
                                       (
-                                        let offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
+                                        let 
+                                        offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
                                         in let temp = newTemporary TYPE_int
                                         in match (List.hd (fst $2)) with
                                         | Expr expr -> 

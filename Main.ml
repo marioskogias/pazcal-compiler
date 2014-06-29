@@ -25,6 +25,7 @@ let main =
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
     let abs_jumps_quad_list = absolute_jumps [] 0 quad_list in
     let optimized_quads = dummy_optimize abs_jumps_quad_list in
+    ignore(List.map print_string (List.map Quads.string_of_quad_t abs_jumps_quad_list));
     FinalCode.print_final_code stdout optimized_quads;
     exit 0
   with Parsing.Parse_error ->
