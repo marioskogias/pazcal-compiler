@@ -286,7 +286,7 @@ let registerLibraryFunctions () =
 %type <Types.typ * string> const_expr
 %type <Types.typ * string * QuadTypes.superexpr> expr
 %type <Types.typ * string * QuadTypes.superexpr> l_value
-%type <int> expr_list
+%type <(superexpr list) * int> expr_list
 //%type <unit> unop
 //%type <unit> binop
 //%type <Types.typ * string * string> call 
@@ -311,7 +311,7 @@ let registerLibraryFunctions () =
 
 
 
-pmodule : initialization declaration_list T_eof { ignore(List.map print_string (List.map string_of_quad_t $2.s_code));  $2.s_code }
+pmodule : initialization declaration_list T_eof { (*ignore(List.map print_string (List.map string_of_quad_t $2.s_code));*)  $2.s_code }
 
 initialization : { ignore(initSymbolTable 256);
 ignore(registerLibraryFunctions())}
@@ -406,7 +406,7 @@ expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
 
      | l_value { if (is_const (second_el $1))
                     then ((first_el $1), get_const_val (second_el $1), Expr(return_null ()))
-                 else $1 }
+                 else ((first_el $1), (second_el $1), Expr(dereference (third_el $1))) }
      | call { let c = match $1 with
                       | Expr e -> e
                in (get_type c.place,"test", $1) 
@@ -463,11 +463,34 @@ expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
 
 
 l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-                                in (get_var_type ((get_type (Quad_entry e)), $2),get_name e,Expr({code=[];place=(Quad_entry (e))}))}
+                                in let type_of_var = match e.entry_info with
+                                  | ENTRY_variable var -> var.variable_type
+                                    in match type_of_var with
+                                      | TYPE_array (typ, size) -> 
+                                      (
+                                        let 
+                                        offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
+                                        in let temp = newTemporary TYPE_int
+                                        in match (List.hd (fst $2)) with
+                                        | Expr expr -> 
+                                            let first_offset_included = 
+                                            {code = Quad_calc("+", expr.place, offset_quads_expr.place, Quad_entry(temp))::offset_quads_expr.code;
+                                             place = Quad_entry(temp);
+                                            }
+                                            in (get_var_type((get_type (Quad_entry e)), (snd $2)), get_name e, Expr({
+                                                code = Quad_array(Quad_entry(e), Quad_entry(temp), e)::(first_offset_included.code);
+                                                place = Quad_entry(e)
+                                                })
+                                            )
+                                        | Cond c -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
+                                      )
+                                      | _ -> (get_var_type ((get_type (Quad_entry e)), (snd $2)),get_name e,Expr({code=[];place=(Quad_entry (e))}))
+                                  | _ -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
+                                }
                                 
 
-expr_list : /*nothing*/ { 0 }
-	  | T_lbracket expr T_rbracket expr_list { $4 + 1 }
+expr_list : /*nothing*/ { ([], 0) }
+	  | T_lbracket expr T_rbracket expr_list { (third_el $2::(fst $4), (snd $4) + 1) }
 
 call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true *) Expr(return_null()) }
      | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 

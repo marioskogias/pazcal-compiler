@@ -77,7 +77,45 @@ let is_parameter_by_reference quad =
   )
   | _ -> false
  
-
+let rec handle_array var_type = function
+  | [] -> 
+  {code = []; place = Quad_none} 
+  | [h] ->
+    begin
+      match h with
+      | Expr e ->
+      (
+        match var_type with
+          | TYPE_array (array_type, size) ->
+            let temp = newTemporary TYPE_int in
+              {
+                code = [Quad_calc("*", Quad_int(string_of_int size), e.place, Quad_entry(temp))];
+                place = Quad_entry(temp);
+              }
+          | _ -> {code = []; place=Quad_none}
+      )
+      | Cond c -> return_null()
+    end
+  | h::t ->
+    begin
+      match h with
+      | Expr e ->
+      (
+        let temp1 = newTemporary TYPE_int in
+        let temp2 = newTemporary TYPE_int in
+        match var_type with
+          | TYPE_array (temp_var_type, temp_size) -> 
+            let rest = handle_array temp_var_type t 
+            in
+            {
+              code = Quad_calc("*", Quad_int(string_of_int temp_size), Quad_entry(temp2), Quad_entry(temp1))::Quad_calc("+", e.place, rest.place, Quad_entry(temp2))::rest.code;
+              place = Quad_entry(temp1);
+            }
+          | _ -> return_null()
+      )
+      | Cond c -> return_null()
+    end 
+ 
 (* Handling [x] case *)
 let dereference x = 
   match x with 
