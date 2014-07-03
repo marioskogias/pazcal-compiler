@@ -397,7 +397,10 @@ l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
                                       | TYPE_array (typ, size) -> 
                                       (
                                         let 
-                                        offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
+                                        offset_quads_expr = 
+                                            match (fst $2) with
+                                            | h::[] ->{code=[];place=Quad_none}
+                                            | h::t  -> handle_array type_of_var (List.tl (fst $2))
                                         in let temp = newTemporary TYPE_int
                                         in match (List.hd (fst $2)) with
                                         | Expr expr -> 
@@ -405,8 +408,10 @@ l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES
                                             {code = Quad_calc("+", expr.place, offset_quads_expr.place, Quad_entry(temp))::offset_quads_expr.code;
                                              place = Quad_entry(temp);
                                             }
-                                            in (get_var_type((get_type (Quad_entry e)), (snd $2)), get_name e, Expr({
-                                                code = Quad_array(Quad_entry(e), Quad_entry(temp), e)::(first_offset_included.code);
+                                            in let result_type = get_var_type((get_type (Quad_entry e)), (snd $2))
+                                            in let result_temp = newTemporary result_type
+                                            in (result_type, get_name e, Expr({
+                                                code = Quad_array(Quad_entry(e), Quad_entry(temp), result_temp)::(first_offset_included.code);
                                                 place = Quad_entry(e)
                                                 })
                                             )
