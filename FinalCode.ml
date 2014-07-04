@@ -144,7 +144,7 @@ let quad_count = ref 0
 let label = function
     |Some a -> Printf.sprintf "@%d" a
     |None ->incr (quad_count);
-    Printf.sprintf "@%d" !quad_count
+    Printf.sprintf "@%d:\n" !quad_count
 
 (* functions to register lib functions *)
 let lib_funcs = ["putchar";"puts";
@@ -349,8 +349,9 @@ let final_code_of_quad = function
     
 let rec create_assembly = function
     | ([], assembly_list) -> assembly_list
-    | (a::quad_list, assembly_list) -> 
-            let assembly_so_far = assembly_list @ (final_code_of_quad a)
+    | (a::quad_list, assembly_list) ->
+            let quad_label = Misc(label None) in
+            let assembly_so_far = assembly_list @ (quad_label::(final_code_of_quad a))
             in create_assembly (quad_list, assembly_so_far)
 
     
