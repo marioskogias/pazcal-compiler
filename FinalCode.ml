@@ -140,7 +140,7 @@ let endof n =
  with a given number return @<number> else 
  produce the next label
  *)
-let quad_count = ref 0
+let quad_count = ref (-1)
 let label = function
     |Some a -> Printf.sprintf "@%d" a
     |None ->incr (quad_count);
