@@ -1,0 +1,17 @@
+PROGRAM solve ()
+{
+    int i;
+    /*FOR (i, 1 TO 10) {
+        WRITE_INT(i, 10);
+        WRITE_CHAR('\n', 0);
+        i += 100;
+        WRITE_INT(i,10);
+        WRITE_CHAR('\n',0);
+    }*/
+    i = 0;
+    while(i<10) {
+        WRITE_INT(i, 10);
+        WRITE_CHAR('\n', 0);
+        i++;
+    }
+}

@@ -25,7 +25,7 @@ let main =
     (*
     let quad_list = List.rev (Parser.pmodule Lexer.lexer lexbuf) in
     let optimized_quads = dummy_optimize quad_list in
-     *)
+    *)
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
     let abs_jumps_quad_list = absolute_jumps [] 0 quad_list in
     let optimized_quads = dummy_optimize abs_jumps_quad_list in
@@ -35,4 +35,3 @@ let main =
   with Parsing.Parse_error ->
     Printf.eprintf "syntax error on line %d \n" lexbuf.Lexing.lex_curr_p.Lexing.pos_lnum ;
     exit 1  
-
