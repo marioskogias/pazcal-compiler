@@ -14,19 +14,22 @@ let check_binop_types type_1 type_2 pos=
   	|(TYPE_int, TYPE_real)
   	|(TYPE_real, TYPE_int)
     	-> TYPE_real
-  	|_ -> ignore(print_error "Wrong types\n" pos); TYPE_none
+  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let check_bool_binop_types type_1 type_2 pos=
   	match (type_1, type_2) with
 
   	|(TYPE_bool, TYPE_bool) -> TYPE_bool
-  	|_ -> ignore(print_error "Wrong types\n" pos); TYPE_none
+  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let check_int_binop_types type_1 type_2 pos=
   	match (type_1, type_2) with
 
   	|(TYPE_int, TYPE_int) -> TYPE_int
-  	|_ -> ignore(print_error "Wrong types\n" pos); TYPE_none
+  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let check_equalities type_1 type_2 pos= 
 	match (type_1, type_2) with
@@ -35,18 +38,21 @@ let check_equalities type_1 type_2 pos=
 	|(TYPE_real, TYPE_real)
 	|(TYPE_real, TYPE_int)
 	|(TYPE_int, TYPE_real) -> TYPE_bool
-	|_ -> ignore(print_error "Wrong types\n" pos); TYPE_none
+  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let check_is_number type_1 pos= 
 	match type_1 with
 	|TYPE_int -> TYPE_int
 	|TYPE_real -> TYPE_real
-	|_ -> ignore(print_error "is not a number" pos); TYPE_none
+  	|_ -> error  "Line:%d.%d: Not a number" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let check_is_bool type_1 pos= 
 	match type_1 with
 	|TYPE_bool -> TYPE_bool
-	|_ -> ignore(print_error "is not a boolean val" pos); TYPE_none
+  	|_ -> error  "Line:%d.%d: Not a boolean" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let table_size val_type value pos= 
    (* try
@@ -56,31 +62,34 @@ let table_size val_type value pos=
 	with Failure "int_of_string" -> ignore(print_error "Unknown table size" pos);0 (* if zero then check memory issues...*)
     EXPLAIN
     *)
-    match val_type with
+  match val_type with
     |TYPE_int ->
-    try
-    int_of_string value
-    with Failure "int_of_string" -> 0
-    |_ -> ignore(print_error "Not an integer value" pos); -1
+        try
+          int_of_string value
+        with Failure "int_of_string" -> 0
+    |_ -> error  "Line:%d.%d: Not an integer value" (pos.pos_lnum) 
+                  (pos.pos_cnum - pos.pos_bol); -1
 
 
 
 let check_function_params symbol_table_params_list passed_param_list pos= 
-		
-	let rec help_check = function
-		| ([],[]) -> true
-		| ([], l1) -> if (List.length l1) > 0 then (ignore(print_error "wrong params 1" pos); false) else true
-		| (l1,[]) -> if (List.length l1) > 0 then (ignore(print_error "wrong params 2" pos);false) else true
-		| ((a::b), (c::d)) -> 	
-			let par_type =
-				match a.entry_info with
-          				| ENTRY_parameter inf -> inf.parameter_type
-					| _ -> TYPE_none
-			in
-			if (equalType par_type c) then help_check (b, d)
-			else (ignore(print_error "wrong params 3" pos); false)
+  let rec help_check = function
+    | ([],[]) -> true
+    | ([], l1) -> if (List.length l1) > 0 then (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                                                  (pos.pos_cnum - pos.pos_bol); false) else true
+    | (l1,[]) -> if (List.length l1) > 0 then (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                                                 (pos.pos_cnum - pos.pos_bol) ;false) else true
+    | ((a::b), (c::d)) -> 	
+        let par_type =
+          match a.entry_info with
+            | ENTRY_parameter inf -> inf.parameter_type
+            | _ -> TYPE_none
+        in
+          if (equalType par_type c) then help_check (b, d)
+          else (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                  (pos.pos_cnum - pos.pos_bol); false)
 
-	in help_check (symbol_table_params_list, passed_param_list)
+  in help_check (symbol_table_params_list, passed_param_list)
 
 
 (*function to check assign operations
@@ -102,7 +111,8 @@ let check_assign operator type_1 type_2 pos=
                 |_ -> false
     in
         if (a && b) then true
-        else (ignore(print_error "Wrong types in assignment\n" pos);false)
+        else (error  "Line:%d.%d: Wrong types in assignment" (pos.pos_lnum) 
+                  (pos.pos_cnum - pos.pos_bol);false)
 
 (*bool val if in loop*)
 let in_loop = ref 0
