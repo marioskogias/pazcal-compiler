@@ -71,18 +71,6 @@ let get_const_val name =
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
-(*handle tuples with 3 elements*)
-let first_el (a,_,_) = a
-
-let second_el (_,b,_) = b
-
-let third_el (_,_,c) = c
-
-let first (a,_,_,_) = a
-let second (_,b,_,_) = b
-let third (_,_,c,_) = c
-let fourth (_,_,_,d) = d
-
 (*get the parameter list of a function as it is in the symbol table*)
 let get_param_list a = 
 	match a.entry_info with 
@@ -607,10 +595,10 @@ stmt : T_semicolon { return_null_stmt () }
                                                             handle_while_stmt $4 $6
                                                         ) else return_null_stmt() 
                                                       }
-     | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := !in_loop - 1 ; 
-                                                                    let e = lookupEntry (id_make $4) LOOKUP_ALL_SCOPES true in (
-                            handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) (first $6) (second $6) (third $6) (fourth $6) $8 (get_binop_pos())) 
-                                                                    }
+            | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := !in_loop - 1 ; 
+                                                                    let e = lookupEntry (id_make $4) LOOKUP_ALL_SCOPES true in 
+                                                                        handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) $6 $8 (get_binop_pos())
+                                                                        }
      | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { if (check_is_bool $6 (rhs_start_pos 1)) 
                                                                             then ( 
                                                                                 in_loop:= !in_loop - 1;

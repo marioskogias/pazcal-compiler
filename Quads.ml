@@ -685,8 +685,12 @@ let handle_switch_exp case switch_exp =
 
 
 (* Handle for statement *)
-let handle_for_stmt indx expr1 expr2 expr3 upordown body pos=
-   match expr1, expr2, expr3, indx with
+let handle_for_stmt indx info body pos=
+  let (expr1, expr2, expr3, upordown) = match info with
+    |(a,b,c,d) -> (a,b,c,d)
+    |_ -> internal "No range given"; raise Terminate 
+  in
+  match expr1, expr2, expr3, indx with
    | Expr startfrom, Expr endto, Expr step, Expr index ->
         begin
             let temp_index = newTemporary TYPE_int in
