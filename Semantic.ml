@@ -39,6 +39,18 @@ let check_is_number expr pos=
      )
     | _ -> internal "Not an expresion"; raise Terminate
 
+let check_is_bool expr pos= 
+  match expr with
+    |Expr e -> (
+       let expr_typ = get_type e.place 
+       in let spt = create_super_type expr_typ in
+         match spt with
+           |Bool _ -> true
+           |_ -> error  "Line:%d.%d: Not a number or char" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol); false
+     )
+    | _ -> internal "Not an expresion"; raise Terminate
+
 (* Semantic checking of values in binary expressions *)
 let check_binop_types expr1 expr2 pos=
   let (type_1, type_2) = match (expr1, expr2) with 
@@ -80,17 +92,6 @@ let check_bool_binop_types type_1 type_2 pos=
   	|(TYPE_bool, TYPE_bool) -> TYPE_bool
   	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
            (pos.pos_cnum - pos.pos_bol); TYPE_none
-
-let check_is_bool expr pos= 
-  match expr with
-    |Expr e -> (
-       let expr_typ = get_type e.place in
-         match expr_typ with
-           |TYPE_bool -> true
-           |_ -> error  "Line:%d.%d: Not a boolean" (pos.pos_lnum) 
-                   (pos.pos_cnum - pos.pos_bol); false
-     )
-    | _ -> internal "Not an expresion"; raise Terminate
 
 let table_size val_type value pos= 
    (* try

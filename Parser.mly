@@ -620,9 +620,13 @@ stmt : T_semicolon { return_null_stmt () }
                                                                     let e = lookupEntry (id_make $4) LOOKUP_ALL_SCOPES true in (
                             handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) (first $6) (second $6) (third $6) (fourth $6) $8 (get_binop_pos())) 
                                                                     }
-     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon {
-         (*(ignore(check_is_bool (first_el $6)  (rhs_start_pos 1)) ;*) in_loop:= !in_loop - 1;
-                                                                         handle_do_while_stmt $3 $6 }
+     | T_do stoppable stmt T_while T_lparen expr T_rparen T_semicolon { if (check_is_bool $6 (rhs_start_pos 1)) 
+                                                                            then ( 
+                                                                                in_loop:= !in_loop - 1;
+                                                                                handle_do_while_stmt $3 $6
+                                                                            )
+                                                                        else return_null_stmt() 
+                                                                       }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_default T_colon clause T_rbrace { in_loop := !in_loop - 1 ; handle_switch_default $4 $7 $10}
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch $4 $7 }
      | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
