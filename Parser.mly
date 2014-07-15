@@ -60,14 +60,6 @@ let rec get_var_type = function
     |(TYPE_array (t,s), a) -> get_var_type (t, a-1)
     |_ -> ignore(error "tables sizes"); TYPE_none
 
-(*function to check entry is const*)
-let is_const name = 
-    let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
-        in
-        match e.entry_info with
-        | ENTRY_variable inf ->  inf.is_const
-        | _ -> false
-
 (*function to get a cont val*)
 let get_const_val name = 
     let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
@@ -588,24 +580,18 @@ local_def : const_def { return_null_stmt() }
 	  | var_def { $1 }
 
 stmt : T_semicolon { return_null_stmt () }
-     | l_value assign expr T_semicolon {(*if (is_const (second_el $1)) 
-                                            then print_error "Assign to a const variable" (rhs_start_pos 1)
-                                        else
-                                            ignore(check_assign $2 (first_el $1) (first_el $3)  (rhs_start_pos 1)); *)
-                                            handle_assignment $2 (dereference $1) $3 (get_binop_pos())}
-     | l_value T_plus_plus T_semicolon{ (*if (is_const (second_el $1)) 
-                                            then print_error "Assign to a const variable" (rhs_start_pos 1) 
-                                       else
-                                           ignore(check_assign "+=" (first_el$1) (first_el $1) (rhs_start_pos 1));
-                                           *)
-                                           handle_plus_plus $1 
-                                            } 
-     | l_value T_minus_minus T_semicolon {(*if (is_const (second_el $1)) 
-                                            then print_error "Assign to a const variable" (rhs_start_pos 1)
-                                          else
-                                             ignore(check_assign "-=" (first_el $1) (first_el $1) (rhs_start_pos 1));*)
-                                             handle_minus_minus $1
+     | l_value assign expr T_semicolon { if (check_assign $2 $1 $3 (rhs_start_pos 1)) then
+                                            handle_assignment $2 (dereference $1) $3 (get_binop_pos())
+                                         else return_null_stmt()
                                         }
+     | l_value T_plus_plus T_semicolon{ if (check_assign "+=" $1 $1 (rhs_start_pos 1)) then
+                                           handle_plus_plus $1 
+                                        else return_null_stmt()
+                                       }
+     | l_value T_minus_minus T_semicolon { if (check_assign "-=" $1 $1 (rhs_start_pos 1)) then
+                                             handle_minus_minus $1
+                                           else return_null_stmt()
+                                          }
      | call T_semicolon { handle_expr_to_stmt $1 }
      | T_if T_lparen expr T_rparen stmt T_else stmt { if (check_is_bool $3 (rhs_start_pos 1)) 
                                                         then handle_if_else_stmt $3 $5 $7 

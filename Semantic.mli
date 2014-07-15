@@ -14,7 +14,6 @@ val check_equalities : QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.posi
 val check_is_bool : QuadTypes.superexpr -> Lexing.position -> bool
 val table_size : Types.typ -> string -> Lexing.position -> int
 val check_function_params : Symbol.entry list -> Types.typ list -> Lexing.position -> bool
-
-val check_assign : string -> Types.typ -> Types.typ -> Lexing.position -> bool
+val check_assign : string -> QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> bool
 val in_loop : int ref
 val create_super_type : Types.typ -> super_type

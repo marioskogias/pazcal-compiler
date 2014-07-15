@@ -27,6 +27,20 @@ let create_super_type t =
     )
     |_ -> internal "Not a basic type"; raise Terminate
 
+(* Check if expression is a const variable *)
+let check_const expr =
+  match expr with
+    |Expr e -> (
+       match e.place with
+         | Quad_entry qe -> (
+             match qe.entry_info with
+               |ENTRY_variable inf -> inf.is_const
+               |_ -> false
+           )
+         |_ -> false
+     )
+    |_ -> false
+
 let check_is_number expr pos= 
   match expr with
     |Expr e -> (
@@ -95,6 +109,41 @@ let check_bool_binop_types expr1 expr2 pos=
       false
     )
 
+(*
+ * function to check assign operations 
+ * if the operator is not '=' then you need the operands to be arithmetic 
+ *)
+let check_assign operator expr1 expr2 pos= 
+  if (check_const expr1) then (
+    error  "Line:%d.%d: Assigning to a const variable" (pos.pos_lnum) 
+      (pos.pos_cnum - pos.pos_bol);
+    false
+  ) else (
+    let (type_1, type_2) = match (expr1, expr2) with 
+      |(Expr e1, Expr e2) -> (get_type e1.place, get_type e2.place) 
+      |_ -> internal "Not expressions"; raise Terminate
+    in 
+    let types_match = 
+      if equalType type_1 type_2 then true 
+      else
+        match (type_1, type_2) with
+          |(TYPE_real, TYPE_int)
+          |(TYPE_char, TYPE_int)
+          |(TYPE_int, TYPE_char) ->  true
+          |_ -> false
+    in
+    let res = match operator with
+      |"=" -> types_match
+      |_ -> (check_is_number expr1 pos) && (check_is_number expr2 pos) && types_match
+    in
+      if res then true
+      else (
+        error  "Line:%d.%d: Wrong types in assignment" (pos.pos_lnum) 
+          (pos.pos_cnum - pos.pos_bol);
+        false
+      )
+  )
+
 (*------------- Updated till here ------------------*)
 
 let table_size val_type value pos= 
@@ -135,27 +184,6 @@ let check_function_params symbol_table_params_list passed_param_list pos=
   in help_check (symbol_table_params_list, passed_param_list)
 
 
-(*function to check assign operations
-  if the operator is not '=' then you need the second operant to be a number 
-*)
-let check_assign operator type_1 type_2 pos= 
-	let a = match operator with
-            |"=" -> true
-            | _ -> (*if not((check_is_number type_2 pos) = TYPE_none) then true else*) false
-    in 
-    let b = 
-        if equalType type_1 type_2 
-            then true
-        else
-            match (type_1, type_2) with
-                |(TYPE_real, TYPE_int)
-                |(TYPE_char, TYPE_int)
-                |(TYPE_int, TYPE_char) ->  true
-                |_ -> false
-    in
-        if (a && b) then true
-        else (error  "Line:%d.%d: Wrong types in assignment" (pos.pos_lnum) 
-                  (pos.pos_cnum - pos.pos_bol);false)
 
 (*bool val if in loop*)
 let in_loop = ref 0
