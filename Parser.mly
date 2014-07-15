@@ -424,10 +424,14 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
                         Expr(handle_unary_expression "-" $2 (rhs_start_pos 2))
                      else Expr(return_null())
                      }
-     | T_NOT expr { (*(check_is_bool (first_el $2) (rhs_start_pos 1), "test", *)
-                        Cond(handle_not $2) }
-     | T_not expr { (*(check_is_bool (first_el $2) (rhs_start_pos 1), "test",*) 
-                        Cond(handle_not $2)  }
+     | T_NOT expr { if (check_is_bool $2 (rhs_start_pos 1)) then
+                        Cond(handle_not $2)
+                     else Expr(return_null())
+                   }
+     | T_not expr { if (check_is_bool $2 (rhs_start_pos 1)) then
+                        Cond(handle_not $2) 
+                     else Expr(return_null())
+                   }
      | expr T_plus expr { (*(check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
                            eval_expr (second_el $1) (second_el $3) "+", *)
                            Expr(handle_expression "+" $1 $3 (get_binop_pos()))}
@@ -592,12 +596,20 @@ stmt : T_semicolon { return_null_stmt () }
                                              handle_minus_minus $1
                                         }
      | call T_semicolon { handle_expr_to_stmt $1 }
-     | T_if T_lparen expr T_rparen stmt T_else stmt { (*ignore(check_is_bool (first_el $3)  (rhs_start_pos 1));*)
-                                                      handle_if_else_stmt $3 $5 $7 }
-     | T_if T_lparen expr T_rparen stmt { (*ignore(check_is_bool (first_el $3) (rhs_start_pos 1)); *)
-                                          handle_if_stmt $3 $5 } 
-     | T_while stoppable T_lparen expr T_rparen stmt { ((*ignore(check_is_bool (first_el $4)  (rhs_start_pos 1)) ; *)in_loop := !in_loop -1);
-                                                        handle_while_stmt $4 $6 }
+     | T_if T_lparen expr T_rparen stmt T_else stmt { if (check_is_bool $3 (rhs_start_pos 1)) 
+                                                        then handle_if_else_stmt $3 $5 $7 
+                                                      else return_null_stmt() 
+                                                     }
+     | T_if T_lparen expr T_rparen stmt { if (check_is_bool $3 (rhs_start_pos 1)) 
+                                            then handle_if_stmt $3 $5 
+                                          else return_null_stmt() 
+                                         }
+     | T_while stoppable T_lparen expr T_rparen stmt { if (check_is_bool $4 (rhs_start_pos 1)) 
+                                                        then (
+                                                            in_loop := !in_loop -1;
+                                                            handle_while_stmt $4 $6
+                                                        ) else return_null_stmt() 
+                                                      }
      | T_FOR stoppable T_lparen T_name T_comma range T_rparen stmt { in_loop := !in_loop - 1 ; 
                                                                     let e = lookupEntry (id_make $4) LOOKUP_ALL_SCOPES true in (
                             handle_for_stmt (Expr({code=[];place=(Quad_entry (e))})) (first $6) (second $6) (third $6) (fourth $6) $8 (get_binop_pos())) 
