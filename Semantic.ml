@@ -4,6 +4,8 @@ open Symbol
 open Error
 open Lexing
 open Output 
+open QuadTypes
+open Quads
 
 (* Semantic checking of values in binary expressions *)
 let check_binop_types type_1 type_2 pos=
@@ -41,12 +43,17 @@ let check_equalities type_1 type_2 pos=
   	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
            (pos.pos_cnum - pos.pos_bol); TYPE_none
 
-let check_is_number type_1 pos= 
-	match type_1 with
-	|TYPE_int -> TYPE_int
-	|TYPE_real -> TYPE_real
-  	|_ -> error  "Line:%d.%d: Not a number" (pos.pos_lnum) 
-           (pos.pos_cnum - pos.pos_bol); TYPE_none
+let check_is_number expr pos= 
+  match expr with
+    |Expr e -> (
+       let expr_typ = get_type e.place in
+         match expr_typ with
+           |TYPE_int  
+           |TYPE_real -> true
+           |_ -> error  "Line:%d.%d: Not a number" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol); false
+     )
+    | _ -> internal "Not an expresion"; raise Terminate
 
 let check_is_bool type_1 pos= 
 	match type_1 with
@@ -98,7 +105,7 @@ let check_function_params symbol_table_params_list passed_param_list pos=
 let check_assign operator type_1 type_2 pos= 
 	let a = match operator with
             |"=" -> true
-            | _ -> if not((check_is_number type_2 pos) = TYPE_none) then true else false
+            | _ -> (*if not((check_is_number type_2 pos) = TYPE_none) then true else*) false
     in 
     let b = 
         if equalType type_1 type_2 

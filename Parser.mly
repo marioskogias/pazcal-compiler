@@ -416,10 +416,14 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
             }
      | call { $1 }
 
-     | T_plus expr { (*(check_is_number (first_el $2) (rhs_start_pos 1), "test",*)
-                        Expr(handle_unary_expression "+" $2 (rhs_start_pos 2))}
-     | T_minus expr { (*(check_is_number (first_el $2) (rhs_start_pos 1), "test",*) 
-                        Expr(handle_unary_expression "-" $2 (rhs_start_pos 2))}
+     | T_plus expr { if (check_is_number $2 (rhs_start_pos 1)) then
+                        Expr(handle_unary_expression "+" $2 (rhs_start_pos 2)) 
+                     else Expr(return_null())
+                    }
+     | T_minus expr { if (check_is_number $2 (rhs_start_pos 1)) then
+                        Expr(handle_unary_expression "-" $2 (rhs_start_pos 2))
+                     else Expr(return_null())
+                     }
      | T_NOT expr { (*(check_is_bool (first_el $2) (rhs_start_pos 1), "test", *)
                         Cond(handle_not $2) }
      | T_not expr { (*(check_is_bool (first_el $2) (rhs_start_pos 1), "test",*) 
