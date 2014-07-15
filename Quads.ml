@@ -256,10 +256,10 @@ let handle_not expr =
 (* Handle an arithmetical expression 
  * Get the 2 types, semantically check them and create the intermediate code 
  * required *)
-let handle_expression op expr1 expr2 (sp,ep) =
+let handle_expression op expr1 expr2 expr_typ (sp,ep) =
   match expr1, expr2 with
   |  Expr e1, Expr e2 ->
-    let t1 = get_type e1.place in
+    let t1 = expr_typ in
     let temp = newTemporary t1 in {
       code  = Quad_calc(op,e1.place, e2.place, Quad_entry(temp))
               ::(e2.code)@(e1.code);

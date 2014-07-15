@@ -8,16 +8,21 @@ open QuadTypes
 open Quads
 
 (* Semantic checking of values in binary expressions *)
-let check_binop_types type_1 type_2 pos=
-	match (type_1, type_2) with
-
-  	|(TYPE_int, TYPE_int) -> TYPE_int
- 	|(TYPE_real, TYPE_real) 
-  	|(TYPE_int, TYPE_real)
-  	|(TYPE_real, TYPE_int)
-    	-> TYPE_real
-  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
-           (pos.pos_cnum - pos.pos_bol); TYPE_none
+let check_binop_types expr1 expr2 pos=
+  let (type_1, type_2) = match (expr1, expr2) with 
+    |(Expr e1, Expr e2) -> (get_type e1.place, get_type e2.place) 
+    |_ -> internal "Not expressions"; raise Terminate
+  in       
+    match (type_1, type_2) with
+      |(TYPE_char, TYPE_char) -> TYPE_int
+      |(TYPE_char, TYPE_int) -> TYPE_int
+      |(TYPE_int, TYPE_char) -> TYPE_int
+      |(TYPE_int, TYPE_int) -> TYPE_int
+      |(TYPE_real, TYPE_real) 
+      |(TYPE_int, TYPE_real)
+      |(TYPE_real, TYPE_int) -> TYPE_real
+      |_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
+              (pos.pos_cnum - pos.pos_bol); TYPE_none
 
 let check_bool_binop_types type_1 type_2 pos=
   	match (type_1, type_2) with
@@ -26,12 +31,13 @@ let check_bool_binop_types type_1 type_2 pos=
   	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
            (pos.pos_cnum - pos.pos_bol); TYPE_none
 
-let check_int_binop_types type_1 type_2 pos=
-  	match (type_1, type_2) with
-
-  	|(TYPE_int, TYPE_int) -> TYPE_int
-  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
-           (pos.pos_cnum - pos.pos_bol); TYPE_none
+let check_int_binop_types expr1 expr2 pos=
+    let res = check_binop_types expr1 expr2 pos in
+      if (res != TYPE_int) then (
+        error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
+          (pos.pos_cnum - pos.pos_bol); 
+        TYPE_none)
+      else TYPE_int
 
 let check_equalities type_1 type_2 pos= 
 	match (type_1, type_2) with

@@ -432,24 +432,24 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
                         Cond(handle_not $2) 
                      else Expr(return_null())
                    }
-     | expr T_plus expr { (*(check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                           eval_expr (second_el $1) (second_el $3) "+", *)
-                           Expr(handle_expression "+" $1 $3 (get_binop_pos()))}
-     | expr T_minus expr { (*(check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                            eval_expr (second_el $1) (second_el $3) "-", *)
-                            Expr(handle_expression "-" $1 $3 (get_binop_pos())) }
-     | expr T_times expr { (*(check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                            eval_expr (second_el $1) (second_el $3) "*", *)
-                            Expr(handle_expression "*" $1 $3 (get_binop_pos())) }
-     | expr T_div expr { (*(check_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1), 
-                          eval_expr (second_el $1) (second_el $3) "/", *)
-                          Expr(handle_expression "/" $1 $3 (get_binop_pos())) }
-     | expr T_mod expr { (*(check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                          eval_expr (second_el $1) (second_el $3) "mod", *)
-                          Expr(handle_expression "%" $1 $3 (get_binop_pos())) }
-     | expr T_MOD expr { (*(check_int_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                          eval_expr (second_el $1) (second_el $3) "mod", *)
-                          Expr(handle_expression "%" $1 $3 (get_binop_pos())) }
+     | expr T_plus expr { let expr_typ = check_binop_types $1 $3 (rhs_start_pos 1) in
+                           Expr(handle_expression "+" $1 $3 expr_typ (get_binop_pos()))
+                         }
+     | expr T_minus expr { let expr_typ = check_binop_types $1 $3 (rhs_start_pos 1) in
+                            Expr(handle_expression "-" $1 $3 expr_typ (get_binop_pos())) 
+                          }
+     | expr T_times expr { let expr_typ = check_binop_types $1 $3 (rhs_start_pos 1) in
+                            Expr(handle_expression "*" $1 $3 expr_typ (get_binop_pos())) 
+                          }
+     | expr T_div expr { let expr_typ = check_binop_types $1 $3 (rhs_start_pos 1) in
+                          Expr(handle_expression "/" $1 $3 expr_typ (get_binop_pos())) 
+                        }
+     | expr T_mod expr { let expr_typ = check_int_binop_types $1 $3 (rhs_start_pos 1) in 
+                          Expr(handle_expression "%" $1 $3 expr_typ (get_binop_pos())) 
+                        }
+     | expr T_MOD expr { let expr_typ = check_int_binop_types $1 $3 (rhs_start_pos 1) in 
+                          Expr(handle_expression "%" $1 $3 expr_typ (get_binop_pos())) 
+                        }
      | expr T_equal expr { (*(check_equalities (first_el $1) (first_el $3) (rhs_start_pos 1),
                             "test",*) 
                             Cond(handle_comparison "==" $1 $3 (get_binop_pos())) }
