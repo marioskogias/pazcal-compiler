@@ -7,20 +7,40 @@ open Output
 open QuadTypes
 open Quads
 
+type num_type = 
+  |Int of Types.typ
+  |Real of Types.typ
+
+type super_type = 
+  | Num of num_type
+  | Bool of Types.typ
+
+let create_super_type t = 
+  match t with
+    |TYPE_bool -> Bool t
+    |TYPE_real
+    |TYPE_int
+    |TYPE_char  -> (
+       match t with
+         |TYPE_real -> Num(Real t)
+         |_ -> Num(Int t)
+    )
+    |_ -> internal "Not a basic type"; raise Terminate
+
 (* Semantic checking of values in binary expressions *)
 let check_binop_types expr1 expr2 pos=
   let (type_1, type_2) = match (expr1, expr2) with 
     |(Expr e1, Expr e2) -> (get_type e1.place, get_type e2.place) 
     |_ -> internal "Not expressions"; raise Terminate
+  in let sp1 = create_super_type type_1
+  in let sp2 = create_super_type type_2
   in       
-    match (type_1, type_2) with
-      |(TYPE_char, TYPE_char) -> TYPE_int
-      |(TYPE_char, TYPE_int) -> TYPE_int
-      |(TYPE_int, TYPE_char) -> TYPE_int
-      |(TYPE_int, TYPE_int) -> TYPE_int
-      |(TYPE_real, TYPE_real) 
-      |(TYPE_int, TYPE_real)
-      |(TYPE_real, TYPE_int) -> TYPE_real
+    match (sp1, sp2) with
+      |(Num n1, Num n2) ->(
+         match (n1,n2) with
+           |(Int _, Int _) -> TYPE_int
+           |_ -> TYPE_real
+       )
       |_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
               (pos.pos_cnum - pos.pos_bol); TYPE_none
 
@@ -52,10 +72,10 @@ let check_equalities type_1 type_2 pos=
 let check_is_number expr pos= 
   match expr with
     |Expr e -> (
-       let expr_typ = get_type e.place in
-         match expr_typ with
-           |TYPE_int  
-           |TYPE_real -> true
+       let expr_typ = get_type e.place 
+       in let spt = create_super_type expr_typ in
+         match spt with
+           |Num _ -> true
            |_ -> error  "Line:%d.%d: Not a number" (pos.pos_lnum) 
                    (pos.pos_cnum - pos.pos_bol); false
      )
