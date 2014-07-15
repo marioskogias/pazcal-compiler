@@ -86,12 +86,16 @@ let check_equalities expr1 expr2 pos =
     )
 
 
-let check_bool_binop_types type_1 type_2 pos=
-  	match (type_1, type_2) with
+let check_bool_binop_types expr1 expr2 pos=
+    if ((check_is_bool expr1 pos) && (check_is_bool expr2 pos))
+    then true
+    else ( 
+      error "Line:%d.%d: Wrong types in boolean operation" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol);
+      false
+    )
 
-  	|(TYPE_bool, TYPE_bool) -> TYPE_bool
-  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
-           (pos.pos_cnum - pos.pos_bol); TYPE_none
+(*------------- Updated till here ------------------*)
 
 let table_size val_type value pos= 
    (* try

@@ -8,7 +8,7 @@ type super_type =
 
 val check_is_number : QuadTypes.superexpr -> Lexing.position -> bool
 val check_binop_types : QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> Types.typ
-val check_bool_binop_types : Types.typ -> Types.typ -> Lexing.position -> Types.typ
+val check_bool_binop_types : QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> bool
 val check_int_binop_types : QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> Types.typ
 val check_equalities : QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> bool
 val check_is_bool : QuadTypes.superexpr -> Lexing.position -> bool

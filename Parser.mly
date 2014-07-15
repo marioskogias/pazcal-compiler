@@ -474,17 +474,22 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
                                     Cond(handle_comparison ">=" $1 $3 (get_binop_pos())) 
                                    else Cond(return_null_cond())
                                   }
-     | expr T_and expr { (*(check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                          "test", *)
-                          Cond(handle_and $1 $3) }
-     | expr T_AND expr { (*(check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),
-                          "test", *)
-                          Cond(handle_and $1 $3) }
-     | expr T_OR expr { (*(check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", *)
-                            Cond(handle_or $1 $3) }
-     | expr T_or expr { (*(check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", *)
-                        Cond(handle_or $1 $3) }
-
+     | expr T_and expr {  if (check_bool_binop_types $1 $3 (rhs_start_pos 1)) then
+                            Cond(handle_and $1 $3) 
+                          else Cond(return_null_cond())
+                        }
+     | expr T_AND expr { if (check_bool_binop_types $1 $3 (rhs_start_pos 1)) then
+                            Cond(handle_and $1 $3) 
+                          else Cond(return_null_cond())
+                        }
+     | expr T_OR expr { if (check_bool_binop_types $1 $3 (rhs_start_pos 1)) then
+                            Cond(handle_or $1 $3) 
+                          else Cond(return_null_cond())
+                       }
+     | expr T_or expr { if (check_bool_binop_types $1 $3 (rhs_start_pos 1)) then
+                            Cond(handle_or $1 $3) 
+                          else Cond(return_null_cond())
+                       }
 
 l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
                             in Expr({code=[];place=(Quad_entry (e))})    
