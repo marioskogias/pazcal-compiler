@@ -27,6 +27,18 @@ let create_super_type t =
     )
     |_ -> internal "Not a basic type"; raise Terminate
 
+let check_is_number expr pos= 
+  match expr with
+    |Expr e -> (
+       let expr_typ = get_type e.place 
+       in let spt = create_super_type expr_typ in
+         match spt with
+           |Num _ -> true
+           |_ -> error  "Line:%d.%d: Not a number or char" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol); false
+     )
+    | _ -> internal "Not an expresion"; raise Terminate
+
 (* Semantic checking of values in binary expressions *)
 let check_binop_types expr1 expr2 pos=
   let (type_1, type_2) = match (expr1, expr2) with 
@@ -44,13 +56,6 @@ let check_binop_types expr1 expr2 pos=
       |_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
               (pos.pos_cnum - pos.pos_bol); TYPE_none
 
-let check_bool_binop_types type_1 type_2 pos=
-  	match (type_1, type_2) with
-
-  	|(TYPE_bool, TYPE_bool) -> TYPE_bool
-  	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
-           (pos.pos_cnum - pos.pos_bol); TYPE_none
-
 let check_int_binop_types expr1 expr2 pos=
     let res = check_binop_types expr1 expr2 pos in
       if (res != TYPE_int) then (
@@ -59,27 +64,22 @@ let check_int_binop_types expr1 expr2 pos=
         TYPE_none)
       else TYPE_int
 
-let check_equalities type_1 type_2 pos= 
-	match (type_1, type_2) with
+let check_equalities expr1 expr2 pos =
+    if ((check_is_number expr1 pos) && (check_is_number expr2 pos))
+    then true
+    else ( 
+      error "Line:%d.%d: Wrong types in assignment or comparison" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol);
+      false
+    )
 
-	|(TYPE_int, TYPE_int)
-	|(TYPE_real, TYPE_real)
-	|(TYPE_real, TYPE_int)
-	|(TYPE_int, TYPE_real) -> TYPE_bool
+
+let check_bool_binop_types type_1 type_2 pos=
+  	match (type_1, type_2) with
+
+  	|(TYPE_bool, TYPE_bool) -> TYPE_bool
   	|_ -> error  "Line:%d.%d: Wrong types" (pos.pos_lnum) 
            (pos.pos_cnum - pos.pos_bol); TYPE_none
-
-let check_is_number expr pos= 
-  match expr with
-    |Expr e -> (
-       let expr_typ = get_type e.place 
-       in let spt = create_super_type expr_typ in
-         match spt with
-           |Num _ -> true
-           |_ -> error  "Line:%d.%d: Not a number" (pos.pos_lnum) 
-                   (pos.pos_cnum - pos.pos_bol); false
-     )
-    | _ -> internal "Not an expresion"; raise Terminate
 
 let check_is_bool expr pos= 
   match expr with
