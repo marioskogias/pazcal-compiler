@@ -39,7 +39,8 @@ and parameter_info = {                        (****** Παράμετρος *******)
 
 and temporary_info = {                        (** Προσωρινή μεταβλητή **)
   temporary_type   : Types.typ;               (* Τύπος                 *)
-  temporary_offset : int                      (* Offset στο Ε.Δ.       *)
+  temporary_offset : int;                     (* Offset στο Ε.Δ.       *)
+  mutable temp_value    : string
 }
 
 and entry_info = ENTRY_none

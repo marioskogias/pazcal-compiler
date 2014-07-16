@@ -70,20 +70,6 @@ let get_param_list a =
 	| ENTRY_function inf -> inf.function_paramlist 
 	| _ -> []
 
-(*function to evaulate expression*)
-
-let eval_expr a b op = 
-    try
-        let a_val = int_of_string a in
-        let b_val = int_of_string b in
-            match op with
-            | "+" -> string_of_int (a_val + b_val)
-            | "-" ->  string_of_int (a_val - b_val)
-            | "*" ->  string_of_int (a_val * b_val)
-            | "/" ->  string_of_int (a_val / b_val)
-            | "mod" ->  string_of_int (a_val mod b_val)
-        with Failure "int_of_string" -> "this is not a number" (*change this*)
-
 (* register all library functions *)
 let registerLibraryFunctions () =
     let v = (TYPE_proc, newFunction (id_make "putchar") true) in
@@ -325,8 +311,8 @@ var_init : T_name { ($1,[], Expr(return_null())) }
 	    | T_name var_init_bra_list { ($1,$2, Expr(return_null())) }
 
 
-var_init_bra_list : T_lbracket const_expr T_rbracket {[] (*[table_size (fst $2) (snd $2) (rhs_start_pos 1)]*) } //(*make sure to return only int*)
-                    | T_lbracket const_expr T_rbracket var_init_bra_list { [] (*(table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4)*) }
+var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size $2 (rhs_start_pos 1)] }
+                    | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size $2 (rhs_start_pos 1)::$4) }
 
 routine_header : routine_header_beg T_lparen routine_header_body T_rparen {ignore(currentFun := (snd $1)); registerFun $1 $3 }
 
@@ -341,11 +327,11 @@ routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2)
 
 formal : T_name { ($1,PASS_BY_VALUE,[]) }
        | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
-       | T_name T_lbracket const_expr T_rbracket formal_end {($1,PASS_BY_REFERENCE,[](*(table_size (fst $3) (snd $3) (rhs_start_pos 1)::$5)*)) }
+       | T_name T_lbracket const_expr T_rbracket formal_end {($1,PASS_BY_REFERENCE,(table_size $3 (rhs_start_pos 1)::$5)) }
        | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
 formal_end : /*nothing*/ { [] }
-	   | T_lbracket const_expr T_rbracket formal_end {[] (*(table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4)*) }
+	   | T_lbracket const_expr T_rbracket formal_end { (table_size $2 (rhs_start_pos 1)::$4) }
 
 routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
 	| routine_header block {  (*before closing scope pass to fun_entry the size of the scope*)

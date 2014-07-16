@@ -49,7 +49,8 @@ and parameter_info = {
 
 and temporary_info = {
   temporary_type   : Types.typ;
-  temporary_offset : int
+  temporary_offset : int;
+  mutable temp_value : string
 }
 
 and entry_info = ENTRY_none
@@ -277,7 +278,8 @@ let newTemporary typ =
   !currentScope.sco_negofs <- !currentScope.sco_negofs - sizeOfType typ;
   let inf = {
     temporary_type = typ;
-    temporary_offset = !currentScope.sco_negofs
+    temporary_offset = !currentScope.sco_negofs;
+    temp_value = ""
   } in
   incr tempNumber;
   newEntry id (ENTRY_temporary inf) false
@@ -349,10 +351,11 @@ let get_entry_type ent =
 
 let get_var_val entry =
   match entry.entry_info with
+    |ENTRY_temporary inf -> inf.temp_value
     |ENTRY_variable inf -> inf.value
     |_ -> internal "Not a var with value"; raise Terminate
 
 let set_var_val entry value =
   match entry.entry_info with
-    |ENTRY_variable inf -> inf.value <- value
+    |ENTRY_temporary inf -> inf.temp_value <- value
     |_ -> internal "Not a var with value"; raise Terminate

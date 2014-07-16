@@ -195,7 +195,7 @@ let calculate_const_val expr pos =
                                    (pos.pos_cnum - pos.pos_bol); ""
                            )
                )
-              |code -> do_calc code
+              |code -> do_calc (List.rev code)
   
 let get_const_val expr pos = 
   match expr with
@@ -212,21 +212,13 @@ let get_const_val expr pos =
     |_ -> internal "Const expr not expr"; raise Terminate
 (*------------- Updated till here ------------------*)
 
-let table_size val_type value pos= 
-   (* try
-        match val_type with
-        | TYPE_int -> int_of_string value
-        | _ -> ignore(print_error "Not an integer value in table size" pos); -1
-	with Failure "int_of_string" -> ignore(print_error "Unknown table size" pos);0 (* if zero then check memory issues...*)
-    EXPLAIN
-    *)
-  match val_type with
-    |TYPE_int ->
-        try
-          int_of_string value
-        with Failure "int_of_string" -> 0
-    |_ -> error  "Line:%d.%d: Not an integer value" (pos.pos_lnum) 
-                  (pos.pos_cnum - pos.pos_bol); -1
+let table_size expr pos= 
+  let size = get_const_val expr pos in
+    Printf.printf "The table size is %s\n" size; 
+    try
+      int_of_string size
+    with Failure "int_of_string" -> error  "Line:%d.%d: Not an integer value as table size" (pos.pos_lnum) 
+                                      (pos.pos_cnum - pos.pos_bol); 0
 
 
 
