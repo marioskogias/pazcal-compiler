@@ -625,8 +625,8 @@ clause : stmt_list { ($1) }
 inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
        | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 
-switch_exp : T_case const_expr T_colon  { {case_list=["temp_string"]; jump_list=[ref 1]}(*{case_list=[(snd $2)]; jump_list=[ref 1]}*) }
-       | T_case const_expr T_colon switch_exp { handle_switch_exp "temp_string" $4(*handle_switch_exp (snd $2) $4*) }
+switch_exp : T_case const_expr T_colon  { {case_list=[get_const_val $2 (rhs_start_pos 1)]; jump_list=[ref 1]} }
+       | T_case const_expr T_colon switch_exp { handle_switch_exp (get_const_val $2 (rhs_start_pos 1)) $4 }
 
 pformat_list : /*nothing*/ { () }
 	     | T_comma pformat pformat_list { () }
