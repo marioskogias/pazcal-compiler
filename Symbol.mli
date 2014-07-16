@@ -18,7 +18,7 @@ and variable_info = {                         (******* Μεταβλητή *******)
   variable_type   : Types.typ;                (* Τύπος                 *)
   variable_offset : int;                       (* Offset στο Ε.Δ.       *)
   is_const : bool;
-  value : string
+  mutable value : string
 }
 
 and function_info = {                         (******* Συνάρτηση *******)
@@ -75,6 +75,8 @@ val newTemporary     : Types.typ -> entry
 val forwardFunction   : entry -> unit
 val endFunctionHeader : entry -> Types.typ -> unit
 val lookupEntry       : Identifier.id -> lookup_type -> bool -> entry
+val set_var_val         : entry -> string -> unit
+val get_var_val         : entry -> string
 
 val start_positive_offset : int   (* Αρχικό θετικό offset στο Ε.Δ.   *)
 val start_negative_offset : int   (* Αρχικό αρνητικό offset στο Ε.Δ. *)

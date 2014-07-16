@@ -44,7 +44,8 @@ let registerVar var_type place (a,b,c) = match c with
                                          |_ -> return_null_stmt()
                         
 (*function to register a const*)
-let registerConst var_type (a,v) =  ignore(newConst (id_make a) var_type v true)
+let registerConst pos var_type (a,v) = let const_val = get_const_val v pos in
+                                    newConst (id_make a) var_type const_val true
 
 (*function to register a param*)
 let register_param anc (param_type, (name, mode, nlist)) = 
@@ -59,14 +60,6 @@ let rec get_var_type = function
     |(var_type, 0) -> var_type
     |(TYPE_array (t,s), a) -> get_var_type (t, a-1)
     |_ -> ignore(error "tables sizes"); TYPE_none
-
-(*function to get a cont val*)
-let get_const_val name = 
-    let e = lookupEntry  (id_make name) LOOKUP_ALL_SCOPES true 
-        in
-        match e.entry_info with
-        | ENTRY_variable inf ->  inf.value
-        | _ -> "0"
 
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
@@ -248,8 +241,8 @@ let registerLibraryFunctions () =
 %type <QuadTypes.stmt_ret_type> declaration_list
 %type <QuadTypes.stmt_ret_type> declaration
 %type <unit> const_def
-%type <string * string > const_inner_def //(*name, val, thanasis*)
-%type <(string * string) list> const_def_list
+%type <string * QuadTypes.superexpr> const_inner_def //(*name, val, thanasis*)
+%type <(string * QuadTypes.superexpr) list> const_def_list
 %type <QuadTypes.stmt_ret_type> var_def
 %type <(string * int list * QuadTypes.superexpr) list> var_def_list
 %type <string * int list * QuadTypes.superexpr> var_init
@@ -263,7 +256,7 @@ let registerLibraryFunctions () =
 %type <int list> formal_end
 %type <QuadTypes.stmt_ret_type> program
 %type <Types.typ> ptype
-%type <Types.typ * string> const_expr
+%type <QuadTypes.superexpr> const_expr
 %type <QuadTypes.superexpr> expr
 %type <QuadTypes.superexpr> l_value
 %type <(superexpr list) * int> expr_list
@@ -304,9 +297,13 @@ declaration : const_def { return_null_stmt() }
 	    | routine { $1 }
 	    | program { $1 }
 
-const_inner_def : T_name T_eq const_expr { ($1, (snd $3)) } 
+const_inner_def : T_name T_eq const_expr { ($1, $3) } 
 
-const_def : T_const ptype const_inner_def const_def_list T_semicolon { ignore(registerConst $2 $3); ignore(List.map (registerConst $2) $4) }
+const_def : T_const ptype const_inner_def const_def_list T_semicolon { let pos = rhs_start_pos 1 in 
+                                                                        ignore(registerConst pos $2 $3); 
+                                                                        ignore(List.map
+                                                                        (registerConst pos $2) $4) 
+                                                                      }
 
 
 const_def_list : /*nothing*/ { [] }
@@ -328,8 +325,8 @@ var_init : T_name { ($1,[], Expr(return_null())) }
 	    | T_name var_init_bra_list { ($1,$2, Expr(return_null())) }
 
 
-var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size (fst $2) (snd $2) (rhs_start_pos 1)] } //(*make sure to return only int*)
-		  | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
+var_init_bra_list : T_lbracket const_expr T_rbracket {[] (*[table_size (fst $2) (snd $2) (rhs_start_pos 1)]*) } //(*make sure to return only int*)
+                    | T_lbracket const_expr T_rbracket var_init_bra_list { [] (*(table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4)*) }
 
 routine_header : routine_header_beg T_lparen routine_header_body T_rparen {ignore(currentFun := (snd $1)); registerFun $1 $3 }
 
@@ -344,11 +341,11 @@ routine_header_beg : T_PROC T_name { let a = (TYPE_proc,newFunction (id_make $2)
 
 formal : T_name { ($1,PASS_BY_VALUE,[]) }
        | T_ampersand T_name  { ($2,PASS_BY_REFERENCE,[]) }
-       | T_name T_lbracket const_expr T_rbracket formal_end { ($1,PASS_BY_REFERENCE,(table_size (fst $3) (snd $3) (rhs_start_pos 1)::$5)) }
+       | T_name T_lbracket const_expr T_rbracket formal_end {($1,PASS_BY_REFERENCE,[](*(table_size (fst $3) (snd $3) (rhs_start_pos 1)::$5)*)) }
        | T_name T_lbracket T_rbracket formal_end {($1,PASS_BY_REFERENCE,(0::$4)) }
 
 formal_end : /*nothing*/ { [] }
-	   | T_lbracket const_expr T_rbracket formal_end { (table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4) }
+	   | T_lbracket const_expr T_rbracket formal_end {[] (*(table_size (fst $2) (snd $2) (rhs_start_pos 1)::$4)*) }
 
 routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
 	| routine_header block {  (*before closing scope pass to fun_entry the size of the scope*)
@@ -372,11 +369,7 @@ ptype : T_int  { $1 }
       | T_char { $1 }
       | T_REAL { $1 }
 
-const_expr : expr { match $1 with
-                    |Expr e -> ((get_type e.place), (string_of_quad_elem_t
-                                e.place))
-                    |_ -> internal "Const expr not expr"; raise Terminate 
-                } 
+const_expr : expr { $1 } 
 
 
 expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
@@ -646,8 +639,8 @@ clause : stmt_list { ($1) }
 inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
        | switch_exp clause inner_switch { handle_inner_switch $1 $2 $3 }
 
-switch_exp : T_case const_expr T_colon  { {case_list=[(snd $2)]; jump_list=[ref 1]} }
-       | T_case const_expr T_colon switch_exp { handle_switch_exp (snd $2) $4 }
+switch_exp : T_case const_expr T_colon  { {case_list=["temp_string"]; jump_list=[ref 1]}(*{case_list=[(snd $2)]; jump_list=[ref 1]}*) }
+       | T_case const_expr T_colon switch_exp { handle_switch_exp "temp_string" $4(*handle_switch_exp (snd $2) $4*) }
 
 pformat_list : /*nothing*/ { () }
 	     | T_comma pformat pformat_list { () }

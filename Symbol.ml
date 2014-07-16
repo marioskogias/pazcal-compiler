@@ -28,7 +28,7 @@ and variable_info = {
   variable_type   : Types.typ;
   variable_offset : int;
   is_const : bool;
-  value : string
+  mutable value : string
 }
 
 and function_info = {
@@ -346,3 +346,13 @@ let get_entry_type ent =
     |ENTRY_parameter (info) -> info.parameter_type
     |ENTRY_function (info) -> info.function_result
     |ENTRY_temporary (info) -> info.temporary_type
+
+let get_var_val entry =
+  match entry.entry_info with
+    |ENTRY_variable inf -> inf.value
+    |_ -> internal "Not a var with value"; raise Terminate
+
+let set_var_val entry value =
+  match entry.entry_info with
+    |ENTRY_variable inf -> inf.value <- value
+    |_ -> internal "Not a var with value"; raise Terminate

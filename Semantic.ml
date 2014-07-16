@@ -144,6 +144,72 @@ let check_assign operator expr1 expr2 pos=
       )
   )
 
+(* 
+ * This is called when constant is a temp variable occuring after calculations
+ *)
+
+let calculate_const_val expr pos =
+  let rec do_calc  = function
+    |[] ->(  (*η τιμή value του place στο expr*)
+       match expr.place with
+         | Quad_entry qe -> get_var_val qe 
+         |_ -> internal "Not an entry"; raise Terminate
+     )
+    |(h::t) -> match h with
+       |Quad_calc (op, op1, op2, res) -> (
+          let op1_val = match op1 with
+            |Quad_entry e1 -> int_of_string (get_var_val e1)
+            |Quad_int e1 -> int_of_string e1
+            |_ -> error  "Line:%d.%d: Only integer const calculations are supported" 
+                    (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol); 0
+          in let op2_val = match op2 with
+            |Quad_entry e1 -> int_of_string (get_var_val e1)
+            |Quad_int e1 -> int_of_string e1
+            |_ -> error  "Line:%d.%d: Only integer const calculations are supported" 
+                    (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol); 0
+          in let result = match op with
+            |"+" -> op1_val + op2_val
+            |"-" -> op1_val - op2_val
+            |"*" -> op1_val * op2_val
+            |"/" -> op1_val / op2_val
+            |"%" -> op1_val mod op2_val
+          in let res_entry = match res with 
+            |Quad_entry e1 -> e1
+            |_ -> internal "Result of calc not an entry"; raise Terminate
+          in set_var_val res_entry (string_of_int result); do_calc t
+        )
+       |_ -> internal "Not a quad calc in constand calc"; raise Terminate
+          in
+            match expr.code with
+              (*if const value == no code return the value string*)
+              |[] -> (if (check_const (Expr(expr))) then 
+                        match expr.place with
+                          | Quad_entry qe ->( 
+                              match qe.entry_info with
+                                |ENTRY_variable inf -> inf.value
+                                |_ -> internal "Not a variable"; raise Terminate
+                            )
+                          |_ -> internal "Not an entry"; raise Terminate
+
+                           else( error  "Line:%d.%d: Not a constant value" (pos.pos_lnum) 
+                                   (pos.pos_cnum - pos.pos_bol); ""
+                           )
+               )
+              |code -> do_calc code
+  
+let get_const_val expr pos = 
+  match expr with
+    |Expr e ->(
+       match e.place with
+         |Quad_int s
+         |Quad_char s
+         |Quad_real s
+         |Quad_string s
+         |Quad_bool s -> s
+         |Quad_entry _ -> calculate_const_val e pos
+         |_ -> internal "Not valid const quad"; raise Terminate
+     )
+    |_ -> internal "Const expr not expr"; raise Terminate
 (*------------- Updated till here ------------------*)
 
 let table_size val_type value pos= 
@@ -187,5 +253,3 @@ let check_function_params symbol_table_params_list passed_param_list pos=
 
 (*bool val if in loop*)
 let in_loop = ref 0
-
-

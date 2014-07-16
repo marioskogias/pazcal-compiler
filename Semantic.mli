@@ -17,3 +17,4 @@ val check_function_params : Symbol.entry list -> Types.typ list -> Lexing.positi
 val check_assign : string -> QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> bool
 val in_loop : int ref
 val create_super_type : Types.typ -> super_type
+val get_const_val : QuadTypes.superexpr -> Lexing.position -> string
