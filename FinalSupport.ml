@@ -54,9 +54,11 @@ type mem_loc =
   | String_addr of string                 (* @strx                  *)
   | Num of string                         (* Constant               *)
 
-let mem_size = function
-  |TYPE_int -> "word"
-  |_ -> "byte"
+let mem_size t =
+  let type_size = sizeOfArrayType t in
+    match type_size with
+      |2 -> "word"
+      |_ -> "byte"
 
 let string_of_mem_loc = function
   | Register reg -> (string_of_register reg)
