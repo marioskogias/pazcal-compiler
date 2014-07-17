@@ -704,7 +704,7 @@ let handle_for_stmt indx info body pos=
                 | _ -> internal "Assigning to something not an entry";
                 raise Terminate
             in match upordown with
-                |"+"-> let comp_quads = handle_comparison "<" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
+                |"+"-> let comp_quads = handle_comparison "<=" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
                        let temp = newTemporary TYPE_int in                                     
                        let plus_quad = Quad_calc("+", step.place, Quad_entry(temp_index), Quad_entry(temp)) in
                        let assign_in_loop_quad = Quad_set(Quad_entry(temp), Quad_entry(temp_index)) in
@@ -718,7 +718,7 @@ let handle_for_stmt indx info body pos=
                             q_break=[];
                             q_cont=[]    
                          }
-                |"-" ->let comp_quads = handle_comparison ">" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
+                |"-" ->let comp_quads = handle_comparison ">=" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
                        let temp = newTemporary TYPE_int in                                     
                        let minus_quad = Quad_calc("-", step.place, Quad_entry(temp_index), Quad_entry(temp)) in
                        let assign_in_loop_quad = Quad_set(Quad_entry(temp), Quad_entry(temp_index)) in
