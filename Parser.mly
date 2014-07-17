@@ -446,8 +446,48 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
 
 l_value : T_name expr_list { 
     let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true  in
-    let pos = (rhs_start_pos 1) 
-    in match e.entry_info with
+    let pos = (rhs_start_pos 1)
+    in if (List.length (fst $2)) = 0 then Expr({code=[];place=(Quad_entry (e))})
+    else match e.entry_info with
+        | ENTRY_parameter par -> 
+            begin
+                let type_of_var = par.parameter_type
+                in 
+                (match type_of_var with
+                    | TYPE_array (typ, size) -> 
+                        (match (List.hd (fst $2)) with
+                            |Expr expr ->
+                                (
+                                let result_type = get_var_type pos ((get_type (Quad_entry e)), (snd $2))
+                                in let result_temp = newTemporary result_type
+                                in let final_expr = match (fst $2) with
+                                    | h::[] ->
+                                        Expr({ 
+                                            code = Quad_array(Quad_entry(e), expr.place, result_temp)::expr.code;
+                                            place = Quad_entry(result_temp)
+                                        })
+                                    | h::t  -> 
+                                        let offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
+                                        in let temp = newTemporary TYPE_int
+                                        in let first_offset_included =
+                                        {
+                                            code = Quad_calc("+", expr.place, offset_quads_expr.place, Quad_entry(temp))::offset_quads_expr.code;
+                                            place = Quad_entry(temp)
+                                        }
+                                        in ( Expr(
+                                            {
+                                                code = Quad_array(Quad_entry(e), Quad_entry(temp), result_temp)::(first_offset_included.code);
+                                                place = Quad_entry(result_temp) 
+                                            }
+                                        ))
+                                        in final_expr
+                                )
+                            | Cond c -> Expr(return_null()) (*error here*)
+                            | _ -> Expr(return_null()) (*error here*)
+                        )
+                    | _ -> Expr({code=[];place=(Quad_entry (e))})
+                )
+            end
         | ENTRY_variable var ->
             begin
                 let type_of_var = var.variable_type
