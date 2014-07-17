@@ -145,6 +145,7 @@ let check_assign operator expr1 expr2 pos=
     in
       if res then true
       else (
+        Printf.printf "Type1 = %s type2 = %s\n" (typeToString type_1) (typeToString type_2);
         error  "Line:%d.%d: Wrong types in assignment" (pos.pos_lnum) 
           (pos.pos_cnum - pos.pos_bol);
         false

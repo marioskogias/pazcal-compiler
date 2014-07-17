@@ -11,3 +11,4 @@ type typ = TYPE_none        (* no type (should not be used)       *)
 val sizeOfType : typ -> int
 val sizeOfArrayType : typ -> int
 val equalType : typ -> typ -> bool
+val typeToString : typ -> string

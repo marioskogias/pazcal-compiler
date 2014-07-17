@@ -34,3 +34,12 @@ let rec equalType t1 t2 =
                                                          else false
 
    | _                                            -> t1 = t2
+
+let typeToString = function
+  |TYPE_none -> "type none"
+  | TYPE_int -> "type int"
+  | TYPE_real -> "type real"
+  | TYPE_char -> "type char"
+  | TYPE_bool -> "type bool"
+  | TYPE_array _ -> "type array"
+  | TYPE_proc -> "type proc"
