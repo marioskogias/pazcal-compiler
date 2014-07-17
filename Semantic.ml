@@ -27,6 +27,13 @@ let create_super_type t =
     )
     |_ -> internal "Not a basic type"; raise Terminate
 
+(*function to get variable's type*)
+let rec get_var_type pos = function
+    |(TYPE_array (t,s), a) -> get_var_type pos (t, a-1)
+    |(var_type, 0) -> var_type 
+    |_ -> error  "Line:%d.%d: Wrong table sizes" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol); TYPE_none
+
 (* Check if expression is a const variable *)
 let check_const expr =
   match expr with

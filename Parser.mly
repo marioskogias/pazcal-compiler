@@ -55,12 +55,6 @@ let register_param anc (param_type, (name, mode, nlist)) =
 (*function to register a function/proc and its params*)
 let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_entry) a); ignore(endFunctionHeader fun_entry fun_type); fun_entry
 
-(*function to get variable's type*)
-let rec get_var_type = function
-    |(var_type, 0) -> var_type
-    |(TYPE_array (t,s), a) -> get_var_type (t, a-1)
-    |_ -> ignore(error "tables sizes"); TYPE_none
-
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
 
@@ -245,7 +239,7 @@ let registerLibraryFunctions () =
 %type <QuadTypes.superexpr> const_expr
 %type <QuadTypes.superexpr> expr
 %type <QuadTypes.superexpr> l_value
-%type <(superexpr list) * int> expr_list
+%type <(QuadTypes.superexpr list) * int> expr_list
 //%type <unit> unop
 //%type <unit> binop
 //%type <Types.typ * string * string> call 
@@ -451,7 +445,8 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
                        }
 
 l_value : T_name expr_list { 
-    let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+    let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true  in
+    let pos = (rhs_start_pos 1) 
     in match e.entry_info with
         | ENTRY_variable var ->
             begin
@@ -462,7 +457,7 @@ l_value : T_name expr_list {
                         (match (List.hd (fst $2)) with
                             |Expr expr ->
                                 (
-                                let result_type = get_var_type((get_type (Quad_entry e)), (snd $2))
+                                let result_type = get_var_type pos ((get_type (Quad_entry e)), (snd $2))
                                 in let result_temp = newTemporary result_type
                                 in let final_expr = match (fst $2) with
                                     | h::[] ->
@@ -484,15 +479,15 @@ l_value : T_name expr_list {
                                                 place = Quad_entry(result_temp) 
                                             }
                                         ))
-                                        in (result_type, get_name e, final_expr)
+                                        in final_expr
                                 )
-                            | Cond c -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
-                            | _ -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
+                            | Cond c -> Expr(return_null()) (*error here*)
+                            | _ -> Expr(return_null()) (*error here*)
                         )
-                    | _ -> (get_var_type ((get_type (Quad_entry e)), (snd $2)),get_name e,Expr({code=[];place=(Quad_entry (e))}))
+                    | _ -> Expr({code=[];place=(Quad_entry (e))})
                 )
             end
-        | _ -> (get_var_type ((get_type (Quad_entry e)), (snd $2)),get_name e,Expr({code=[];place=(Quad_entry (e))}))
+        | _ -> Expr({code=[];place=(Quad_entry (e))})
 }
 
 expr_list : /*nothing*/ { ([], 0) }

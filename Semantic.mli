@@ -6,6 +6,7 @@ type super_type =
   | Num of num_type
   | Bool of Types.typ
 
+val get_var_type : Lexing.position -> Types.typ * int -> Types.typ
 val check_is_number : QuadTypes.superexpr -> Lexing.position -> bool
 val check_binop_types : QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> Types.typ
 val check_bool_binop_types : QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> bool
