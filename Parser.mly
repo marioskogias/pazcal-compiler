@@ -462,43 +462,51 @@ expr:  T_int_const { (TYPE_int,$1, Expr( {code=[]; place= Quad_int ($1)})) }
      | expr T_or expr { (check_bool_binop_types (first_el $1) (first_el $3) (rhs_start_pos 1),"test", Cond(handle_or (third_el $1) (third_el $3))) }
 
 
-l_value : T_name expr_list { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-                                in let type_of_var = match e.entry_info with
-                                  | ENTRY_variable var -> var.variable_type
-                                    in match type_of_var with
-                                      | TYPE_array (typ, size) -> 
-                                      (match (List.hd (fst $2)) with
-                                       |Expr expr ->
-                                       (
-                                        let result_type = get_var_type((get_type (Quad_entry e)), (snd $2))
-                                        in let result_temp = newTemporary result_type
-                                        in let final_expr = 
-                                            match (fst $2) with
-                                            | h::[] ->
-                                                Expr({ 
-                                                    code = Quad_array(Quad_entry(e), expr.place, result_temp)::expr.code;
-                                                    place = Quad_entry(result_temp)
-                                                })
-                                            | h::t  -> 
-                                                let offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
-                                                in let temp = newTemporary TYPE_int
-                                                in let first_offset_included =
-                                                    {
-                                                     code = Quad_calc("+", expr.place, offset_quads_expr.place, Quad_entry(temp))::offset_quads_expr.code;
-                                                     place = Quad_entry(temp)
-                                                    }
-                                                in ( Expr({code = Quad_array(Quad_entry(e), Quad_entry(temp), result_temp)::(first_offset_included.code);
-                                                        place = Quad_entry(result_temp) 
-                                                    })
-                                                )
-                                            in (result_type, get_name e, final_expr)
-                                        )
-                                        | Cond c -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
-                                     ) 
-                                      | _ -> (get_var_type ((get_type (Quad_entry e)), (snd $2)),get_name e,Expr({code=[];place=(Quad_entry (e))}))
-                                  | _ -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
-                                }
-                                
+l_value : T_name expr_list { 
+    let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+    in match e.entry_info with
+        | ENTRY_variable var ->
+            begin
+                let type_of_var = var.variable_type
+                in 
+                (match type_of_var with
+                    | TYPE_array (typ, size) -> 
+                        (match (List.hd (fst $2)) with
+                            |Expr expr ->
+                                (
+                                let result_type = get_var_type((get_type (Quad_entry e)), (snd $2))
+                                in let result_temp = newTemporary result_type
+                                in let final_expr = match (fst $2) with
+                                    | h::[] ->
+                                        Expr({ 
+                                            code = Quad_array(Quad_entry(e), expr.place, result_temp)::expr.code;
+                                            place = Quad_entry(result_temp)
+                                        })
+                                    | h::t  -> 
+                                        let offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
+                                        in let temp = newTemporary TYPE_int
+                                        in let first_offset_included =
+                                        {
+                                            code = Quad_calc("+", expr.place, offset_quads_expr.place, Quad_entry(temp))::offset_quads_expr.code;
+                                            place = Quad_entry(temp)
+                                        }
+                                        in ( Expr(
+                                            {
+                                                code = Quad_array(Quad_entry(e), Quad_entry(temp), result_temp)::(first_offset_included.code);
+                                                place = Quad_entry(result_temp) 
+                                            }
+                                        ))
+                                        in (result_type, get_name e, final_expr)
+                                )
+                            | Cond c -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
+                            | _ -> (TYPE_bool,"test", Expr(return_null())) (*error here*)
+                        )
+                    | _ -> (get_var_type ((get_type (Quad_entry e)), (snd $2)),get_name e,Expr({code=[];place=(Quad_entry (e))}))
+                )
+            end
+        | _ -> (get_var_type ((get_type (Quad_entry e)), (snd $2)),get_name e,Expr({code=[];place=(Quad_entry (e))}))
+}
+
 
 expr_list : /*nothing*/ { ([], 0) }
 	  | T_lbracket expr T_rbracket expr_list { (third_el $2::(fst $4), (snd $4) + 1) }
