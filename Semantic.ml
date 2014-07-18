@@ -218,7 +218,6 @@ let get_const_val expr pos =
          |_ -> internal "Not valid const quad"; raise Terminate
      )
     |_ -> internal "Const expr not expr"; raise Terminate
-(*------------- Updated till here ------------------*)
 
 let table_size expr pos= 
   let size = get_const_val expr pos in
@@ -229,25 +228,25 @@ let table_size expr pos=
                                       (pos.pos_cnum - pos.pos_bol); 0
 
 
+(*------------- Updated till here ------------------*)
 
-let check_function_params symbol_table_params_list passed_param_list pos= 
+let check_function_params symbol_table_params_list passed_param_types pos= 
+  let get_param_type p = 
+    match p.entry_info with
+      | ENTRY_parameter inf -> inf.parameter_type
+      | _ -> internal "Not a parameter"; raise Terminate
+  in
   let rec help_check = function
     | ([],[]) -> true
-    | ([], l1) -> if (List.length l1) > 0 then (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                                                  (pos.pos_cnum - pos.pos_bol); false) else true
-    | (l1,[]) -> if (List.length l1) > 0 then (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                                                 (pos.pos_cnum - pos.pos_bol) ;false) else true
+    | ([], l1)  
+    | (l1,[]) -> error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol) ;false
     | ((a::b), (c::d)) -> 	
-        let par_type =
-          match a.entry_info with
-            | ENTRY_parameter inf -> inf.parameter_type
-            | _ -> TYPE_none
-        in
-          if (equalType par_type c) then help_check (b, d)
+          if (equalType a c) then help_check (b, d)
           else (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
                   (pos.pos_cnum - pos.pos_bol); false)
-
-  in help_check (symbol_table_params_list, passed_param_list)
+  in let param_types = List.map get_param_type symbol_table_params_list in
+  help_check (param_types, passed_param_types)
 
 
 
