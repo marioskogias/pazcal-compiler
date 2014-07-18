@@ -27,6 +27,7 @@ let get_info = function
     let offset = info.parameter_offset in
     let mode = (info.parameter_mode = PASS_BY_REFERENCE)
     in (offset,mode)
+  |_ -> internal "Info for not a var"; raise Terminate
 
 let const_strings = Queue.create()
 let add_string str = Queue.add str const_strings;
@@ -60,6 +61,7 @@ let rec load a reg =
     |Quad_bool(str) -> (match str with
                           |"true" -> [Mov (Register get_register(reg, TYPE_char), Num "1")]
                           |"false" -> [Mov (Register get_register(reg, TYPE_char), Num "0")]
+                          |_ -> internal "Unknown bool value"; raise Terminate
      )
     |Quad_entry(e) ->( let l = local e in
                        let (offset, is_reference) = get_info e.entry_info in
@@ -77,24 +79,26 @@ let rec load a reg =
         let length = mem_size entry_type in 
         let l = load (Quad_entry(e)) Di in
           ((Mov(Register get_register(reg, entry_type), Mem_loc(length, Di, 0)))::l)
-    (* {x}? *)
+    |_ -> internal "Load from sth unloadable"; raise Terminate
+(* {x}? *)
 
 (* load address in reg *)
 let load_addr addr reg = 
-    match addr with
+  match addr with
     |Quad_string(s) ->let addr = add_string (strip  s) in
-        [Lea (Register reg, String_addr addr)]
+       [Lea (Register reg, String_addr addr)]
     |Quad_valof(ent) -> load (Quad_entry(ent)) reg
     |Quad_entry(e) ->( let l = local e in
-        let (offset, is_reference) = get_info e.entry_info in
-        let entry_type = get_entry_type e in
-        let length = mem_size entry_type in 
-        match (l, is_reference) with
-        |(true, false) -> [Lea (Register reg, Mem_loc(length, Bp, offset))] 
-        |(true, true) ->  [Mov (Register reg, Mem_loc(length, Bp, offset))] 
-        |(false,_) -> let ar = get_ar in 
-            (Mov(Register reg, Mem_loc(length, Si,offset))::ar)
-    )
+                       let (offset, is_reference) = get_info e.entry_info in
+                       let entry_type = get_entry_type e in
+                       let length = mem_size entry_type in 
+                         match (l, is_reference) with
+                           |(true, false) -> [Lea (Register reg, Mem_loc(length, Bp, offset))] 
+                           |(true, true) ->  [Mov (Register reg, Mem_loc(length, Bp, offset))] 
+                           |(false,_) -> let ar = get_ar in 
+                              (Mov(Register reg, Mem_loc(length, Si,offset))::ar)
+     )
+    |_ -> internal "Not an address to load"; raise Terminate
 
 (* store from reg to mem *)
 let store a reg = 
@@ -114,6 +118,7 @@ let store a reg =
         let entry_type = get_entry_type e in
         let length = mem_size entry_type in 
         (Mov(Mem_loc(length, Di, 0), Register get_register(reg, entry_type))::l)
+    |_ -> internal "Can not store to non entry"; raise Terminate
 
 (* function labels follow _p_num naming format *)
 let func_labels = Hashtbl.create 30
@@ -224,128 +229,129 @@ let param_size x =
 let current_fun = ref "fun_name"
 
 let final_code_of_quad = function 
-    |Quad_set(q,e) -> merge_lists([], [ store e Ax ;load q Ax ])
-    |Quad_array(x,y,z) ->
-        let lval = match x with
-            |Quad_entry x -> x
-            |_ -> internal "Error"; raise Terminate
-        in let size = 
-          match lval.entry_info with
+  |Quad_set(q,e) -> merge_lists([], [ store e Ax ;load q Ax ])
+  |Quad_array(x,y,z) ->
+      let lval = match x with
+        |Quad_entry x -> x
+        |_ -> internal "Error"; raise Terminate
+      in let size = 
+        match lval.entry_info with
           |ENTRY_variable(info)-> sizeOfArrayType info.variable_type
           |ENTRY_parameter(info) ->sizeOfArrayType info.parameter_type
           |_ -> internal "Called array with not an array"; raise Terminate
-        in let code = [store (Quad_entry(z)) Ax; 
-                      [Add (Action_reg Ax, Action_reg Cx )];
-                      load_addr x Cx;
-                      [IMul Cx]; 
-                      [Mov(Register Cx, Num(string_of_int size))];
-                      load y Ax]
-        in merge_lists([], code)
-    |Quad_calc(op,x,y,z) ->
-        let type_x = get_type x in
-        let type_y = get_type y in 
+      in let code = [store (Quad_entry(z)) Ax; 
+                     [Add (Action_reg Ax, Action_reg Cx )];
+                     load_addr x Cx;
+                     [IMul Cx]; 
+                     [Mov(Register Cx, Num(string_of_int size))];
+                     load y Ax]
+      in merge_lists([], code)
+  |Quad_calc(op,x,y,z) ->
+      let type_x = get_type x in
+      let type_y = get_type y in 
         (
-        match op with
-        |"+"-> let code = [store z Ax;
-                          [Add (Action_reg get_register(Ax, type_x), 
-                                Action_reg get_register(Dx, type_y))];
-                          load y Dx;
-                          load x Ax]
-              in merge_lists([], code)
-        |"+"-> let code = [store z Ax;
-                          [Sub (Action_reg get_register(Ax, type_x), 
-                                Action_reg get_register(Dx, type_y))];
-                          load y Dx;
-                          load x Ax]
-              in merge_lists([], code)
-        |"*"-> let code = [store z Ax;
-                          [IMul Cx];
-                          load y Cx;
-                          load x Ax]
-              in merge_lists([], code)
-        |"*"-> let code = [store z Ax;
-                          [IDiv Cx];
-                          load y Cx;
-                          [Cwd];
-                          load x Ax]
-              in merge_lists([], code)
-        |"%"-> let code = [store z Dx;
-                          [IDiv Cx];
-                          load y Cx;
-                          [Cwd];
-                          load x Ax]
-              in merge_lists([], code)
-       |_ -> internal "No operator"; raise Terminate 
-    )
-    |Quad_cond(op,x,y,l) ->
-        let op_type = get_type x in 
-        let jump_kind = match op with
-                        |"==" -> "je"
-                        |"!=" -> "jne"
-                        |"<=" -> "jle"
-                        |"<" -> "jl"
-                        |">=" -> "jge"
-                        | ">" -> "jg"
-                        |_ -> internal "Not a comparator"; 
-                              raise Terminate
-        in let code = [[Cond_jump(jump_kind, label (Some(!l)))];
-                       [Cmp(get_register(Ax, op_type), get_register(Dx, op_type))];
-                       load y Dx;
-                       load x Ax] 
-        in merge_lists([], code)
-    |Quad_jump(l) -> [Jump(label (Some(!l)))]
-    |Quad_unit(x) -> 
-        let size = param_size x in
-        let fun_real_name = id_name x.entry_id in
-        let fun_name = name fun_real_name in
+          match op with
+            |"+"-> let code = [store z Ax;
+                               [Add (Action_reg get_register(Ax, type_x), 
+                                     Action_reg get_register(Dx, type_y))];
+                               load y Dx;
+                               load x Ax]
+             in merge_lists([], code)
+            |"-"-> let code = [store z Ax;
+                               [Sub (Action_reg get_register(Ax, type_x), 
+                                     Action_reg get_register(Dx, type_y))];
+                               load y Dx;
+                               load x Ax]
+             in merge_lists([], code)
+            |"*"-> let code = [store z Ax;
+                               [IMul Cx];
+                               load y Cx;
+                               load x Ax]
+             in merge_lists([], code)
+            |"/"-> let code = [store z Ax;
+                               [IDiv Cx];
+                               load y Cx;
+                               [Cwd];
+                               load x Ax]
+             in merge_lists([], code)
+            |"%"-> let code = [store z Dx;
+                               [IDiv Cx];
+                               load y Cx;
+                               [Cwd];
+                               load x Ax]
+             in merge_lists([], code)
+            |_ -> internal "No operator"; raise Terminate 
+        )
+  |Quad_cond(op,x,y,l) ->
+      let op_type = get_type x in 
+      let jump_kind = match op with
+        |"==" -> "je"
+        |"!=" -> "jne"
+        |"<=" -> "jle"
+        |"<" -> "jl"
+        |">=" -> "jge"
+        | ">" -> "jg"
+        |_ -> internal "Not a comparator"; 
+              raise Terminate
+      in let code = [[Cond_jump(jump_kind, label (Some(!l)))];
+                     [Cmp(get_register(Ax, op_type), get_register(Dx, op_type))];
+                     load y Dx;
+                     load x Ax] 
+      in merge_lists([], code)
+  |Quad_jump(l) -> [Jump(label (Some(!l)))]
+  |Quad_unit(x) -> 
+      let size = param_size x in
+      let fun_real_name = id_name x.entry_id in
+      let fun_name = name fun_real_name in
         Printf.printf "The function is %s\n" fun_name;
         current_fun := fun_real_name;
         let code = [[Sub(Action_reg Sp, Constant size)];
-                       [Mov(Register Bp, Register Sp)]; 
-                       [Push(Register Bp)];
-                       [Proc(fun_name)]]
+                    [Mov(Register Bp, Register Sp)]; 
+                    [Push(Register Bp)];
+                    [Proc(fun_name)]]
         in merge_lists([], code)
-    |Quad_endu(x) -> let r_name = id_name x.entry_id in
-                     let u_name = name r_name in
-                     let ending = Printf.sprintf "%s\tendp\n" u_name in
-                     let code = [[Misc ending];
-                                 [Ret];
-                                 [Pop(Bp)];
-                                 [Mov(Register Sp, Register Bp)];
-                                 [Label(endof r_name)]]
-                     in merge_lists([], code)
-    |Quad_call(e,_) -> let function_type  = match e.entry_info with
-                                           | ENTRY_function info ->
-                                                   info.function_result
-                                           | _ -> internal "Call not a funtion";
-                                                raise Terminate
-                        in
-                        let sub_size = if (function_type = TYPE_proc) then 2 else 0 in
-                        let p_size = param_size e in                   
-                        let code = [[Add(Action_reg Sp, Constant(p_size+4))];
-                                    [Call name(id_name e.entry_id)];
-                                    update_al;
-                                    [Sub(Action_reg Sp, Constant sub_size)]]
-                        in merge_lists([], code)                        
-    
-    |Quad_ret -> [Jump endof(!current_fun)]
-    |Quad_par(v,pm) -> let v_type = get_type v in
-                       match (v_type, pm) with
-                       |(TYPE_int, PASS_BY_VALUE) -> 
-                               let code =  [[Push (Register Ax)]; load v Ax] 
-                               in merge_lists([], code)
-                       |(_, PASS_BY_VALUE) -> 
-                               let code = [[Mov(Mem_loc("byte", Si, 0),Register Al)];
-                                           [Mov(Register Si, Register Sp)];
-                                           [Sub(Action_reg Sp, Constant 1)];
-                                           load v Al]
-                               in merge_lists([], code)
-                       |(_, PASS_BY_REFERENCE) 
-                       |(_, PASS_RET) -> 
-                               let code = [[Push(Register Si)];
-                                            load_addr v Si]
-                               in merge_lists([], code)
-    |_ -> []
+  |Quad_endu(x) -> let r_name = id_name x.entry_id in
+   let u_name = name r_name in
+   let ending = Printf.sprintf "%s\tendp\n" u_name in
+   let code = [[Misc ending];
+               [Ret];
+               [Pop(Bp)];
+               [Mov(Register Sp, Register Bp)];
+               [Label(endof r_name)]]
+   in merge_lists([], code)
+  |Quad_call(e,_) -> let function_type  = match e.entry_info with
+     | ENTRY_function info ->
+         info.function_result
+     | _ -> internal "Call not a funtion";
+            raise Terminate
+   in
+   let sub_size = if (function_type = TYPE_proc) then 2 else 0 in
+   let p_size = param_size e in                   
+   let code = [[Add(Action_reg Sp, Constant(p_size+4))];
+               [Call name(id_name e.entry_id)];
+               update_al;
+               [Sub(Action_reg Sp, Constant sub_size)]]
+   in merge_lists([], code)                        
+
+  |Quad_ret -> [Jump endof(!current_fun)]
+  |Quad_par(v,pm) -> let v_type = get_type v in (
+     match (v_type, pm) with
+       |(TYPE_int, PASS_BY_VALUE) -> 
+           let code =  [[Push (Register Ax)]; load v Ax] 
+           in merge_lists([], code)
+       |(_, PASS_BY_VALUE) -> 
+           let code = [[Mov(Mem_loc("byte", Si, 0),Register Al)];
+                       [Mov(Register Si, Register Sp)];
+                       [Sub(Action_reg Sp, Constant 1)];
+                       load v Al]
+           in merge_lists([], code)
+       |(_, PASS_BY_REFERENCE) 
+       |(_, PASS_RET) -> 
+           let code = [[Push(Register Si)];
+                       load_addr v Si]
+           in merge_lists([], code)
+   )
+  |_ -> []
     
 let rec create_assembly = function
     | ([], assembly_list) -> assembly_list
