@@ -41,7 +41,6 @@ let registerVar var_type place (a,b,c) = match c with
                                          end
                                          | Cond(cond) -> let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
                                             in handle_assignment "=" (dereference quad_e) c (get_binop_pos())
-                                         |_ -> return_null_stmt()
                         
 (*function to register a const*)
 let registerConst pos var_type (a,v) = let const_val = get_const_val v pos in
@@ -76,7 +75,7 @@ let handle_fun_mul_params e e_list =
             let temp = newTemporary TYPE_bool
     in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
             in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
-    in let jump_quad = Quad_jump (ref (3)) in                       
+    in let jump_quad = Quad_jump (ref (3)) in       (* FIX: nowhere used*)                
     let new_quad = Quad_jump (ref (2)) in                           
     List.iter (fun x -> x := !x + 2) c.q_false;                     
     Expr{                                                           
@@ -575,7 +574,7 @@ expressions : /*nothing*/ { [] }
                 let temp = newTemporary TYPE_bool                                           
                 in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
                 in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
-                in let jump_quad = Quad_jump (ref (3)) in                                   
+                in let jump_quad = Quad_jump (ref (3)) in      (*not used*)                             
                 let new_quad = Quad_jump (ref (2)) in                                       
                 List.iter (fun x -> x := !x + 2) c.q_false;                                 
                 Expr{                                                                           

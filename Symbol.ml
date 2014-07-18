@@ -323,7 +323,8 @@ let endFunctionHeader e typ =
                   let size =
                     match inf.parameter_mode with
                     | PASS_BY_VALUE     -> sizeOfType inf.parameter_type
-                    | PASS_BY_REFERENCE -> 2 in
+                    | PASS_BY_REFERENCE -> 2
+                    | _ -> internal "Unknown pass method"; raise Terminate in
                   offset := !offset + size
               | _ ->
                   internal "Cannot fix offset to a non parameter" in

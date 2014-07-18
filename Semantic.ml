@@ -181,6 +181,7 @@ let calculate_const_val expr pos =
             |"*" -> op1_val * op2_val
             |"/" -> op1_val / op2_val
             |"%" -> op1_val mod op2_val
+            |_ -> internal "Unknown operand"; raise Terminate
           in let res_entry = match res with 
             |Quad_entry e1 -> e1
             |_ -> internal "Result of calc not an entry"; raise Terminate

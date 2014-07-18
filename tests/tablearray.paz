@@ -1,0 +1,22 @@
+PROC test(int a) {
+    a = 1;
+    int b = 2;
+    WRITE_INT(a,10);
+    WRITE_CHAR('\n', 0);
+    WRITE_INT(b,10);
+    WRITE_CHAR('\n', 0);
+}
+
+PROGRAM solve ()
+{
+    int a = 2;
+    int b[2];
+    b[1] = 2;
+    b[2] = 3;
+    int j = 123;
+    //test(1);
+    WRITE_INT(a,10);
+    WRITE_CHAR('\n', 0);
+    WRITE_INT(j,10);
+    WRITE_CHAR('\n', 0);
+}
