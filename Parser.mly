@@ -555,8 +555,10 @@ l_value : T_name expr_list {
 expr_list : /*nothing*/ { ([], 0) }
 	  | T_lbracket expr T_rbracket expr_list { ($2::(fst $4), (snd $4) + 1) }
 
-call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true *) Expr(return_null()) }
-     | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+call : T_name T_lparen T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+                                   in  Expr(handle_func_call e (rhs_start_pos 1) [])
+                                 }
+     | T_name T_lparen expr expressions T_rparen { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
                                                     in let get_place e = e.place
                                                     in let expr_list = handle_fun_mul_params $3 $4
                                                     in let expr_types = List.map get_type (List.map get_place expr_list) 
