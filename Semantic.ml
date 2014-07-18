@@ -222,7 +222,6 @@ let get_const_val expr pos =
 
 let table_size expr pos= 
   let size = get_const_val expr pos in
-    Printf.printf "The table size is %s\n" size; 
     try
       int_of_string size
     with Failure "int_of_string" -> error  "Line:%d.%d: Not an integer value as table size" (pos.pos_lnum) 

@@ -96,8 +96,6 @@ let initSymbolTable size =
    currentScope := the_outer_scope
 
 let openScope () =
-  print_string "open scope\n";
-  
   let base_offset = if (!currentScope.sco_parent != None ) then !currentScope.sco_negofs
                     else start_negative_offset in
       
@@ -110,7 +108,6 @@ let openScope () =
   currentScope := sco
 
 let closeScope () =
-  print_string "close scope\n";
   let sco = !currentScope in
   let manyentry e = H.remove !tab e.entry_id in
   List.iter manyentry sco.sco_entries;
