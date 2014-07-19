@@ -255,14 +255,14 @@ let final_code_of_quad = function
         (
           match op with
             |"+"-> let code = [store z Ax;
-                               [Add (Action_reg get_register(Ax, type_x), 
-                                     Action_reg get_register(Dx, type_y))];
+                               [Add (Action_reg Ax, 
+                                     Action_reg Dx)];
                                load y Dx;
                                load x Ax]
              in merge_lists([], code)
             |"-"-> let code = [store z Ax;
-                               [Sub (Action_reg get_register(Ax, type_x), 
-                                     Action_reg get_register(Dx, type_y))];
+                               [Sub (Action_reg Ax, 
+                                     Action_reg Dx)];
                                load y Dx;
                                load x Ax]
              in merge_lists([], code)
