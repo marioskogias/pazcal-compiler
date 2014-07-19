@@ -345,8 +345,14 @@ let handle_func_call ent pos expr_list =
       begin
         match hfi.entry_info with
         | ENTRY_parameter (par_info) ->
-          let new_quad = Quad_par (hp, par_info.parameter_mode) in
-          create_par_quads (new_quad::acc) (tfi, tp)
+            let quad_type = get_type hp in
+            let quad_code = 
+              if (quad_type != par_info.parameter_type) then
+                    let tmp = newTemporary par_info.parameter_type in
+                     [Quad_par (Quad_entry(tmp), par_info.parameter_mode); 
+                      Quad_set(hp, Quad_entry(tmp))] 
+              else [Quad_par (hp, par_info.parameter_mode)] in
+          create_par_quads (quad_code::acc) (tfi, tp)
         | _ -> 
           internal "Function parameter not a parameter"; 
           raise Terminate
@@ -358,7 +364,7 @@ let handle_func_call ent pos expr_list =
   (* Reverse the order of the code_list and add the par_quads *)
   let rec reverse_code_list acc = function
     | ([], []) -> acc
-    | ((h::t), (hp::tp)) -> reverse_code_list (hp::h@acc) (t,tp) 
+    | ((h::t), (hp::tp)) -> reverse_code_list (hp@h@acc) (t,tp) 
     | _ -> internal "Uneven args and code"; raise Terminate in
 
   
