@@ -250,8 +250,6 @@ let final_code_of_quad = function
                      load y Ax]
       in merge_lists([], code)
   |Quad_calc(op,x,y,z) ->
-      let type_x = get_type x in
-      let type_y = get_type y in 
         (
           match op with
             |"+"-> let code = [store z Ax;
