@@ -227,28 +227,35 @@ let table_size expr pos=
     with Failure "int_of_string" -> error  "Line:%d.%d: Not an integer value as table size" (pos.pos_lnum) 
                                       (pos.pos_cnum - pos.pos_bol); 0
 
-
-(*------------- Updated till here ------------------*)
-
-let check_function_params symbol_table_params_list passed_param_types pos= 
-  let get_param_type p = 
+let check_function_params symb_table_param_list given_param_types pos = 
+  let get_param_info p = 
     match p.entry_info with
-      | ENTRY_parameter inf -> inf.parameter_type
+      | ENTRY_parameter inf -> (inf.parameter_type, inf.parameter_mode)
       | _ -> internal "Not a parameter"; raise Terminate
-  in
+  in 
   let rec help_check = function
-    | ([],[]) -> true
-    | ([], l1)  
-    | (l1,[]) -> error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                   (pos.pos_cnum - pos.pos_bol) ;false
-    | ((a::b), (c::d)) -> 	
-          if (equalType a c) then help_check (b, d)
-          else (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                  (pos.pos_cnum - pos.pos_bol); false)
-  in let param_types = List.map get_param_type symbol_table_params_list in
-  help_check (param_types, passed_param_types)
+    |([], []) -> true
+    |([], _)
+    |(_, []) -> error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                  (pos.pos_cnum - pos.pos_bol) ;false
+    |(a::b, c::d) ->
+        let p_type = fst a in
+        let p_mode = snd a in
+          if (equalType p_type c) then help_check(b, d)
+          else
+            let is_by_val = (p_mode == PASS_BY_VALUE) in 
+            let types_match =
+              match (p_type, c) with
+                |(TYPE_real, TYPE_int)
+                |(TYPE_char, TYPE_int)
+                |(TYPE_int, TYPE_char) ->  true
+                |_ -> false
+            in if (types_match && is_by_val) then help_check(b, d)
+            else (error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                    (pos.pos_cnum - pos.pos_bol) ;false)
 
-
+  in let params_info = List.map get_param_info symb_table_param_list 
+  in help_check (params_info, given_param_types)
 
 (*bool val if in loop*)
 let in_loop = ref 0
