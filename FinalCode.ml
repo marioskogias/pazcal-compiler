@@ -49,37 +49,40 @@ let update_al =
 
 (* load a to reg *)
 let rec load a reg = 
-  match a with
-    |Quad_int(str) -> [Mov (Register reg, Num str)]
-    |Quad_char(str) -> let asci =
-       match (String.length str) with
-         |3 -> string_of_int (Char.code str.[1]) 
-         |4 -> special_char_asci str.[2]
-         |_ -> internal "Not a char"; raise Terminate
-     in 
-       [Mov (Register get_register(reg, TYPE_char), Num asci)]
-    |Quad_bool(str) -> (match str with
-                          |"true" -> [Mov (Register get_register(reg, TYPE_char), Num "1")]
-                          |"false" -> [Mov (Register get_register(reg, TYPE_char), Num "0")]
-                          |_ -> internal "Unknown bool value"; raise Terminate
-     )
-    |Quad_entry(e) ->( let l = local e in
-                       let (offset, is_reference) = get_info e.entry_info in
-                       let entry_type = get_entry_type e in
-                       let length = mem_size entry_type in 
-                         match (l, is_reference) with
-                           |(true, false) -> [Mov (Register get_register(reg, entry_type), Mem_loc(length, Bp, offset))]
-                           |(true, true) ->  [Mov (Register get_register(reg, entry_type), Mem_loc(length, Si, 0)); 
-                                              Mov (Register Si, Mem_loc(length, Bp, offset))]
-                           |(false,_) -> let ar = get_ar in 
-                              (Mov(Register get_register(reg, entry_type), Mem_loc(length, Si,offset))::ar)
-     )
-    |Quad_valof(e) -> 
-        let entry_type = get_entry_type e in
-        let length = mem_size entry_type in 
-        let l = load (Quad_entry(e)) Di in
-          ((Mov(Register get_register(reg, entry_type), Mem_loc(length, Di, 0)))::l)
-    |_ -> internal "Load from sth unloadable"; raise Terminate
+  let clear_reg = [Mov(Register reg, Num "0")] in
+  let code = 
+    match a with
+      |Quad_int(str) -> [Mov (Register reg, Num str)]
+      |Quad_char(str) -> let asci =
+         match (String.length str) with
+           |3 -> string_of_int (Char.code str.[1]) 
+           |4 -> special_char_asci str.[2]
+           |_ -> internal "Not a char"; raise Terminate
+       in 
+         [Mov (Register get_register(reg, TYPE_char), Num asci)]
+      |Quad_bool(str) -> (match str with
+                            |"true" -> [Mov (Register get_register(reg, TYPE_char), Num "1")]
+                            |"false" -> [Mov (Register get_register(reg, TYPE_char), Num "0")]
+                            |_ -> internal "Unknown bool value"; raise Terminate
+       )
+      |Quad_entry(e) ->( let l = local e in
+                         let (offset, is_reference) = get_info e.entry_info in
+                         let entry_type = get_entry_type e in
+                         let length = mem_size entry_type in 
+                           match (l, is_reference) with
+                             |(true, false) -> [Mov (Register get_register(reg, entry_type), Mem_loc(length, Bp, offset))]
+                             |(true, true) ->  [Mov (Register get_register(reg, entry_type), Mem_loc(length, Si, 0)); 
+                                                Mov (Register Si, Mem_loc(length, Bp, offset))]
+                             |(false,_) -> let ar = get_ar in 
+                                (Mov(Register get_register(reg, entry_type), Mem_loc(length, Si,offset))::ar)
+       )
+      |Quad_valof(e) -> 
+          let entry_type = get_entry_type e in
+          let length = mem_size entry_type in 
+          let l = load (Quad_entry(e)) Di in
+            ((Mov(Register get_register(reg, entry_type), Mem_loc(length, Di, 0)))::l)
+      |_ -> internal "Load from sth unloadable"; raise Terminate
+  in code@clear_reg
 (* {x}? *)
 
 (* load address in reg *)
