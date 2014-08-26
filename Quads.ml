@@ -347,7 +347,8 @@ let handle_func_call ent pos expr_list =
         | ENTRY_parameter (par_info) ->
             let quad_type = get_type hp in
             let quad_code = 
-              if (quad_type != par_info.parameter_type) then
+              if ((quad_type != par_info.parameter_type) && 
+                  (par_info.parameter_mode == PASS_BY_VALUE)) then
                     let tmp = newTemporary par_info.parameter_type in
                      [Quad_par (Quad_entry(tmp), par_info.parameter_mode); 
                       Quad_set(hp, Quad_entry(tmp))] 
