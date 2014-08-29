@@ -60,6 +60,25 @@ let constant_optimize q_list =
             |(Some v1, Some v2) -> let op_res = calc v1 v2 in
             Quad_set(Quad_int(string_of_int op_res), q)
             )
+    |Quad_set(q1, q2) -> (
+            let v = get_constant_val q1 in
+            match v with
+            |Some value -> Quad_set(Quad_int (string_of_int value),q2)
+            |_ -> quad
+            )                      
+    |Quad_array (q1, q2, s) -> ( 
+            let v = get_constant_val q2 in
+            match v with
+            |Some value -> Quad_array(q1, Quad_int (string_of_int value),s)
+            |_ -> quad
+            )                      
+    |Quad_par (q, pm) -> ( 
+            let v = get_constant_val q in
+            match v with
+            |Some value -> Quad_par(Quad_int (string_of_int value),pm)
+            |_ -> quad
+            )                      
+    |Quad_cond (op, q1, q2, e)  -> quad
     |_ -> quad
 
     in List.map change_single_quad q_list
