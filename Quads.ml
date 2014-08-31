@@ -405,24 +405,55 @@ let handle_func_call ent pos expr_list =
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
 
+let condition_to_expr c =
+    let temp = newTemporary TYPE_bool                                           
+    in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
+    in let jump_quad = Quad_jump (ref (3)) in                                   
+    let new_quad = Quad_jump (ref (2)) in                                       
+    List.iter (fun x -> x := !x + 2) c.q_false;                                 
+    {                                                                           
+        code = quad_false :: (new_quad::(quad_true :: c.c_code));               
+        place = Quad_entry(temp)                                                
+    }
+
 (* Handle Comparisons *)
-let handle_comparison op exp1 exp2 (sp,ep) =
+let handle_comparison op sexp1 sexp2 (sp,ep) =
   (* First Check the types of the compared things *)
-  match exp1, exp2 with
-  | Expr e1, Expr e2 ->
-        (* Invariant for Jumps :
-         * Everything points to the beginning of the next block
-         * with a relative offset. Backpatching is done additively *)
-        let true_ref = ref 2 in 
-        let false_ref = ref 1 in
-        let code_true = (Quad_cond(op, e1.place, e2.place, true_ref))
-        in let code_false = (Quad_jump (false_ref)) in {
-          c_code = code_false::code_true::e2.code@e1.code;
-          q_true = [true_ref];
-          q_false = [false_ref];
-        }
-  | _ -> return_null_cond ()
-  
+  let (exp1, exp2) = match op with
+  | "=="
+  | "!=" -> (
+    match sexp1, sexp2 with
+    | Cond c1, Cond c2 ->                   
+        let e1 = Expr(condition_to_expr c1) in
+        let e2 = Expr(condition_to_expr c2) in
+        (e1, e2)
+    | Cond c1, Expr e2 ->
+        let e1 = Expr(condition_to_expr c1) in
+        (e1, sexp2)
+    | Expr e1, Cond c2 ->
+        let e2 = Expr(condition_to_expr c2) in
+        (sexp1, e2)
+    | Expr e1, Expr e2 -> 
+        (sexp1, sexp2)
+    )
+  | _ -> (sexp1, sexp2)
+  in
+      match exp1, exp2 with
+      | Expr e1, Expr e2 ->
+            (* Invariant for Jumps :
+             * Everything points to the beginning of the next block
+             * with a relative offset. Backpatching is done additively *)
+            let true_ref = ref 2 in 
+            let false_ref = ref 1 in
+            let code_true = (Quad_cond(op, e1.place, e2.place, true_ref))
+            in let code_false = (Quad_jump (false_ref)) in {
+              c_code = code_false::code_true::e2.code@e1.code;
+              q_true = [true_ref];
+              q_false = [false_ref];
+            }
+      | _ -> return_null_cond ()
+
 (* Handle boolean values 
  * Constant values means no jump in the "opposite" direction 
  * Extraneous code can be eliminated with dead code elimination optimization *)

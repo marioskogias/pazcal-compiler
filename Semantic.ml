@@ -137,7 +137,10 @@ let check_assign operator expr1 expr2 pos=
     false
   ) else (
     let (type_1, type_2) = match (expr1, expr2) with 
-      |(Expr e1, Expr e2) -> (get_type e1.place, get_type e2.place) 
+      |(Expr e1, Expr e2) -> (get_type e1.place, get_type e2.place)
+      |(Expr e1, Cond c2) -> (get_type e1.place, TYPE_bool)
+      |(Cond c1, Expr e2) -> (TYPE_bool, get_type e2.place)
+      |(Cond c1, Cond c2) -> (TYPE_bool, TYPE_bool)
       |_ -> internal "Not expressions"; raise Terminate
     in 
     let types_match = 
