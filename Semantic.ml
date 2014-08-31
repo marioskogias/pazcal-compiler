@@ -200,7 +200,7 @@ let calculate_const_val expr pos =
             |_ -> internal "Result of calc not an entry"; raise Terminate
           in set_var_val res_entry (string_of_int result); do_calc t
         )
-       |_ -> internal "Not a quad calc in constand calc"; raise Terminate
+       |_ -> do_calc [] 
           in
             match expr.code with
               (*if const value == no code return the value string*)

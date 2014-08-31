@@ -405,17 +405,20 @@ let handle_func_call ent pos expr_list =
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
 
-let condition_to_expr c =
-    let temp = newTemporary TYPE_bool                                           
-    in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
-    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
-    in let jump_quad = Quad_jump (ref (3)) in                                   
-    let new_quad = Quad_jump (ref (2)) in                                       
-    List.iter (fun x -> x := !x + 2) c.q_false;                                 
-    {                                                                           
-        code = quad_false :: (new_quad::(quad_true :: c.c_code));               
-        place = Quad_entry(temp)                                                
-    }
+let condition_to_expr expr =
+    match expr with
+    | Cond c ->
+        let temp = newTemporary TYPE_bool                                           
+        in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
+        in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
+        in let jump_quad = Quad_jump (ref (3)) in                                   
+        let new_quad = Quad_jump (ref (2)) in                                       
+        List.iter (fun x -> x := !x + 2) c.q_false;                                 
+        Expr{                                                                           
+            code = quad_false :: (new_quad::(quad_true :: c.c_code));               
+            place = Quad_entry(temp)                                                
+        }
+    | Expr e -> expr
 
 (* Handle Comparisons *)
 let handle_comparison op sexp1 sexp2 (sp,ep) =
@@ -424,17 +427,17 @@ let handle_comparison op sexp1 sexp2 (sp,ep) =
   | "=="
   | "!=" -> (
     match sexp1, sexp2 with
-    | Cond c1, Cond c2 ->                   
-        let e1 = Expr(condition_to_expr c1) in
-        let e2 = Expr(condition_to_expr c2) in
+    | Cond _, Cond _ ->                   
+        let e1 = condition_to_expr sexp1 in
+        let e2 = condition_to_expr sexp2 in
         (e1, e2)
-    | Cond c1, Expr e2 ->
-        let e1 = Expr(condition_to_expr c1) in
+    | Cond _, Expr _ ->
+        let e1 = condition_to_expr sexp1 in
         (e1, sexp2)
-    | Expr e1, Cond c2 ->
-        let e2 = Expr(condition_to_expr c2) in
+    | Expr _, Cond _ ->
+        let e2 = condition_to_expr sexp2 in
         (sexp1, e2)
-    | Expr e1, Expr e2 -> 
+    | Expr _, Expr _-> 
         (sexp1, sexp2)
     )
   | _ -> (sexp1, sexp2)
