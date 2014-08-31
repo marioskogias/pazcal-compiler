@@ -70,6 +70,7 @@ let check_is_bool expr pos=
            |_ -> error  "Line:%d.%d: Not a number or char" (pos.pos_lnum) 
                    (pos.pos_cnum - pos.pos_bol); false
      )
+    |Cond c -> true
     | _ -> internal "Not an expresion"; raise Terminate
 
 (* Semantic checking of values in binary expressions *)
