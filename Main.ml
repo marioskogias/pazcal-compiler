@@ -1,23 +1,35 @@
-let dummy_optimize q_list = q_list 
-
-let rec absolute_jumps acc idx = function
-    | h::t -> 
-      begin
-        match h with
-          | QuadTypes.Quad_jump (x)
-          | QuadTypes.Quad_cond (_, _, _, x)
-          -> x := !x + idx; absolute_jumps (acc@[h]) (idx+1) t
-          | _ -> absolute_jumps (acc@[h]) (idx+1) t
-      end
-    | [h] -> 
-      begin
-        match h with
-          | QuadTypes.Quad_jump (x)
-          | QuadTypes.Quad_cond (_, _, _, x)
-          -> x := !x + idx; acc@[h]
-          | _ -> acc@[h]
-      end
-    | [] -> acc
+let rec optimize block_code =                                                   
+    (* First optimization is allways immediate backward *)
+    Optimizations.immediate_backward_propagation block_code;
+ 
+    (* Constant Folding - No longer needed *)                                   
+    (* Optimizations.constant_folding block_code; *)                            
+                                                                                
+    (* Unreachable simple deletions *)                                          
+    CodeElimination.perform_deletions block_code;                               
+                                                                                
+    (* Simplify jumps *)                                                        
+    Optimizations.jump_simplification block_code;                               
+                                                                                
+    (* Dummy elimination *)                                                     
+    Optimizations.dummy_elimination block_code;                                 
+                                                                                
+    (* Convert to flowgraph for further optimizations *)                        
+    let flowgraphs = ControlFlow.flowgraph_array_of_quads block_code in         
+                                                                                
+    (* Unreachable Code Elimination *)                                          
+    CodeElimination.delete_unreachable_blocks flowgraphs;                       
+                                                                                
+    (* Copy Propagation *)                                                      
+    Array.iter CopyPropagation.copy_propagation flowgraphs;                     
+                                                                                
+    (* Convert back *)                                                          
+    let block_code = ControlFlow.convert_back_to_quads flowgraphs in            
+                                                                                
+    (* Dummy Elimination again to lighten code after eliminations *)            
+    Optimizations.dummy_elimination block_code;                                 
+                                                                                
+    block_code                                                             
 
 let main =
   let lexbuf = Lexing.from_channel stdin in
@@ -27,10 +39,12 @@ let main =
     let optimized_quads = dummy_optimize quad_list in
     *)
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
-    let abs_jumps_quad_list = absolute_jumps [] 0 quad_list in
-    let optimized_quads = dummy_optimize abs_jumps_quad_list in
-    ignore(List.map print_string (List.map Quads.string_of_quad_t abs_jumps_quad_list));
-    FinalCode.print_final_code stdout optimized_quads;
+    ignore(List.map print_string (List.map Quads.string_of_quad_t quad_list));
+    let block_code = Blocks.blocks_of_quad_t_list quad_list in
+    let opt_code = optimize block_code in
+    let final_list = MergeBlocks.make_list opt_code in
+    FinalCode.print_final_code stdout final_list;
+    ignore(List.map print_string (List.map Quads.string_of_quad_t final_list));
     exit 0
   with Parsing.Parse_error ->
     Printf.eprintf "syntax error on line %d \n" lexbuf.Lexing.lex_curr_p.Lexing.pos_lnum ;
