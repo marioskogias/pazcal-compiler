@@ -492,6 +492,43 @@ let handle_or cond1 cond2 =
         q_true = c1.q_true @ c2.q_true;
         q_false = c2.q_false;
       }
+  | Cond c1, Expr e1 ->
+    let temp = newTemporary TYPE_bool
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+    in let c2 = handle_comparison "==" (Expr(e1)) (true_expr) (1, 3) in
+        let len = List.length c2.c_code in
+          List.iter (fun x -> x := !x + len) c1.q_true;
+          { 
+            c_code = c2.c_code @ c1.c_code;
+            q_true = c1.q_true @ c2.q_true;
+            q_false = c2.q_false;
+          }
+  | Expr e1, Cond c2 ->
+    let temp = newTemporary TYPE_bool
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+    in let c1 = handle_comparison "==" (Expr(e1)) true_expr (1, 3) in
+         let len = List.length c2.c_code in
+          List.iter (fun x -> x := !x + len) c1.q_true;
+          { 
+            c_code = c2.c_code @ c1.c_code;
+            q_true = c1.q_true @ c2.q_true;
+            q_false = c2.q_false;
+          }
+  | Expr e1, Expr e2 -> 
+    let temp = newTemporary TYPE_bool
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+    in let c1 = handle_comparison "==" (Expr(e1)) true_expr (1, 3)
+    in let c2 = handle_comparison "==" (Expr(e2)) true_expr (1, 3) in
+        let len = List.length c2.c_code in
+          List.iter (fun x -> x := !x + len) c1.q_true;
+          {
+            c_code = c2.c_code @ c1.c_code;
+            q_true = c1.q_true @ c2.q_true;
+            q_false = c2.q_false;
+          }
   | _ -> return_null_cond()
 
 (* Handle assignmenet *)
