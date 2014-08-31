@@ -96,8 +96,6 @@ let initSymbolTable size =
    currentScope := the_outer_scope
 
 let openScope () =
-  print_string "open scope\n";
-  
   let base_offset = if (!currentScope.sco_parent != None ) then !currentScope.sco_negofs
                     else start_negative_offset in
       
@@ -110,7 +108,6 @@ let openScope () =
   currentScope := sco
 
 let closeScope () =
-  print_string "close scope\n";
   let sco = !currentScope in
   let manyentry e = H.remove !tab e.entry_id in
   List.iter manyentry sco.sco_entries;
@@ -323,7 +320,8 @@ let endFunctionHeader e typ =
                   let size =
                     match inf.parameter_mode with
                     | PASS_BY_VALUE     -> sizeOfType inf.parameter_type
-                    | PASS_BY_REFERENCE -> 2 in
+                    | PASS_BY_REFERENCE -> 2
+                    | _ -> internal "Unknown pass method"; raise Terminate in
                   offset := !offset + size
               | _ ->
                   internal "Cannot fix offset to a non parameter" in

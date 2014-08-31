@@ -1,14 +1,8 @@
-PROC test(char b, int a) {
-    WRITE_CHAR(b, 5);
-    WRITE_INT(a, 5);
+PROC test() {
+    WRITE_CHAR('4', 5);
 }
     
 PROGRAM solve ()
 {
-    int c = 3;
-    c = c + 1;
-    char b = 'v';
-    test(b, c);
-    WRITE_CHAR(b, 5);
-    WRITE_INT(c, 5);
+    test();
 }

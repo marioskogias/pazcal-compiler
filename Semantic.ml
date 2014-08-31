@@ -146,6 +146,7 @@ let check_assign operator expr1 expr2 pos=
     in
       if res then true
       else (
+        Printf.printf "Type1 = %s type2 = %s\n" (typeToString type_1) (typeToString type_2);
         error  "Line:%d.%d: Wrong types in assignment" (pos.pos_lnum) 
           (pos.pos_cnum - pos.pos_bol);
         false
@@ -181,6 +182,7 @@ let calculate_const_val expr pos =
             |"*" -> op1_val * op2_val
             |"/" -> op1_val / op2_val
             |"%" -> op1_val mod op2_val
+            |_ -> internal "Unknown operand"; raise Terminate
           in let res_entry = match res with 
             |Quad_entry e1 -> e1
             |_ -> internal "Result of calc not an entry"; raise Terminate
@@ -218,38 +220,43 @@ let get_const_val expr pos =
          |_ -> internal "Not valid const quad"; raise Terminate
      )
     |_ -> internal "Const expr not expr"; raise Terminate
-(*------------- Updated till here ------------------*)
 
 let table_size expr pos= 
   let size = get_const_val expr pos in
-    Printf.printf "The table size is %s\n" size; 
     try
       int_of_string size
     with Failure "int_of_string" -> error  "Line:%d.%d: Not an integer value as table size" (pos.pos_lnum) 
                                       (pos.pos_cnum - pos.pos_bol); 0
 
-
-
-let check_function_params symbol_table_params_list passed_param_list pos= 
+let check_function_params symb_table_param_list given_param_types pos = 
+  let get_param_info p = 
+    match p.entry_info with
+      | ENTRY_parameter inf -> (inf.parameter_type, inf.parameter_mode)
+      | _ -> internal "Not a parameter"; raise Terminate
+  in 
   let rec help_check = function
-    | ([],[]) -> true
-    | ([], l1) -> if (List.length l1) > 0 then (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                                                  (pos.pos_cnum - pos.pos_bol); false) else true
-    | (l1,[]) -> if (List.length l1) > 0 then (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                                                 (pos.pos_cnum - pos.pos_bol) ;false) else true
-    | ((a::b), (c::d)) -> 	
-        let par_type =
-          match a.entry_info with
-            | ENTRY_parameter inf -> inf.parameter_type
-            | _ -> TYPE_none
-        in
-          if (equalType par_type c) then help_check (b, d)
-          else (error  "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
-                  (pos.pos_cnum - pos.pos_bol); false)
+    |([], []) -> true
+    |([], _)
+    |(_, []) -> error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                  (pos.pos_cnum - pos.pos_bol) ;false
+    |(a::b, c::d) ->
+        let p_type = fst a in
+        let p_mode = snd a in
+          if (equalType p_type c) then help_check(b, d)
+          else
+            let is_by_val = (p_mode == PASS_BY_VALUE) in 
+            let types_match =
+              match (p_type, c) with
+                |(TYPE_real, TYPE_int)
+                |(TYPE_char, TYPE_int)
+                |(TYPE_int, TYPE_char) ->  true
+                |_ -> false
+            in if (types_match && is_by_val) then help_check(b, d)
+            else (error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+                    (pos.pos_cnum - pos.pos_bol) ;false)
 
-  in help_check (symbol_table_params_list, passed_param_list)
-
-
+  in let params_info = List.map get_param_info symb_table_param_list 
+  in help_check (params_info, given_param_types)
 
 (*bool val if in loop*)
 let in_loop = ref 0

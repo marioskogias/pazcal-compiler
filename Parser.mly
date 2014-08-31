@@ -41,7 +41,6 @@ let registerVar var_type place (a,b,c) = match c with
                                          end
                                          | Cond(cond) -> let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
                                             in handle_assignment "=" (dereference quad_e) c (get_binop_pos())
-                                         |_ -> return_null_stmt()
                         
 (*function to register a const*)
 let registerConst pos var_type (a,v) = let const_val = get_const_val v pos in
@@ -63,6 +62,28 @@ let get_param_list a =
 	match a.entry_info with 
 	| ENTRY_function inf -> inf.function_paramlist 
 	| _ -> []
+
+(* function to handle mutliple expressions as function parameters *)
+let handle_fun_mul_params e e_list = 
+    let get_expr e = 
+        match e with
+        | Expr e -> e
+        | _ -> return_null() 
+    in let sexpr = match e  with
+    | Expr exp -> Expr exp
+    | Cond c ->
+            let temp = newTemporary TYPE_bool
+    in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
+            in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let jump_quad = Quad_jump (ref (3)) in       (* FIX: nowhere used*)                
+    let new_quad = Quad_jump (ref (2)) in                           
+    List.iter (fun x -> x := !x + 2) c.q_false;                     
+    Expr{                                                           
+        code = quad_false :: (new_quad::(quad_true :: c.c_code));
+        place = Quad_entry(temp)
+                                         }
+    in let expr_list = List.map get_expr (sexpr::e_list) in
+    expr_list
 
 (* register all library functions *)
 let registerLibraryFunctions () =
@@ -533,30 +554,16 @@ l_value : T_name expr_list {
 expr_list : /*nothing*/ { ([], 0) }
 	  | T_lbracket expr T_rbracket expr_list { ($2::(fst $4), (snd $4) + 1) }
 
-call : T_name T_lparen T_rparen {  (*lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true *) Expr(return_null()) }
-     | T_name T_lparen expr expressions T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
-                                                    in let get_expr e = 
-                                                        match e with
-                                                        | Expr e -> e
-                                                        | _ -> return_null()
+call : T_name T_lparen T_rparen {  let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
+                                   in  Expr(handle_func_call e (rhs_start_pos 1) [])
+                                 }
+     | T_name T_lparen expr expressions T_rparen { let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true 
                                                     in let get_place e = e.place
-                                                    in let sexpr = match $3 with
-                                                    | Expr exp -> Expr exp
-                                                    | Cond c ->
-                                                        let temp = newTemporary TYPE_bool
-                                                        in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
-                                                        in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
-                                                        in let jump_quad = Quad_jump (ref (3)) in                       
-                                                        let new_quad = Quad_jump (ref (2)) in                           
-                                                        List.iter (fun x -> x := !x + 2) c.q_false;                     
-                                                        Expr{                                                           
-                                                            code = quad_false :: (new_quad::(quad_true :: c.c_code));
-                                                            place = Quad_entry(temp)
-                                                            }
-                                                    in let expr_list = List.map get_expr (sexpr::$4)
+                                                    in let expr_list = handle_fun_mul_params $3 $4
                                                     in let expr_types = List.map get_type (List.map get_place expr_list) 
-                                                    in ignore(check_function_params (get_param_list e) expr_types (rhs_start_pos 1)) ;
-                                                        Expr(handle_func_call e (rhs_start_pos 1) expr_list )
+                                                    in if (check_function_params (get_param_list e) expr_types (rhs_start_pos 1))
+                                                    then Expr(handle_func_call e (rhs_start_pos 1) expr_list)
+                                                    else Expr(return_null())
                                                  }
 
 expressions : /*nothing*/ { [] }
@@ -567,7 +574,7 @@ expressions : /*nothing*/ { [] }
                 let temp = newTemporary TYPE_bool                                           
                 in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
                 in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
-                in let jump_quad = Quad_jump (ref (3)) in                                   
+                in let jump_quad = Quad_jump (ref (3)) in      (*not used*)                             
                 let new_quad = Quad_jump (ref (2)) in                                       
                 List.iter (fun x -> x := !x + 2) c.q_false;                                 
                 Expr{                                                                           

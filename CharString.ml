@@ -7,6 +7,7 @@ let special_char_asci c =
     |'\\' -> 92
     |'\'' -> 39
     |'"'  -> 34
+    |_ -> 0
   in string_of_int code
 
 let explode s =
