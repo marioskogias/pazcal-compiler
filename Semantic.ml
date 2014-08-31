@@ -74,7 +74,7 @@ let check_is_bool ?(v=true) expr pos=
                  else ();
                    false
      )
-    | Cond _ -> true
+    |Cond c -> true
     | _ -> internal "Not an expresion"; raise Terminate
 
 (* Semantic checking of values in binary expressions *)
