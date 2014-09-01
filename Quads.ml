@@ -12,6 +12,7 @@ let get_type = function
   |Quad_int (_) -> TYPE_int
   |Quad_real (_) -> TYPE_real
   |Quad_char(_) -> TYPE_char
+  |Quad_bool(_) -> TYPE_bool
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
   |Quad_valof (ent) 
   |Quad_entry (ent) -> get_entry_type ent 
