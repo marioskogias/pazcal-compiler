@@ -1,0 +1,13 @@
+*.cmi
+*.cmo
+*.asm
+*.int
+*.LST
+*.lib
+*.swp
+.depend
+Lexer.ml
+Parser.ml
+Parser.mli
+Parser.output
+pazcal
