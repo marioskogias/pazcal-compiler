@@ -38,7 +38,7 @@ let main =
   let outass = open_out "a.asm" in
   try
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
-    (*ignore(List.map print_string (List.map Quads.string_of_quad_t quad_list)); *)
+    ignore(List.map print_string (List.map Quads.string_of_quad_t quad_list));
     let block_code = Blocks.blocks_of_quad_t_list quad_list in
     let opt_code = optimize block_code in
     let final_list = MergeBlocks.make_list opt_code in
