@@ -222,6 +222,15 @@ let get_const_val expr pos =
          |Quad_entry _ -> calculate_const_val e pos
          |_ -> internal "Not valid const quad"; raise Terminate
      )
+    |Cond c ->(
+        match c.c_code with
+        |[Quad_jump(x)] -> (
+            match c.q_true with
+            |[] -> "false"
+            |_ -> "true"
+        )
+        |_ -> internal "Const expr is not expr"; raise Terminate
+        )
     |_ -> internal "Const expr not expr"; raise Terminate
 
 let table_size expr pos= 

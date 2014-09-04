@@ -43,7 +43,7 @@ let registerVar var_type place (a,b,c) = match c with
                                             in handle_assignment "=" (dereference quad_e) c (get_binop_pos())
                         
 (*function to register a const*)
-let registerConst pos var_type (a,v) = let const_val = get_const_val (condition_to_expr v) pos in
+let registerConst pos var_type (a,v) = let const_val = get_const_val v pos in
                                     newConst (id_make a) var_type const_val true
 
 (*function to register a param*)
