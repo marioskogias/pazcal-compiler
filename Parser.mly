@@ -74,9 +74,8 @@ let handle_fun_mul_params e e_list =
     | Cond c ->
             let temp = newTemporary TYPE_bool
     in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
-            in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
-    in let jump_quad = Quad_jump (ref (3)) in       (* FIX: nowhere used*)                
-    let new_quad = Quad_jump (ref (2)) in                           
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let new_quad = Quad_jump (ref (2)) in                           
     List.iter (fun x -> x := !x + 2) c.q_false;                     
     Expr{                                                           
         code = quad_false :: (new_quad::(quad_true :: c.c_code));
@@ -242,7 +241,7 @@ let registerLibraryFunctions () =
 %type <QuadTypes.stmt_ret_type> declaration_list
 %type <QuadTypes.stmt_ret_type> declaration
 %type <unit> const_def
-%type <string * QuadTypes.superexpr> const_inner_def //(*name, val, thanasis*)
+%type <string * QuadTypes.superexpr> const_inner_def 
 %type <(string * QuadTypes.superexpr) list> const_def_list
 %type <QuadTypes.stmt_ret_type> var_def
 %type <(string * int list * QuadTypes.superexpr) list> var_def_list
@@ -575,8 +574,7 @@ expressions : /*nothing*/ { [] }
                 let temp = newTemporary TYPE_bool                                           
                 in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
                 in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
-                in let jump_quad = Quad_jump (ref (3)) in      (*not used*)                             
-                let new_quad = Quad_jump (ref (2)) in                                       
+                in let new_quad = Quad_jump (ref (2)) in                                       
                 List.iter (fun x -> x := !x + 2) c.q_false;                                 
                 Expr{                                                                           
                     code = quad_false :: (new_quad::(quad_true :: c.c_code));               

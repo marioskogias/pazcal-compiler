@@ -406,8 +406,7 @@ let condition_to_expr expr =
         let temp = newTemporary TYPE_bool                                           
         in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
         in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
-        in let jump_quad = Quad_jump (ref (3)) in                                   
-        let new_quad = Quad_jump (ref (2)) in                                       
+        in let new_quad = Quad_jump (ref (2)) in                                       
         List.iter (fun x -> x := !x + 2) c.q_false;                                 
         Expr{                                                                           
             code = quad_false :: (new_quad::(quad_true :: c.c_code));               
@@ -577,8 +576,7 @@ let handle_assignment assign lval exp (sp,ep) =
     let temp = newTemporary TYPE_bool
     in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
     in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
-    in let jump_quad = Quad_jump (ref (3)) in
-    let new_quad = Quad_jump (ref (2)) in
+    in let new_quad = Quad_jump (ref (2)) in
     List.iter (fun x -> x := !x + 2) c.q_false;
     {
         code = quad_false :: (new_quad::(quad_true :: c.c_code));
