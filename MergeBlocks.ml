@@ -29,7 +29,6 @@ let my_append sizes offset acc array_to_list =
 
 let merge_func_block acc func_array =
     let sizes = calc_sizes func_array in
-    let n = Array.length func_array in
     let offset = List.length acc in
     Array.fold_left (my_append sizes offset) [] func_array 
 

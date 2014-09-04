@@ -71,7 +71,6 @@ let check_is_bool expr pos=
                    (pos.pos_cnum - pos.pos_bol); false
      )
     |Cond c -> true
-    | _ -> internal "Not an expresion"; raise Terminate
 
 (* Semantic checking of values in binary expressions *)
 let check_binop_types expr1 expr2 pos=
@@ -132,7 +131,6 @@ let check_assign operator expr1 expr2 pos=
       |(Expr e1, Cond c2) -> (get_type e1.place, TYPE_bool)
       |(Cond c1, Expr e2) -> (TYPE_bool, get_type e2.place)
       |(Cond c1, Cond c2) -> (TYPE_bool, TYPE_bool)
-      |_ -> internal "Not expressions"; raise Terminate
     in 
     let types_match = 
       if equalType type_1 type_2 then true 

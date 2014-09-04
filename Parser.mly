@@ -501,10 +501,11 @@ l_value : T_name expr_list {
                                                 place = Quad_entry(result_temp) 
                                             }
                                         ))
+                                    | [] -> Expr(return_null())
                                         in final_expr
+                                
                                 )
                             | Cond c -> Expr(return_null()) (*error here*)
-                            | _ -> Expr(return_null()) (*error here*)
                         )
                     | _ -> Expr({code=[];place=(Quad_entry (e))})
                 )
@@ -540,10 +541,10 @@ l_value : T_name expr_list {
                                                 place = Quad_entry(result_temp) 
                                             }
                                         ))
+                                    | [] -> Expr(return_null())
                                         in final_expr
                                 )
                             | Cond c -> Expr(return_null()) (*error here*)
-                            | _ -> Expr(return_null()) (*error here*)
                         )
                     | _ -> Expr({code=[];place=(Quad_entry (e))})
                 )

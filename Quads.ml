@@ -14,16 +14,9 @@ let get_type = function
   |Quad_char(_) -> TYPE_char
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
   |Quad_valof (ent) 
-  |Quad_entry (ent) -> get_entry_type ent 
-(* function to get entry's type)                                        
-let get_type e =                                                        
-  match e.entry_info with                                                 
-  | ENTRY_variable inf -> inf.variable_type                               
-  | ENTRY_parameter inf -> inf.parameter_type                             
-  | ENTRY_function inf -> inf.function_result                             
-   (*to be continued...*)                                                  
-  | _ ->TYPE_int
-*)
+  |Quad_entry (ent) -> get_entry_type ent
+  |Quad_bool (_) -> TYPE_bool
+
 (* Small Function To Check if Quad is en entry or not *)
 let is_entry quad =
   match quad with
@@ -143,6 +136,7 @@ let get_id = function
   |Quad_int (i) -> i
   |Quad_real (r) -> r
   |Quad_char (c) -> c
+  |Quad_bool (b) -> b
   |Quad_string (s) -> s
   |Quad_valof (ent)
   |Quad_entry (ent) -> id_name ent.entry_id
@@ -375,7 +369,7 @@ let handle_func_call ent pos expr_list =
 
   
   match ent.entry_info with
-  |ENTRY_function (info) ->
+  |ENTRY_function (info) ->(
       (* Generate par_quads *)
       let par_code = create_par_quads [] 
         (info.function_paramlist, param_list) in 
@@ -398,7 +392,8 @@ let handle_func_call ent pos expr_list =
           code = Quad_call(ent,(param_list@[ret_place]))::par_q::entire_code;
           place = Quad_entry(temp)
         }
-      | _ -> return_null ()         
+      | _ -> return_null ()
+  )
   |_ ->   
     error "Invalid Function call. Identifier is not a function \
       at line %d, position %d."
@@ -518,7 +513,6 @@ let handle_and sexpr1 sexpr2 =
             q_true = c2.q_true;
             q_false = c1.q_false @ c2.q_false;
           }
-  | _ -> return_null_cond()
 
 (* Handle an "or" cond *)
 let handle_or cond1 cond2 = 
@@ -570,7 +564,6 @@ let handle_or cond1 cond2 =
             q_true = c1.q_true @ c2.q_true;
             q_false = c2.q_false;
           }
-  | _ -> return_null_cond()
 
 (* Handle assignmenet *)
 let handle_assignment assign lval exp (sp,ep) =
@@ -658,6 +651,7 @@ let handle_assignment assign lval exp (sp,ep) =
          q_cont=[]    
         }
     end
+    |_ -> return_null_stmt()
   end
 (*  else []*)
 
@@ -705,6 +699,7 @@ let create_cond_quads expr switch =
     let rec merge_lists = function
         | ([], [], l) -> l
         | ((h1::t1), (h2::t2), l) -> merge_lists (t1, t2, l@[(h1,h2)])
+        | (_, _, _) -> []
     in let create_quad (a, b) = Quad_cond("==", expr.place, Quad_int(a), b)
     in let mylist = merge_lists (switch.cond_list, switch.true_list, [])
     in List.map create_quad mylist
@@ -766,7 +761,6 @@ let handle_switch_exp case switch_exp =
 let handle_for_stmt indx info body pos=
   let (expr1, expr2, expr3, upordown) = match info with
     |(a,b,c,d) -> (a,b,c,d)
-    |_ -> internal "No range given"; raise Terminate 
   in
   match expr1, expr2, expr3, indx with
    | Expr startfrom, Expr endto, Expr step, Expr index ->
@@ -811,6 +805,7 @@ let handle_for_stmt indx info body pos=
                             q_break=[];
                             q_cont=[]
                          }
+                |_ -> return_null_stmt()
         end
    | _ -> return_null_stmt()
 
