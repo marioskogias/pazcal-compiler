@@ -1,0 +1,9 @@
+const int x = 0;
+int y;
+
+PROGRAM solve ()
+{
+    y = 1;
+    int a[2];
+    a[0] = x+3;
+}
