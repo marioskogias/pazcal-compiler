@@ -16,7 +16,6 @@ let get_type = function
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
   |Quad_valof (ent) 
   |Quad_entry (ent) -> get_entry_type ent
-  |Quad_bool (_) -> TYPE_bool
 
 (* Small Function To Check if Quad is en entry or not *)
 let is_entry quad =

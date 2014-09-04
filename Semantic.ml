@@ -238,7 +238,6 @@ let get_const_val expr pos =
         )
         |_ -> internal "Const expr is not expr"; raise Terminate
         )
-    |_ -> internal "Const expr not expr"; raise Terminate
 
 let table_size expr pos= 
   let size = get_const_val expr pos in

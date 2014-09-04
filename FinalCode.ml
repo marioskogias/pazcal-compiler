@@ -192,7 +192,6 @@ let declare_lib_functions () =
 
 (*create a dummy ar to begin with and register the globals*)
 let register_globals size = 
-    Printf.printf "The globals size is %d\n" size;
     let code = Printf.sprintf "\
     \tmov BP, SP\n\tsub BP, 4\n\
     \tpush BP\n\tsub SP, 2\n\
