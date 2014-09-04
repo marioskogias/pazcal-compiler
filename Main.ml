@@ -1,9 +1,6 @@
 let rec optimize block_code =                                                   
     (* First optimization is allways immediate backward *)
     Optimizations.immediate_backward_propagation block_code;
- 
-    (* Constant Folding - No longer needed *)                                   
-    (* Optimizations.constant_folding block_code; *)                            
                                                                                 
     (* Unreachable simple deletions *)                                          
     CodeElimination.perform_deletions block_code;                               
