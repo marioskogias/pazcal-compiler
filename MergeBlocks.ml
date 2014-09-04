@@ -30,8 +30,8 @@ let my_append sizes offset acc array_to_list =
 let merge_func_block acc func_array =
     let sizes = calc_sizes func_array in
     let offset = List.length acc in
-    Array.fold_left (my_append sizes offset) [] func_array 
-
+    let func_list = Array.fold_left (my_append sizes offset) [] func_array
+    in acc @ func_list
 
 let make_list block_code =
     Array.fold_left merge_func_block [] block_code;

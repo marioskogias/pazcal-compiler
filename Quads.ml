@@ -657,26 +657,42 @@ let handle_assignment assign lval exp (sp,ep) =
 let handle_if_stmt sexpr stmt =
   (* An if statement (without an else) is executed when true. Therefore only the
    * "false" relative jumps are increased by the length of the statement *)
-  match sexpr with
-  | Cond cond ->
-  let len = List.length stmt.s_code in
+  let cond = 
+    match sexpr with
+    | Cond condition -> condition
+    | Expr expr ->
+        (
+            let temp = newTemporary TYPE_bool
+            in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+            in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+            in handle_comparison "==" sexpr (true_expr) (1, 3)
+        )
+  in let len = List.length stmt.s_code in
   let len2 = List.length cond.c_code in
   List.iter (fun x -> x := !x + len) cond.q_false;
   List.iter (fun x -> x := !x - len2) stmt.q_cont;
   {
-  s_code = stmt.s_code @ cond.c_code;
-  q_cont = stmt.q_cont;
-  q_break = stmt.q_break
+    s_code = stmt.s_code @ cond.c_code;
+    q_cont = stmt.q_cont;
+    q_break = stmt.q_break
   }
-  | Expr expr -> return_null_stmt()
 
 (* Handle if-else statement *)
 (* The true condition is executed directly, and then a jump is added to the end
  * of the entire code (including the else-part). The false-refs are increased by 
  * the if-part + 1 (the new jump quad) *)
 let handle_if_else_stmt sexpr s1 s2 =
-  match sexpr with
-  | Cond cond ->
+  let cond =
+    match sexpr with
+    | Cond condition -> condition
+    | Expr expr ->
+        (
+            let temp = newTemporary TYPE_bool
+            in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+            in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+            in handle_comparison "==" sexpr (true_expr) (1, 3)
+        )
+  in
   let l1 = List.length s1.s_code in
   let l2 = List.length s2.s_code in
   let l3 = List.length cond.c_code in
@@ -686,11 +702,10 @@ let handle_if_else_stmt sexpr s1 s2 =
   List.iter (fun x -> x := !x - l3 -1) s1.q_cont;
   List.iter (fun x -> x := !x - l1 - l3 - 2) s2.q_cont;
   {
-  s_code = s2.s_code @ (new_quad::(s1.s_code @ cond.c_code));
-  q_cont = s1.q_cont @ s2.q_cont;
-  q_break = s1.q_break @ s2.q_break
+    s_code = s2.s_code @ (new_quad::(s1.s_code @ cond.c_code));
+    q_cont = s1.q_cont @ s2.q_cont;
+    q_break = s1.q_break @ s2.q_break
   }
-  | Expr expr -> return_null_stmt()
 
 
 let create_cond_quads expr switch =
@@ -814,20 +829,27 @@ let handle_for_stmt indx info body pos=
 (* The "false" jumps after all the statements plus the jump to the top. The jump to
  * the top must account for the re-evaluation of the condition *)
 let handle_while_stmt sexpr stmt =
+  let cond =
   match sexpr with
-  | Cond cond ->
-  let l = List.length stmt.s_code in
+    | Cond condition -> condition
+    | Expr expr ->
+        (
+            let temp = newTemporary TYPE_bool
+            in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+            in let true_expr = Expr{code = [quad_true]; place=Quad_entry(temp)}
+            in handle_comparison "==" sexpr (true_expr) (1, 3)
+        )
+  in let l = List.length stmt.s_code in
   let lc = List.length cond.c_code in
   List.iter (fun x -> x := !x + l + 1) cond.q_false;
   List.iter (fun x -> x := !x - lc) stmt.q_cont;
   List.iter (fun x -> x := !x + 1) stmt.q_break;
   let new_quad = Quad_jump (ref (-l-lc)) in
   {
-  s_code = new_quad :: (stmt.s_code @ cond.c_code);
-  q_cont = [];
-  q_break = []
+    s_code = new_quad :: (stmt.s_code @ cond.c_code);
+    q_cont = [];
+    q_break = []
   }
-  | Expr exp -> return_null_stmt()
 
 
 (* Handle do while statement *)

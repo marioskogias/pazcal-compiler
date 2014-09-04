@@ -25,8 +25,6 @@ let implode l =
 
 
 let escape_chars s =
-  print_string "in fuctnion\n";
-  print_string s;
   let char_arr = explode s in
   let rec help_fn = function
     |([], [], res) -> List.rev res

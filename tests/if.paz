@@ -1,0 +1,9 @@
+PROGRAM test() { 
+    bool x = false; 
+    int a = 2; 
+    if ((a == 2) && x && (x==true)) { 
+        WRITE_STRING("ok", 10); 
+    } else { 
+         WRITE_STRING("else ok", 10); 
+    } 
+}

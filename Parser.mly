@@ -423,27 +423,27 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
      | expr T_MOD expr { let expr_typ = check_int_binop_types $1 $3 (rhs_start_pos 1) in 
                           Expr(handle_expression "%" $1 $3 expr_typ (get_binop_pos())) 
                         }
-     | expr T_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then
+     | expr T_equal expr { if (check_equalities $1 $3 "==" (rhs_start_pos 1)) then
                             Cond(handle_comparison "==" $1 $3 (get_binop_pos())) 
                            else Cond(return_null_cond())
                           }
-    | expr T_not_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then
+    | expr T_not_equal expr { if (check_equalities $1 $3 "!=" (rhs_start_pos 1)) then
                                 Cond(handle_comparison "!=" $1 $3 (get_binop_pos())) 
                               else Cond(return_null_cond())
                              }
-     | expr T_greater expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_greater expr { if (check_equalities $1 $3 ">" (rhs_start_pos 1)) then 
                                 Cond(handle_comparison ">"  $1 $3 (get_binop_pos())) 
                              else Cond(return_null_cond())
                             }
-     | expr T_less expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_less expr { if (check_equalities $1 $3 "<" (rhs_start_pos 1)) then 
                             Cond(handle_comparison "<" $1 $3 (get_binop_pos())) 
                           else Cond(return_null_cond())
                          }
-     | expr T_less_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_less_equal expr { if (check_equalities $1 $3 "<=" (rhs_start_pos 1)) then 
                                  Cond(handle_comparison "<=" $1 $3 (get_binop_pos())) 
                                 else Cond(return_null_cond())
                                }
-     | expr T_greater_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_greater_equal expr { if (check_equalities $1 $3 ">=" (rhs_start_pos 1)) then 
                                     Cond(handle_comparison ">=" $1 $3 (get_binop_pos())) 
                                    else Cond(return_null_cond())
                                   }

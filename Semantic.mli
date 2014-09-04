@@ -7,12 +7,12 @@ type super_type =
   | Bool of Types.typ
 
 val get_var_type : Lexing.position -> Types.typ * int -> Types.typ
-val check_is_number : QuadTypes.superexpr -> Lexing.position -> bool
+val check_is_number : ?v:bool -> QuadTypes.superexpr -> Lexing.position -> bool
 val check_binop_types : QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> Types.typ
-val check_bool_binop_types : QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> bool
+val check_bool_binop_types : ?v:bool -> QuadTypes.superexpr ->  QuadTypes.superexpr -> Lexing.position -> bool
 val check_int_binop_types : QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> Types.typ
-val check_equalities : QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> bool
-val check_is_bool : QuadTypes.superexpr -> Lexing.position -> bool
+val check_equalities : QuadTypes.superexpr -> QuadTypes.superexpr -> string -> Lexing.position -> bool
+val check_is_bool : ?v:bool -> QuadTypes.superexpr -> Lexing.position -> bool
 val table_size : QuadTypes.superexpr -> Lexing.position -> int
 val check_function_params : Symbol.entry list -> Types.typ list -> Lexing.position -> bool
 val check_assign : string -> QuadTypes.superexpr -> QuadTypes.superexpr -> Lexing.position -> bool
