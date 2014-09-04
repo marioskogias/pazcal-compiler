@@ -7,6 +7,7 @@ else
    EXE=
 endif
 
+EXEC_ENV=exec_env
 EXEFILE=gracec$(EXE)
 MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml Output.ml\
   QuadTypes.ml Quads.ml Semantic.ml MergeBlocks.ml CodeElimination.ml\
@@ -80,9 +81,11 @@ clean:
 	$(RM) $(CMXFILES) $(CMOFILES) $(CMIFILES) $(OBJFILES) $(EXEFILES) \
            extend.cmi extend.cmo \
            $(patsubst %,%.cm?,$(EXEFILES)) $(PARSERFILES) pplib.cma *~
+	make -C $(EXEC_ENV) clean
 
 distclean: clean
 	$(RM) $(EXEFILE) symbtest$(EXE) pazcal$(EXE) .depend
+	make -C $(EXEC_ENV) distclean
 
 pack: clean
 	tar cvfz gracec.tar.gz $(SRCFILES)
@@ -99,3 +102,10 @@ bonus.tgz: distclean
 
 count:
 	wc -l $(SRCFILES)
+
+lib:
+	make -C $(EXEC_ENV)
+
+run: a.asm
+	cp a.asm $(EXEC_ENV)
+	make -C $(EXEC_ENV) run

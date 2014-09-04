@@ -1,5 +1,5 @@
 @echo off                                                                       
-set MYLIB=pazcal                                                                
+set MYLIB=PAZCAL                                                                
 path %path%;.\Support                                                           
 echo Assembling...                                                              
 masm /mx /t a.asm;                                                              

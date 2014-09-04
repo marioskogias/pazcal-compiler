@@ -48,30 +48,33 @@ let check_const expr =
      )
     |_ -> false
 
-let check_is_number expr pos= 
+let check_is_number ?(v=true) expr pos= 
   match expr with
     |Expr e -> (
        let expr_typ = get_type e.place 
        in let spt = create_super_type expr_typ in
          match spt with
            |Num _ -> true
-           |_ -> error  "Line:%d.%d: Not a number or char" (pos.pos_lnum) 
-                   (pos.pos_cnum - pos.pos_bol); false
+           |_ -> if (v) then error  "Line:%d.%d: Not a number or char" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol)
+                   else () ;
+                   false
      )
     | _ -> internal "Not an expresion"; raise Terminate
 
-let check_is_bool expr pos= 
+let check_is_bool ?(v=true) expr pos= 
   match expr with
     |Expr e -> (
        let expr_typ = get_type e.place 
        in let spt = create_super_type expr_typ in
          match spt with
            |Bool _ -> true
-           |_ -> error  "Line:%d.%d: Not a number or char" (pos.pos_lnum) 
-                   (pos.pos_cnum - pos.pos_bol); false
+           |_ -> if (v) then error "Line:%d.%d: Not a bool" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol)
+                 else ();
+                   false
      )
     |Cond c -> true
-    | _ -> internal "Not an expresion"; raise Terminate
 
 (* Semantic checking of values in binary expressions *)
 let check_binop_types expr1 expr2 pos=
@@ -98,25 +101,30 @@ let check_int_binop_types expr1 expr2 pos=
         TYPE_none)
       else TYPE_int
 
-let check_equalities expr1 expr2 pos =
-    if ((check_is_number expr1 pos) && (check_is_number expr2 pos))
+let check_bool_binop_types ?(v=true) expr1 expr2 pos=
+    if ((check_is_bool ~v:false expr1 pos) && (check_is_bool ~v:false expr2 pos))
     then true
     else ( 
-      error "Line:%d.%d: Wrong types in assignment or comparison" (pos.pos_lnum) 
-           (pos.pos_cnum - pos.pos_bol);
+      if (v) then error "Line:%d.%d: Wrong types in boolean operation" (pos.pos_lnum) 
+           (pos.pos_cnum - pos.pos_bol)
+      else ();
       false
     )
 
-
-let check_bool_binop_types expr1 expr2 pos=
-    if ((check_is_bool expr1 pos) && (check_is_bool expr2 pos))
-    then true
-    else ( 
-      error "Line:%d.%d: Wrong types in boolean operation" (pos.pos_lnum) 
+let check_equalities expr1 expr2 op pos =
+    let m_res = match op with
+    |"=="
+    |"!=" -> ((check_bool_binop_types ~v:false expr1 expr2 pos) || 
+                ((check_is_number ~v:false expr1 pos) && (check_is_number ~v:false expr2 pos)))
+    |_ -> ((check_is_number expr1 pos) && (check_is_number expr2 pos))
+    in
+    if m_res
+        then true
+        else ( 
+            error "Line:%d.%d: Wrong types in assignment or comparison" (pos.pos_lnum)
            (pos.pos_cnum - pos.pos_bol);
-      false
-    )
-
+            false
+        )
 (*
  * function to check assign operations 
  * if the operator is not '=' then you need the operands to be arithmetic 
@@ -132,7 +140,6 @@ let check_assign operator expr1 expr2 pos=
       |(Expr e1, Cond c2) -> (get_type e1.place, TYPE_bool)
       |(Cond c1, Expr e2) -> (TYPE_bool, get_type e2.place)
       |(Cond c1, Cond c2) -> (TYPE_bool, TYPE_bool)
-      |_ -> internal "Not expressions"; raise Terminate
     in 
     let types_match = 
       if equalType type_1 type_2 then true 

@@ -140,7 +140,6 @@ let name n =
 
 (* end of routine label *)
 let endof n =
-    Printf.printf "\nIn endof : %s\n" n; 
     let l = Hashtbl.find func_labels n in
     Printf.sprintf "@%s" l
 
@@ -165,7 +164,7 @@ let lib_funcs = ["putchar";"puts";
 let rec register_lib_functions = function
   |[] -> ()
   |(h::t) ->  
-      let help_reg k v = Printf.printf "%s %s\n" k v; Hashtbl.add func_labels k v in
+      let help_reg k v = Hashtbl.add func_labels k v in
       match h with
      |"putchar" -> ignore(help_reg "putchar" "_print_char"); register_lib_functions t
      |"puts" -> ignore(help_reg "puts" "_print_string"); register_lib_functions t
@@ -305,7 +304,6 @@ let final_code_of_quad = function
       let size = param_size x in
       let fun_real_name = id_name x.entry_id in
       let fun_name = name fun_real_name in
-        Printf.printf "The function is %s\n" fun_name;
         current_fun := fun_real_name;
         let code = [[Sub(Action_reg Sp, Constant size)];
                     [Mov(Register Bp, Register Sp)]; 
@@ -375,7 +373,6 @@ let rec print_final_code file_d code =
       incr count; 
       try 
         let s = Queue.take const_strings in
-        print_string s;
         let lb = Printf.sprintf "@str%d" !count in
         let decl = declare_string lb s in
           string_dec_fn decl^res
@@ -389,5 +386,4 @@ let rec print_final_code file_d code =
     let assembly_all = assembly_start @ assembly_mid @ assembly_string_dec @ assembly_end in 
     
     let assembly_string = (List.map string_of_final_t assembly_all) in
-    Printf.fprintf file_d "\n\n\n\nFinal code is \n";
     print_help file_d assembly_string;

@@ -74,9 +74,8 @@ let handle_fun_mul_params e e_list =
     | Cond c ->
             let temp = newTemporary TYPE_bool
     in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))
-            in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
-    in let jump_quad = Quad_jump (ref (3)) in       (* FIX: nowhere used*)                
-    let new_quad = Quad_jump (ref (2)) in                           
+    in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))
+    in let new_quad = Quad_jump (ref (2)) in                           
     List.iter (fun x -> x := !x + 2) c.q_false;                     
     Expr{                                                           
         code = quad_false :: (new_quad::(quad_true :: c.c_code));
@@ -242,7 +241,7 @@ let registerLibraryFunctions () =
 %type <QuadTypes.stmt_ret_type> declaration_list
 %type <QuadTypes.stmt_ret_type> declaration
 %type <unit> const_def
-%type <string * QuadTypes.superexpr> const_inner_def //(*name, val, thanasis*)
+%type <string * QuadTypes.superexpr> const_inner_def 
 %type <(string * QuadTypes.superexpr) list> const_def_list
 %type <QuadTypes.stmt_ret_type> var_def
 %type <(string * int list * QuadTypes.superexpr) list> var_def_list
@@ -424,27 +423,27 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
      | expr T_MOD expr { let expr_typ = check_int_binop_types $1 $3 (rhs_start_pos 1) in 
                           Expr(handle_expression "%" $1 $3 expr_typ (get_binop_pos())) 
                         }
-     | expr T_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then
+     | expr T_equal expr { if (check_equalities $1 $3 "==" (rhs_start_pos 1)) then
                             Cond(handle_comparison "==" $1 $3 (get_binop_pos())) 
                            else Cond(return_null_cond())
                           }
-    | expr T_not_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then
+    | expr T_not_equal expr { if (check_equalities $1 $3 "!=" (rhs_start_pos 1)) then
                                 Cond(handle_comparison "!=" $1 $3 (get_binop_pos())) 
                               else Cond(return_null_cond())
                              }
-     | expr T_greater expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_greater expr { if (check_equalities $1 $3 ">" (rhs_start_pos 1)) then 
                                 Cond(handle_comparison ">"  $1 $3 (get_binop_pos())) 
                              else Cond(return_null_cond())
                             }
-     | expr T_less expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_less expr { if (check_equalities $1 $3 "<" (rhs_start_pos 1)) then 
                             Cond(handle_comparison "<" $1 $3 (get_binop_pos())) 
                           else Cond(return_null_cond())
                          }
-     | expr T_less_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_less_equal expr { if (check_equalities $1 $3 "<=" (rhs_start_pos 1)) then 
                                  Cond(handle_comparison "<=" $1 $3 (get_binop_pos())) 
                                 else Cond(return_null_cond())
                                }
-     | expr T_greater_equal expr { if (check_equalities $1 $3 (rhs_start_pos 1)) then 
+     | expr T_greater_equal expr { if (check_equalities $1 $3 ">=" (rhs_start_pos 1)) then 
                                     Cond(handle_comparison ">=" $1 $3 (get_binop_pos())) 
                                    else Cond(return_null_cond())
                                   }
@@ -501,10 +500,11 @@ l_value : T_name expr_list {
                                                 place = Quad_entry(result_temp) 
                                             }
                                         ))
+                                    | [] -> Expr(return_null())
                                         in final_expr
+                                
                                 )
                             | Cond c -> Expr(return_null()) (*error here*)
-                            | _ -> Expr(return_null()) (*error here*)
                         )
                     | _ -> Expr({code=[];place=(Quad_entry (e))})
                 )
@@ -540,10 +540,10 @@ l_value : T_name expr_list {
                                                 place = Quad_entry(result_temp) 
                                             }
                                         ))
+                                    | [] -> Expr(return_null())
                                         in final_expr
                                 )
                             | Cond c -> Expr(return_null()) (*error here*)
-                            | _ -> Expr(return_null()) (*error here*)
                         )
                     | _ -> Expr({code=[];place=(Quad_entry (e))})
                 )
@@ -574,8 +574,7 @@ expressions : /*nothing*/ { [] }
                 let temp = newTemporary TYPE_bool                                           
                 in let quad_false = Quad_set(Quad_bool("false"), Quad_entry(temp))          
                 in let quad_true = Quad_set(Quad_bool("true"), Quad_entry(temp))            
-                in let jump_quad = Quad_jump (ref (3)) in      (*not used*)                             
-                let new_quad = Quad_jump (ref (2)) in                                       
+                in let new_quad = Quad_jump (ref (2)) in                                       
                 List.iter (fun x -> x := !x + 2) c.q_false;                                 
                 Expr{                                                                           
                     code = quad_false :: (new_quad::(quad_true :: c.c_code));               
