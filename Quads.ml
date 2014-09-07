@@ -5,6 +5,7 @@ open Identifier
 open Semantic
 open Lexing
 open QuadTypes
+open Parsing
 
 (* Get Type of a quad_elem_t *)
 let get_type = function
@@ -15,15 +16,7 @@ let get_type = function
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
   |Quad_valof (ent) 
   |Quad_entry (ent) -> get_entry_type ent 
-(* function to get entry's type)                                        
-let get_type e =                                                        
-  match e.entry_info with                                                 
-  | ENTRY_variable inf -> inf.variable_type                               
-  | ENTRY_parameter inf -> inf.parameter_type                             
-  | ENTRY_function inf -> inf.function_result                             
-   (*to be continued...*)                                                  
-  | _ ->TYPE_int
-*)
+
 (* Small Function To Check if Quad is en entry or not *)
 let is_entry quad =
   match quad with
@@ -404,6 +397,95 @@ let handle_func_call ent pos expr_list =
       at line %d, position %d."
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
+
+let get_param_list a =
+    match a.entry_info with
+        | ENTRY_function inf -> inf.function_paramlist
+        | _ -> []
+
+let rec handle_format_list (*format_list quad_list int_quads*) = function
+  | [], a, _ -> a
+  | a::b, quads, int_quad -> let print_func =
+        (match fst a, snd a with
+            | Expr e1, Expr e2 ->
+                (
+                (*
+                    match (e1.place) with
+                    |Quad_int _ -> "WRITE_INT"
+                    |Quad_char _ -> "WRITE_CHAR"
+                    |Quad_string _ -> "puts"
+                    |Quad_bool _ -> "WRITE_BOOL"
+                    |Quad_entry e ->
+                        (
+                            match e.entry_info with 
+                                | ENTRY_variable var_info ->
+                                    (
+                                        match var_info.variable_type with
+                                            | TYPE_int -> "WRITE_INT"
+                                            | TYPE_bool -> "WRITE_BOOL"
+                                            | TYPE_char -> "WRITE_CHAR"
+                                            | TYPE_array (e, s)-> "WRITE_STRING"
+                                            | _ -> ""
+                                    )
+                                | _ -> ""
+                        )
+                    |_ -> ""
+                *)
+                    match (get_type (e1.place)) with
+                        |TYPE_int _ -> "WRITE_INT"
+                        |TYPE_char _ -> "WRITE_CHAR"
+                        |TYPE_array _ -> "puts"
+                        |TYPE_bool _ -> "WRITE_BOOL"
+                        |_ -> ""
+                )
+            | _, _ -> ""
+        )
+    in
+        let e = lookupEntry  (id_make print_func) LOOKUP_ALL_SCOPES true
+        in let get_expr e =
+            (
+                match e with
+                    | Expr e -> e
+                    | _ -> return_null()
+            )
+        in let get_place e = e.place
+        in let expr_list = List.map get_expr (fst a::([snd a]))
+        in let expr_types = List.map get_type (List.map get_place expr_list)
+        in let
+            expr = (handle_func_call e (rhs_start_pos 1) expr_list)
+        in let new_quads = (int_quad.code)@expr.code
+  in handle_format_list (b, (new_quads@quads), int_quad)
+    | _, _, _ -> []
+
+let handle_write write_type form_list =
+  let intermediate_quad = (match write_type with
+    |"write" -> ({code = []; place = Quad_int("0")})
+    |"writeln" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
+        handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("\n")}]
+    |"writesp" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
+        handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("' '")}]
+    |"writespln" ->(
+        let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
+        let expr1 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("\n")})] in
+        let expr2 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
+        {code=expr1.code@expr2.code;
+        place= expr1.place}
+    )
+  )
+  in match form_list with
+  | [] ->
+    {
+        s_code = intermediate_quad.code;
+        q_cont = [];
+        q_break = [];
+    }
+  | _ ->
+    {
+        s_code = handle_format_list (form_list, [], (intermediate_quad));
+        q_cont = [];
+        q_break = [];
+    }
+
 
 let condition_to_expr expr =
     match expr with

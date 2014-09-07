@@ -185,11 +185,11 @@ let registerLibraryFunctions () =
 %token T_TO 
 %token T_true 
 %token T_while 
-%token T_WRITE 
-%token T_WRITELN
-%token T_WRITESP 
-%token T_WRITESPLN 
-%token <string> T_eq 
+%token <string> T_WRITE
+%token <string> T_WRITELN
+%token <string> T_WRITESP
+%token <string> T_WRITESPLN
+%token <string> T_eq
 %token T_lparen 
 %token T_rparen 
 %token T_plus 
@@ -272,13 +272,13 @@ let registerLibraryFunctions () =
 %type <QuadTypes.stmt_ret_type> stmt
 %type <QuadTypes.inner_switch_ret_type> inner_switch
 %type <QuadTypes.switch_exp_ret_type> switch_exp
-%type <unit> pformat_list
+%type <(QuadTypes.superexpr * QuadTypes.superexpr) list> pformat_list
 %type <string> assign
 %type <QuadTypes.superexpr*QuadTypes.superexpr*QuadTypes.superexpr*string>range
 %type <QuadTypes.stmt_ret_type> clause
 %type <QuadTypes.stmt_ret_type> stmt_list 
-%type <unit> write
-%type <unit> pformat
+%type <string> write
+%type <(QuadTypes.superexpr * QuadTypes.superexpr)> pformat
 %%
 
 
@@ -644,8 +644,8 @@ stmt : T_semicolon { return_null_stmt () }
                                    let ret_code = handle_return_expr expr (rhs_start_pos 1) in
                                    {s_code = ret_code ; q_cont=[]; q_break=[]}}
      | openScope block closeScope { $2 }
-     | write T_lparen T_rparen T_semicolon { return_null_stmt() }
-     | write T_lparen pformat pformat_list T_rparen T_semicolon { return_null_stmt() }
+     | write T_lparen T_rparen T_semicolon { handle_write  $1 ([]) }
+     | write T_lparen pformat pformat_list T_rparen T_semicolon { handle_write  $1 ($3::$4) }
 
 stoppable : {in_loop := !in_loop + 1}
 
@@ -676,14 +676,13 @@ inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_li
 switch_exp : T_case const_expr T_colon  { {case_list=[get_const_val (condition_to_expr $2) (rhs_start_pos 1)]; jump_list=[ref 1]} }
        | T_case const_expr T_colon switch_exp { handle_switch_exp (get_const_val (condition_to_expr $2) (rhs_start_pos 1)) $4 }
 
-pformat_list : /*nothing*/ { () }
-	     | T_comma pformat pformat_list { () }
+pformat_list : /*nothing*/ { [] }
+	     | T_comma pformat pformat_list { $2::$3 }
 
-write : T_WRITE { () }
-      | T_WRITELN { () } 
-      | T_WRITESP { () }
-      | T_WRITESPLN { () }
+write : T_WRITE { ($1) }
+      | T_WRITELN { ($1) }
+      | T_WRITESP { ($1) }
+      | T_WRITESPLN { ($1) }
 
-pformat : expr { () }
-	| T_FORM T_lparen expr T_comma expr T_rparen { () }
-	| T_FORM T_lparen expr T_comma expr T_comma expr T_rparen { () }
+pformat : expr { ($1, Expr({ code=[]; place= Quad_int ("0")})) }
+	| T_FORM T_lparen expr T_comma expr T_rparen { ($3, $5) }
