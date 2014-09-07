@@ -166,7 +166,7 @@ let rec register_lib_functions = function
   |(h::t) ->  
       let help_reg k v = Hashtbl.add func_labels k v in
       match h with
-     |"putchar" -> ignore(help_reg "putchar" "_print_char"); register_lib_functions t
+     |"putchar" -> ignore(help_reg "putchar" "_print_s_char"); register_lib_functions t
      |"puts" -> ignore(help_reg "puts" "_print_string"); register_lib_functions t
      |"READ_INT" -> ignore(help_reg "READ_INT" "_read_int"); register_lib_functions t
      |"READ_BOOL" -> ignore(help_reg "READ_BOOL" "_read_bool"); register_lib_functions t
