@@ -54,6 +54,8 @@ let constant_folding fun_code =
       |Quad_valof _
       |Quad_string _
       |Quad_char _
+      |Quad_real _
+      |Quad_bool _
         -> None
       |Quad_int str -> Some (int_of_string str)
       |Quad_entry ent ->
