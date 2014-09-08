@@ -42,7 +42,8 @@ let escape_chars s =
 
 let declare_string label str = 
   let escaped = escape_chars str in
-  let add_db s = Printf.sprintf "db %s\n" s in
+  let add_db s = if (s <> "''") then Printf.sprintf "db %s\n" s
+                 else "" in
   let db_list = List.map add_db escaped in
   let rec final = function
     |([], s) -> s^"\tdb 0\n"

@@ -4,6 +4,7 @@ if exist pazcal.lib del pazcal.lib
 support\masm -mx src\stdio\printi.asm;
 support\masm -mx src\stdio\readi.asm;
 support\masm -mx src\stdio\printc.asm;
+support\masm -mx src\stdio\printsc.asm;
 support\masm -mx src\stdio\readc.asm;
 support\masm -mx src\stdio\printb.asm;
 support\masm -mx src\stdio\readb.asm;
@@ -14,7 +15,7 @@ support\masm -mx src\stdio\reads.asm;
 support\masm -mx src\stdio\writes.asm;
 
 support\lib pazcal.lib /NOIGNORECASE +printi.obj +readi.obj;
-support\lib pazcal.lib /NOIGNORECASE +printc.obj +readc.obj;
+support\lib pazcal.lib /NOIGNORECASE +printc.obj +readc.obj +printsc.obj;
 support\lib pazcal.lib /NOIGNORECASE +printb.obj +readb.obj;
 support\lib pazcal.lib /NOIGNORECASE +printr.obj +readr.obj;
 support\lib pazcal.lib /NOIGNORECASE +prints.obj +reads.obj +writes.obj;
