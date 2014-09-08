@@ -31,14 +31,34 @@ let rec optimize block_code =
                                                                                 
     block_code                                                             
 
+let get_name name = 
+    let point_index = String.index name '.' in
+    String.sub name 0 point_index
+
+let should_optimize = ref false
+let fflag = ref false
+let iflag = ref false
+let in_file = ref ""
+let usage = "This is th usage:"
+let anon_fun name = in_file := name
+
+let speclist = Arg.align [
+    "-o", Arg.Unit (function () -> should_optimize := true)
+        , "Optimize intermediate code";
+    "-f", Arg.Unit (function () -> fflag := true)
+    , "Input stdin, stdout: final code";
+    "-i", Arg.Unit (function () -> iflag := true)
+    , "Input stdin, stdout: intermediate code"]
+
 let main =
-  let inbuffer = open_in Sys.argv.(1) in
+  Arg.parse speclist anon_fun usage;
+  let inbuffer = if (!fflag || !iflag) then (in_file := "a.pas"; stdin) else open_in !in_file in
+  let name = get_name !in_file in 
+  let outass = if (!fflag) then stdout else open_out (String.concat "" [name; ".asm"]) in
+  let outquads = if (!iflag) then stdout else open_out  (String.concat "" [name; ".imm"]) in
   let lexbuf = Lexing.from_channel inbuffer in
-  let outquads = open_out "a.int" in
-  let outass = open_out "a.asm" in
   try
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
-    ignore(List.map print_string (List.map Quads.string_of_quad_t quad_list));
     let block_code = Blocks.blocks_of_quad_t_list quad_list in
     let opt_code = optimize block_code in
     let final_list = MergeBlocks.make_list opt_code in
@@ -47,4 +67,4 @@ let main =
     exit 0
   with Parsing.Parse_error ->
     Printf.eprintf "syntax error on line %d \n" lexbuf.Lexing.lex_curr_p.Lexing.pos_lnum ;
-    exit 1  
+    exit 1
