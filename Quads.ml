@@ -438,7 +438,7 @@ let rec handle_format_list (*format_list quad_list int_quads*) = function
                     match (get_type (e1.place)) with
                         |TYPE_int _ -> "WRITE_INT"
                         |TYPE_char _ -> "WRITE_CHAR"
-                        |TYPE_array _ -> "puts"
+                        |TYPE_array _ -> "WRITE_STRING"
                         |TYPE_bool _ -> "WRITE_BOOL"
                         |_ -> ""
                 )
