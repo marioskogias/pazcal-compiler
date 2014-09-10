@@ -458,32 +458,40 @@ let rec handle_format_list (*format_list quad_list int_quads*) = function
   )
 
 let handle_write write_type form_list =
-  let intermediate_quad = (
+  let (intermediate_quad, break_line_quad) = (
     match write_type with
-        |"write" -> ({code = []; place = Quad_int("0")})
-        |"writeln" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
-            handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("'\\n'")}]
+        |"write" -> (({code = []; place = Quad_int("0")}), ({code = []; place = Quad_int("0")}))
+        |"writeln" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in 
+            (
+                ({code = []; place = Quad_int("0")}),
+                (handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("'\\n'")}])
+            )
         |"writesp" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
-            handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("' '")}]
+            (
+                (handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("' '")}]),
+                ({code = []; place = Quad_int("0")})
+            )
         |"writespln" ->(
             let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
             let expr1 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("'\\n'")})] in
             let expr2 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
-            {code=expr1.code@expr2.code;
-            place= expr1.place}
+            (
+                ({code = []; place = Quad_int("0")}),
+                ({code=expr1.code@expr2.code; place= expr1.place})
+            )
         )
         |_ -> internal "Not a valid write function"; raise Terminate 
   )
   in match form_list with
   | [] ->
     {
-        s_code = intermediate_quad.code;
+        s_code = break_line_quad.code@intermediate_quad.code;
         q_cont = [];
         q_break = [];
     }
   | _ ->
     {
-        s_code = handle_format_list (form_list, [], (intermediate_quad));
+        s_code = break_line_quad.code@(handle_format_list (form_list, [], (intermediate_quad)));
         q_cont = [];
         q_break = [];
     }
