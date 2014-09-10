@@ -59,9 +59,11 @@ let main =
   let lexbuf = Lexing.from_channel inbuffer in
   try
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
-    let block_code = Blocks.blocks_of_quad_t_list quad_list in
-    let opt_code = optimize block_code in
-    let final_list = MergeBlocks.make_list opt_code in
+    let final_list = if (!should_optimize) then (
+                            let block_code = Blocks.blocks_of_quad_t_list quad_list in
+                            let opt_code = optimize block_code in
+                            MergeBlocks.make_list opt_code
+                            ) else quad_list in
     FinalCode.print_final_code outass final_list;
     ignore(List.map (Printf.fprintf outquads "%s") (List.map Quads.string_of_quad_t final_list));
     exit 0
