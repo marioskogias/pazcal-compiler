@@ -473,11 +473,10 @@ let handle_write write_type form_list =
             )
         |"writespln" ->(
             let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
-            let expr1 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("'\\n'")})] in
-            let expr2 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
+            let expr = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
             (
                 ({code = []; place = Quad_int("0")}),
-                ({code=expr1.code@expr2.code; place= expr1.place})
+                ({code=expr.code; place= expr.place})
             )
         )
         |_ -> internal "Not a valid write function"; raise Terminate 
