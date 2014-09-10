@@ -14,7 +14,8 @@ _write_string  proc  near
                mov   bp, sp
                mov   si, word ptr [bp+10]      ; 1st parameter
                mov   bx, word ptr [bp+8]       ; 2nd parameter
-mloop:
+mloop:         cmp   bx,0
+               je    next_print
                dec   bx
                jz    next_print                ; if 0, then print_next
                mov   dl, byte ptr [si]         ; Load next character
