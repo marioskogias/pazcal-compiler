@@ -462,12 +462,12 @@ let handle_write write_type form_list =
     match write_type with
         |"write" -> ({code = []; place = Quad_int("0")})
         |"writeln" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
-            handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("\n")}]
+            handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("'\\n'")}]
         |"writesp" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
             handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("' '")}]
         |"writespln" ->(
             let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
-            let expr1 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("\n")})] in
+            let expr1 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("'\\n'")})] in
             let expr2 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
             {code=expr1.code@expr2.code;
             place= expr1.place}
