@@ -35,7 +35,6 @@ type quad_t =
   |Quad_cond of string * quad_elem_t * quad_elem_t * (int ref)
   |Quad_jump of (int ref)
   |Quad_call of Symbol.entry * (quad_elem_t list)
-  |Quad_tailCall of Symbol.entry
   |Quad_par of quad_elem_t * Symbol.pass_mode
   |Quad_ret
 

@@ -173,9 +173,6 @@ let string_of_quad_t = function
       !i
   |Quad_jump i  ->
     Printf.sprintf "jump, -, -, %d\n" !i
-  |Quad_tailCall ent ->
-    Printf.sprintf "tailRecursiveCall, -, -, %s\n"
-      (id_name ent.entry_id)
   |Quad_call (ent,_) ->
     Printf.sprintf "call, -, -, %s\n"
       (id_name ent.entry_id)
@@ -413,28 +410,6 @@ let rec handle_format_list (*format_list quad_list int_quads*) = function
         (match fst a, snd a with
             | Expr e1, Expr e2 ->
                 (
-                (*
-                    match (e1.place) with
-                    |Quad_int _ -> "WRITE_INT"
-                    |Quad_char _ -> "WRITE_CHAR"
-                    |Quad_string _ -> "puts"
-                    |Quad_bool _ -> "WRITE_BOOL"
-                    |Quad_entry e ->
-                        (
-                            match e.entry_info with 
-                                | ENTRY_variable var_info ->
-                                    (
-                                        match var_info.variable_type with
-                                            | TYPE_int -> "WRITE_INT"
-                                            | TYPE_bool -> "WRITE_BOOL"
-                                            | TYPE_char -> "WRITE_CHAR"
-                                            | TYPE_array (e, s)-> "WRITE_STRING"
-                                            | _ -> ""
-                                    )
-                                | _ -> ""
-                        )
-                    |_ -> ""
-                *)
                     match (get_type (e1.place)) with
                         |TYPE_int _ -> "WRITE_INT"
                         |TYPE_char _ -> "WRITE_CHAR"
