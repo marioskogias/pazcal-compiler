@@ -87,7 +87,6 @@ let compute_immediate_dominators flowgraph =
   let label = Array.make (n+1) 0 in
   let size = Array.make (n+1) 0 in
 
-  let debug_mode = false in
 
   let print_array a =
     Printf.printf "%s: " (fst a);
@@ -188,19 +187,13 @@ let compute_immediate_dominators flowgraph =
 
       (* loop through parents to set semidominators *)
       let rec parse_parents parents =
-        if(debug_mode) then Printf.printf "Parsing parents of %d\n" w;
         match parents with 
         | [] -> ()
         | (h::t) ->
-            if (debug_mode) then Printf.printf "Going through %d\n" h;
             let u = eval h in
             if (sdno.(u) < sdno.(w))      
             then begin
               sdno.(w) <- sdno.(u);
-              if (debug_mode) then (
-                Printf.printf "Changing sdno.(%d) to sdno.(%d) = %d\n" 
-                  w u sdno.(u); flush_all();
-              )
             end;            
             parse_parents t in
       parse_parents flowgraph.(w).parents;
@@ -237,22 +230,11 @@ let compute_immediate_dominators flowgraph =
   (* Main Logic Now *)
   ignore (dfs 0 0);
   
-  if(debug_mode) then (
-    print_state (); Printf.printf "\n"; flush_all();
-  );
 
   populate_buckets (n-1);
   
-  if (debug_mode) then (
-   print_state (); Printf.printf "\n"; flush_all();
-  );
-
   adjust_idoms 1;
   
-  if (debug_mode) then (
-    print_state ();
-    flush_all();
-  );
   
   (* Return idom *)
   idom
