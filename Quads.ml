@@ -458,25 +458,26 @@ let rec handle_format_list (*format_list quad_list int_quads*) = function
   )
 
 let handle_write write_type form_list =
-  let (intermediate_quad, break_line_quad) = (
+  let (intermediate_quad, break_line_quad)= (
     match write_type with
-        |"write" -> (({code = []; place = Quad_int("0")}), ({code = []; place = Quad_int("0")}))
-        |"writeln" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in 
+        |"write" -> ({code = []; place = Quad_int("0")}, {code = []; place = Quad_int("0")})
+        |"writeln" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
             (
-                ({code = []; place = Quad_int("0")}),
-                (handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("'\\n'")}])
+                {code = []; place = Quad_int("0")},
+                handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("'\\n'")}]
             )
         |"writesp" -> let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
             (
-                (handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("' '")}]),
-                ({code = []; place = Quad_int("0")})
+                handle_func_call e (rhs_start_pos 1)  [{ code=[]; place= Quad_char ("' '")}],
+                {code = []; place = Quad_int("0")}
             )
         |"writespln" ->(
             let e = lookupEntry (id_make "putchar") LOOKUP_ALL_SCOPES true in
-            let expr = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
+            let expr1 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("'\\n'")})] in
+            let expr2 = handle_func_call e  (rhs_start_pos 1) [({ code=[]; place= Quad_char ("' '")})] in
             (
-                ({code = []; place = Quad_int("0")}),
-                ({code=expr.code; place= expr.place})
+                ({code=expr2.code; place=expr2.place}),
+                ({code=expr1.code; place=expr1.place})
             )
         )
         |_ -> internal "Not a valid write function"; raise Terminate 
