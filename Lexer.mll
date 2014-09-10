@@ -55,10 +55,10 @@ rule lexer = parse
   | "TO"   { T_TO }
   | "true"   { T_true }
   | "while"   { T_while }
-  | "WRITE"   { T_WRITE }
-  | "WRITELN"   { T_WRITELN }
-  | "WRITESP"   { T_WRITESP }
-  | "WRITESPLN"   { T_WRITESPLN }
+  | "WRITE"   { T_WRITE ("write")}
+  | "WRITELN"   { T_WRITELN ("writeln")}
+  | "WRITESP"   { T_WRITESP ("writesp")}
+  | "WRITESPLN"   { T_WRITESPLN ("writespln")}
 
   | letter+(letter* digit* '_'*)* as name { T_name(name) }
   | (['1'-'9']+ digit*) | ('0'+) as value { T_int_const(value) }

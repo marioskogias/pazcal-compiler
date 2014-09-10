@@ -1,5 +1,5 @@
-; print_char : char -> unit
-; -------------------------
+; print_char : char -> int  -> unit
+; ----------------------------------
 ; This function prints a character to the standard output.
 
 
