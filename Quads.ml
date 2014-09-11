@@ -943,7 +943,7 @@ let handle_return_expr expr pos=
   let t = get_type expr.place in
   let fnType =get_entry_type !currentFun in  
   if (equalType t fnType) 
-  then let ret_entry = lookupEntry (id_make "$$") LOOKUP_CURRENT_SCOPE true
+  then let ret_entry = lookupEntry (id_make "$$") LOOKUP_ALL_SCOPES true
     in Quad_ret ::(Quad_set(expr.place, Quad_entry(ret_entry))):: expr.code
   else (
     error "Wrong types in return, \
