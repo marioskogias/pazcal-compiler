@@ -1,4 +1,0 @@
-PROGRAM solve ()
-{
-    puts("Hello world\n");
-}

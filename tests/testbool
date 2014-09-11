@@ -1,8 +1,0 @@
-PROGRAM boolsd ()
-{
-    int i = 2;
-    bool x=true;
-    bool z;
-    x = i < 4;
-    z = ((i==1) and (x));
-}

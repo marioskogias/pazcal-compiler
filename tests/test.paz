@@ -1,9 +1,0 @@
-PROGRAM bubbles ()
-
-{
-
-	int x,y,z,seed = 65;
-    seed = seed + 2;
-
-
-}
