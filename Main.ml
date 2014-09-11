@@ -57,11 +57,11 @@ let main =
   try
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
     let no_constants = ConstantProp.constant_optimize quad_list in
-    let final_list = if (!should_optimize) then (
-                            let block_code = Blocks.blocks_of_quad_t_list no_constants in
-                            let opt_code = optimize block_code in
-                            MergeBlocks.make_list opt_code
-                            ) else no_constants in
+    (*either optimize or not need block code for jumps*)
+    let block_code = Blocks.blocks_of_quad_t_list no_constants in
+    let opt_code = if (!should_optimize) then optimize block_code 
+                     else block_code in
+    let final_list = MergeBlocks.make_list opt_code in
     FinalCode.print_final_code outass final_list;
     ignore(List.map (Printf.fprintf outquads "%s") (List.map Quads.string_of_quad_t final_list));
     exit 0

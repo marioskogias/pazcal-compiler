@@ -247,6 +247,7 @@ let table_size expr pos=
                                       (pos.pos_cnum - pos.pos_bol); 0
 
 let check_function_params symb_table_param_list given_param_types pos = 
+  Printf.printf "Symbtable: %d given: %d \n" (List.length symb_table_param_list) (List.length given_param_types);
   let get_param_info p = 
     match p.entry_info with
       | ENTRY_parameter inf -> (inf.parameter_type, inf.parameter_mode)
@@ -254,8 +255,8 @@ let check_function_params symb_table_param_list given_param_types pos =
   in 
   let rec help_check = function
     |([], []) -> true
-    |([], _)
-    |(_, []) -> error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+    |([], _)  
+    |(_, []) -> error "Line:%d.%d: Wrong number of parameters" (pos.pos_lnum) 
                   (pos.pos_cnum - pos.pos_bol) ;false
     |(a::b, c::d) ->
         let p_type = fst a in
@@ -270,7 +271,7 @@ let check_function_params symb_table_param_list given_param_types pos =
                 |(TYPE_int, TYPE_char) ->  true
                 |_ -> false
             in if (types_match && is_by_val) then help_check(b, d)
-            else (error "Line:%d.%d: Wrong parameters" (pos.pos_lnum) 
+            else (error "Line:%d.%d: Wrong type of parameters" (pos.pos_lnum) 
                     (pos.pos_cnum - pos.pos_bol) ;false)
 
   in let params_info = List.map get_param_info symb_table_param_list 
