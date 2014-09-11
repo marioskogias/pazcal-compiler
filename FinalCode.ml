@@ -61,8 +61,8 @@ let rec load a reg =
        in 
          [Mov (Register get_register(reg, TYPE_char), Num asci)]
       |Quad_bool(str) -> (match str with
-                            |"true" -> [Mov (Register get_register(reg, TYPE_char), Num "1")]
-                            |"false" -> [Mov (Register get_register(reg, TYPE_char), Num "0")]
+                            |"true" -> [Mov (Register get_register(reg, TYPE_bool), Num "1")]
+                            |"false" -> [Mov (Register get_register(reg, TYPE_bool), Num "0")]
                             |_ -> internal "Unknown bool value"; raise Terminate
        )
       |Quad_entry(e) ->( let l = local e in
@@ -71,10 +71,10 @@ let rec load a reg =
                          let length = mem_size entry_type in 
                            match (l, is_reference) with
                              |(true, false) -> [Mov (Register get_register(reg, entry_type), Mem_loc(length, Bp, offset))]
-                             |(true, true) ->  [Mov (Register get_register(reg, entry_type), Mem_loc("word", Si, 0)); 
+                             |(true, true) ->  [Mov (Register get_register(reg, entry_type), Mem_loc(length, Si, 0)); 
                                                 Mov (Register Si, Mem_loc("word", Bp, offset))]
                              |(false,_) -> let ar = get_ar in 
-                                (Mov(Register get_register(reg, entry_type), Mem_loc("word", Si,offset))::ar)
+                                (Mov(Register get_register(reg, entry_type), Mem_loc(length, Si,offset))::ar)
        )
       |Quad_valof(e) -> 
           let entry_type = get_entry_type e in
@@ -93,14 +93,13 @@ let load_addr addr reg =
     |Quad_valof(ent) -> load (Quad_entry(ent)) reg
     |Quad_entry(e) ->( let l = local e in
                        let (offset, is_reference) = get_info e.entry_info in
-                       (*let entry_type = get_entry_type e in
-                       let length = mem_size entry_type in *)
-                       let length = "word" in
+                       let entry_type = get_entry_type e in
+                       let length = mem_size entry_type in
                          match (l, is_reference) with
                            |(true, false) -> [Lea (Register reg, Mem_loc(length, Bp, offset))] 
-                           |(true, true) ->  [Mov (Register reg, Mem_loc(length, Bp, offset))] 
+                           |(true, true) ->  [Mov (Register reg, Mem_loc("word", Bp, offset))] 
                            |(false,_) -> let ar = get_ar in 
-                              (Mov(Register reg, Mem_loc(length, Si,offset))::ar)
+                              (Mov(Register reg, Mem_loc("word", Si,offset))::ar)
      )
     |_ -> internal "Not an address to load"; raise Terminate
 
@@ -113,10 +112,10 @@ let store a reg =
         let length = mem_size entry_type in 
         match (l, is_reference) with
         |(true, false) -> [Mov (Mem_loc(length, Bp, offset), Register get_register(reg, entry_type))] 
-        |(true, true) ->  [Mov (Mem_loc("word", Si, 0), Register get_register(reg, entry_type)); 
+        |(true, true) ->  [Mov (Mem_loc(length, Si, 0), Register get_register(reg, entry_type)); 
                             Mov(Register Si, Mem_loc("word", Bp, offset))] 
         |(false,_) -> let ar = get_ar in 
-            (Mov(Mem_loc("word", Si,offset), Register reg)::ar)
+            (Mov(Mem_loc(length, Si,offset), Register get_register(reg, entry_type))::ar)
     )
     |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
         let entry_type = get_entry_type e in
@@ -326,7 +325,8 @@ let final_code_of_quad = function
             raise Terminate
    in
    let sub_size = if (function_type = TYPE_proc) then 2 else 0 in
-   let p_size = param_size e in                   
+   (*let p_size = param_size e in *)     (* FIXME size of the parameters not local vars *)             
+   let p_size = get_function_param_size e in
    let code = [[Add(Action_reg Sp, Constant(p_size+4))];
                [Call name(id_name e.entry_id)];
                update_al;
@@ -340,7 +340,7 @@ let final_code_of_quad = function
            let code =  [[Push (Register Ax)]; load v Ax] 
            in merge_lists([], code)
        |(_, PASS_BY_VALUE) -> 
-           let code = [[Mov(Mem_loc("word", Si, 0),Register Al)];
+           let code = [[Mov(Mem_loc("byte", Si, 0),Register Al)];
                        [Mov(Register Si, Register Sp)];
                        [Sub(Action_reg Sp, Constant 1)];
                        load v Al]

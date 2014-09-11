@@ -357,3 +357,19 @@ let set_var_val entry value =
   match entry.entry_info with
     |ENTRY_temporary inf -> inf.temp_value <- value
     |_ -> internal "Not a var with value"; raise Terminate
+
+let get_function_param_size e = 
+  let rec add_p_sizes s = function
+    |[] -> s
+    |(h::t) -> (
+       let hs = match h.entry_info with
+         | ENTRY_parameter p -> ( match p.parameter_mode with
+                                   |PASS_BY_VALUE -> (sizeOfType p.parameter_type)
+                                   |_ -> 2
+           )
+         | _ -> internal "Not a parameter"; raise Terminate
+       in add_p_sizes (s+hs) t
+     ) 
+  in match e.entry_info with
+    |ENTRY_function f -> add_p_sizes 0 f.function_paramlist 
+    |_ -> internal "Only functions have params"; raise Terminate

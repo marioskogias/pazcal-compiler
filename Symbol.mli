@@ -82,3 +82,4 @@ val get_var_val         : entry -> string
 val start_positive_offset : int   (* Αρχικό θετικό offset στο Ε.Δ.   *)
 val start_negative_offset : int   (* Αρχικό αρνητικό offset στο Ε.Δ. *)
 val get_entry_type        : entry -> Types.typ
+val get_function_param_size : entry -> int
