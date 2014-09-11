@@ -866,7 +866,7 @@ let handle_for_stmt indx info body pos=
                        List.iter (fun x -> x := !x + 3) body.q_break;
                        List.iter (fun x -> x := !x + l1) body.q_cont;
                        List.iter (fun x -> x := !x + l1 + 3) comp_quads.q_false;
-                         {s_code= cont_jump::assign_in_loop_quad::plus_quad::body.s_code@(comp_quads.c_code@(assign_quad::set_end_quad::[set_start_quad]));   
+                         {s_code= cont_jump::assign_in_loop_quad::plus_quad::body.s_code@(comp_quads.c_code@(assign_quad::set_end_quad::(set_start_quad::(step.code@(endto.code@startfrom.code)))));
                             q_break=[];
                             q_cont=[]    
                          }
@@ -881,7 +881,7 @@ let handle_for_stmt indx info body pos=
                        List.iter (fun x -> x := !x + l1 + 3) body.q_break;
                        List.iter (fun x -> x := !x + l1) body.q_cont;
 
-                         {s_code= cont_jump::assign_in_loop_quad::minus_quad::body.s_code@(comp_quads.c_code@(assign_quad::set_end_quad::[set_start_quad]));   
+                         {s_code= cont_jump::assign_in_loop_quad::minus_quad::body.s_code@(comp_quads.c_code@(assign_quad::set_end_quad::(set_start_quad::(step.code@(endto.code@startfrom.code)))));
                             q_break=[];
                             q_cont=[]
                          }
