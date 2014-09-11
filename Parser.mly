@@ -46,9 +46,19 @@ let registerVar var_type place (a,b,c) = match c with
 let registerConst pos var_type (a,v) = let const_val = get_const_val v pos in
                                     newConst (id_make a) var_type const_val true
 
+(*get the parameter list of a function as it is in the symbol table*)
+let get_param_list a = 
+	match a.entry_info with 
+	| ENTRY_function inf -> (
+                match inf.function_result with 
+                |TYPE_proc -> inf.function_paramlist
+                |_ -> List.rev (List.tl (List.rev inf.function_paramlist)) (*omit the result parameter*)
+        ) 
+        | _ -> internal "Ask for params in a non-function entry"; raise Terminate
+
 (*function to register a param*)
 let register_param anc (param_type, (name, mode, nlist)) = 
-	let var_type = table_type param_type nlist
+        let var_type = table_type param_type nlist
 	in ignore(newParameter (id_make name)var_type mode anc true)
 
 (*function to register a function/proc and its params*)
@@ -56,12 +66,6 @@ let registerFun (fun_type,fun_entry) a = ignore(List.map (register_param fun_ent
 
 (*function to get entry's name*)
 let get_name e = id_name e.entry_id 
-
-(*get the parameter list of a function as it is in the symbol table*)
-let get_param_list a = 
-	match a.entry_info with 
-	| ENTRY_function inf -> inf.function_paramlist 
-	| _ -> []
 
 (* function to handle mutliple expressions as function parameters *)
 let handle_fun_mul_params e e_list = 

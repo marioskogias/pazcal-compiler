@@ -398,11 +398,6 @@ let handle_func_call ent pos expr_list =
       (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol);
     return_null ()
 
-let get_param_list a =
-    match a.entry_info with
-        | ENTRY_function inf -> inf.function_paramlist
-        | _ -> []
-
 let rec handle_format_list (*format_list quad_list int_quads*) = function
   | [], a, _ -> a
   | a::b, quads, int_quad -> 
