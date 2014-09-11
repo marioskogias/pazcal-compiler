@@ -88,17 +88,6 @@ let compute_immediate_dominators flowgraph =
   let size = Array.make (n+1) 0 in
 
 
-  let print_array a =
-    Printf.printf "%s: " (fst a);
-    Array.iter (Printf.printf "%d ") (snd a);
-    Printf.printf "\n";
-    in
-
-  let print_state () =
-    List.iter print_array 
-      [("Sdno",sdno); ("Idom",idom); ("Parent", parent); 
-       ("Ndfs",ndfs); ("Ancestor", ancestor); ("Child",child); 
-       ("Label",label); ("Size",size)] in
 
   (* DFS function with initializations *)
   let rec dfs i cnt =
