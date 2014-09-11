@@ -304,7 +304,7 @@ let endFunctionHeader e typ =
 		  		    | TYPE_bool -> 
 			  		    ignore(newParameter (id_make "$$") 
 				  				     typ PASS_BY_REFERENCE e true);
-					      ref (start_positive_offset - 1);
+					      ref (start_positive_offset - 2);
 		  		    | TYPE_int -> 
 			  		    ignore(newParameter (id_make "$$") 
 				  				     typ PASS_BY_REFERENCE e true);
@@ -371,5 +371,6 @@ let get_function_param_size e =
        in add_p_sizes (s+hs) t
      ) 
   in match e.entry_info with
-    |ENTRY_function f -> add_p_sizes 0 f.function_paramlist 
+    |ENTRY_function f -> let count = add_p_sizes 0 f.function_paramlist in
+      if (f.function_result = TYPE_none) then count else count - 2 
     |_ -> internal "Only functions have params"; raise Terminate

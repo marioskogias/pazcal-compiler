@@ -247,7 +247,6 @@ let table_size expr pos=
                                       (pos.pos_cnum - pos.pos_bol); 0
 
 let check_function_params symb_table_param_list given_param_types pos = 
-  Printf.printf "Symbtable: %d given: %d \n" (List.length symb_table_param_list) (List.length given_param_types);
   let get_param_info p = 
     match p.entry_info with
       | ENTRY_parameter inf -> (inf.parameter_type, inf.parameter_mode)

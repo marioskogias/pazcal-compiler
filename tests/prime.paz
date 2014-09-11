@@ -1,7 +1,6 @@
 FUNC bool prime (int n)
 {
-    prime(-n);
-    if (n < 0) return true;//prime(-n);
+    if (n < 0) return prime(-n);
     else if (n < 2) return false;
     else if (n == 2) return true;
     else if (n MOD 2 == 0) return false;
@@ -30,3 +29,4 @@ PROGRAM primes ()
     WRITELN();
     WRITESPLN(counter, "prime number(s) were found.");
 }
+
