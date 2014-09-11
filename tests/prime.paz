@@ -25,7 +25,7 @@ PROGRAM primes ()
     int number;
     FOR (number, 6 TO limit STEP 6) {
         if (prime(number-1)) { WRITELN(number-1); counter++; }
-        if (number != limit and prime(number+1)) { WRITELN(number+1); counter++; }
+        if ((number != limit) and prime(number+1)) { WRITELN(number+1); counter++; }
     }
     WRITELN();
     WRITESPLN(counter, "prime number(s) were found.");

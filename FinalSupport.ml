@@ -38,6 +38,17 @@ let get_register = function
   |(Dx, _) -> Dl
   |(reg, _) -> reg
 
+let get_16_bit_reg = function
+  | Ax
+  | Al -> Ax
+  | Cx
+  | Cl -> Cx
+  | Bx
+  | Bl -> Bx
+  | Dx
+  | Dl -> Dx
+  | reg -> reg
+
 (* In calculations we can have either registers or constants *)
 type action_arg = 
   |Action_reg of register

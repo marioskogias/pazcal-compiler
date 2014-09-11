@@ -21,8 +21,7 @@ PROC print (char msg[], int n, int x[])
     WRITELN("n = ", n);
     FOR (i, 0 TO n-1) {
         if (i > 0) WRITE(", ");
-        WRITELN(x[i]);
-        WRITE("another message");
+        WRITE(x[i]); (*an bgalw auto gamietai*)
     }
     WRITELN();
 }
@@ -34,9 +33,9 @@ PROGRAM bubbles ()
     FOR (i, 0 TO 15) {
         seed = (seed * 137 + 221 + i) MOD 101;
         x[i] = seed;
-        WRITELN(i);
+        WRITE(i);
     }
     print("Initial array: ", 16, x);
-    //bsort(16, x);
-    //print("Sorted array: ", 16, x);
+    bsort(16, x);
+    print("Sorted array: ", 16, x);
 }
