@@ -13,7 +13,7 @@ MLFILES=Hashcons.ml Identifier.ml Error.ml Types.ml Symbol.ml Output.ml\
   QuadTypes.ml Quads.ml Semantic.ml MergeBlocks.ml CodeElimination.ml\
   OptimizationSupport.ml ControlFlow.ml CopyPropagation.ml  Optimizations.ml\
   Lexer.ml Blocks.ml CharString.ml Parser.ml FinalSupport.ml FinalCode.ml\
-  ConstantProp.ml Main.ml
+  ConstantProp.ml FinalOpt.ml Main.ml
 MLIFILES=Hashcons.mli Identifier.mli Error.mli Types.mli CopyPropagation.mli\
   CodeElimination.mli ControlFlow.mli Symbol.mli Output.mli Semantic.mli \
   QuadTypes.mli Parser.mli Lexer.mli FinalCode.mli ConstantProp.mli

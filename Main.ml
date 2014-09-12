@@ -71,9 +71,14 @@ let main =
     
     (*create assembly code*)
     let assembly_code = FinalCode.create_final_code final_list in
-    
+   
+    (*optimize assembly code*)
+    let final_assembly =  if (!should_optimize) 
+                            then FinalOpt.optimize assembly_code
+                          else assembly_code in
+
     (*Ouput assembly*)
-    FinalCode.print_assembly outass assembly_code;
+    FinalCode.print_assembly outass final_assembly;
     
     (*Ouput quads*)
     Quads.print_quads outquads final_list;
