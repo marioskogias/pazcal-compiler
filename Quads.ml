@@ -187,7 +187,12 @@ let string_of_quad_t = function
   |Quad_ret -> "ret, -, -, -\n" 
   |Quad_dummy -> ""
 
-
+(*Get a list of quads a print it to the given out_channel*)
+let print_quads fd qlist =
+    let help_fn q =
+        let string_quad = string_of_quad_t q
+        in Printf.fprintf fd "%s" string_quad
+    in ignore(List.map help_fn qlist)
 
 (* ----------------------------------------------------------------------------- *)
 

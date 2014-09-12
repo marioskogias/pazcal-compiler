@@ -49,21 +49,34 @@ let speclist = Arg.align [
 
 let main =
   Arg.parse speclist anon_fun usage;
-  let inbuffer = if (!fflag || !iflag) then (in_file := "a.pas"; stdin) else open_in !in_file in
+  let inbuffer = if (!fflag || !iflag) then (in_file := "a.pas"; stdin) 
+                 else open_in !in_file in
   let name = get_name !in_file in 
-  let outass = if (!fflag) then stdout else open_out (String.concat "" [name; ".asm"]) in
-  let outquads = if (!iflag) then stdout else open_out  (String.concat "" [name; ".imm"]) in
+  let asm_name = String.concat "" [name; ".asm"] in
+  let quads_name = String.concat "" [name; ".imm"] in
+  let outass = if (!fflag) then stdout else open_out asm_name in
+  let outquads = if (!iflag) then stdout else open_out quads_name  in
   let lexbuf = Lexing.from_channel inbuffer in
   try
     let quad_list = List.rev(Parser.pmodule Lexer.lexer lexbuf) in
+
+    (*Substitute constant values*)
     let no_constants = ConstantProp.constant_optimize quad_list in
+    
     (*either optimize or not need block code for jumps*)
     let block_code = Blocks.blocks_of_quad_t_list no_constants in
     let opt_code = if (!should_optimize) then optimize block_code 
                      else block_code in
     let final_list = MergeBlocks.make_list opt_code in
-    FinalCode.print_final_code outass final_list;
-    ignore(List.map (Printf.fprintf outquads "%s") (List.map Quads.string_of_quad_t final_list));
+    
+    (*create assembly code*)
+    let assembly_code = FinalCode.create_final_code final_list in
+    
+    (*Ouput assembly*)
+    FinalCode.print_assembly outass assembly_code;
+    
+    (*Ouput quads*)
+    Quads.print_quads outquads final_list;
     exit 0
   with Parsing.Parse_error ->
     Printf.eprintf "syntax error on line %d \n" lexbuf.Lexing.lex_curr_p.Lexing.pos_lnum ;

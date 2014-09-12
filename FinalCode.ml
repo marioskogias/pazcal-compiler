@@ -361,13 +361,9 @@ let rec create_assembly = function
             in create_assembly (quad_list, assembly_so_far)
 
     
-let rec print_final_code file_d code =
+let rec create_final_code code =
     (*register lib functions*)
     register_lib_functions lib_funcs;
-    let rec print_help d = function
-        | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
-        | [] -> () 
-    in
     let count = ref 0 in
     let rec string_dec_fn res =
       incr count; 
@@ -383,7 +379,14 @@ let rec print_final_code file_d code =
     let assembly_mid = create_assembly(code, []) in
     let assembly_end = end_code in 
     let assembly_string_dec = [Misc (string_dec_fn "")] in
-    let assembly_all = assembly_start @ assembly_mid @ assembly_string_dec @ assembly_end in 
-    
-    let assembly_string = (List.map string_of_final_t assembly_all) in
-    print_help file_d assembly_string;
+    let assembly_all = assembly_start @ assembly_mid @ assembly_string_dec @ assembly_end 
+    in assembly_all
+
+
+let print_assembly fd assembly_list = 
+    let rec print_help d = function
+        | (h::tail) -> Printf.fprintf d "%s" h; print_help d tail 
+        | [] -> () 
+    in
+    let assembly_string = (List.map string_of_final_t assembly_list) in
+    print_help fd assembly_string;
