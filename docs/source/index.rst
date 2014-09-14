@@ -11,14 +11,14 @@ Welcome to PaZcal Compiler's documentation!
 Δαγκλής Θανάσης, ath.daglis@gmail.com
 
 Στα πλαίσια του μαθήματος `Μεταγλωτιστές
-<http://courses.softlab.ntua.gr/compilers/>`_ του της `ΣΗΜΜΥ ΕΜΠ
+<http://courses.softlab.ntua.gr/compilers/>`_ της `ΣΗΜΜΥ ΕΜΠ
 <http://www.ece.ntua.gr/>`_ κατασκευάσαμε έναν μεταγλωτιστή για τη γλώσσα
 `PaZcal <http://courses.softlab.ntua.gr/compilers/pazcal2014.pdf>`_
 χρησιμοποιώντας τη γλώσσα OCaml με στόχο να παράγουμε κώδικα assembly για
 επεξεργαστές 8086.
 
 Παρακάτω μπορείτε να βρείτε λεπτομέρειες σχετικές με την υλοποίηση του
-μεταγλωτιστή καθώς και οδηγίες εγκατάστασης και χρήσης του.
+μεταγλωτιστή καθώς και οδηγίες για το χτίσιμο και τη χρήση του.
 
 Contents:
 
