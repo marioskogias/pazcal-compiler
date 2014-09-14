@@ -284,5 +284,24 @@ let check_lval e pos =
     |_ -> error  "Line:%d.%d: Not an lvalue" (pos.pos_lnum) 
                    (pos.pos_cnum - pos.pos_bol); false
 
+let check_return in_fun pos = 
+     if in_fun then true 
+     else (error "Line:%d.%d: Return not in function" (pos.pos_lnum) 
+                    (pos.pos_cnum - pos.pos_bol) ;false)
+
+let check_if_return ent returned pos = 
+    match ent.entry_info with
+    |ENTRY_function f -> ( match f.function_result, returned with
+                            |TYPE_proc, _ -> true
+                            |_, true -> true
+                            |_, false -> warning "Line:%d.%d: No return in funtion"
+                                (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol); false
+    )
+   |_ -> internal "Check return not in a function"; raise Terminate
+
+ 
+
 (*bool val if in loop*)
 let in_loop = ref 0
+let in_func = ref false 
+let did_return = ref false

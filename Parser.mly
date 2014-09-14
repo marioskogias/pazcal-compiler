@@ -332,7 +332,7 @@ var_init : T_name { ($1,[], Expr(return_null())) }
 var_init_bra_list : T_lbracket const_expr T_rbracket { [table_size $2 (rhs_start_pos 1)] }
                     | T_lbracket const_expr T_rbracket var_init_bra_list { (table_size $2 (rhs_start_pos 1)::$4) }
 
-routine_header : routine_header_beg T_lparen routine_header_body T_rparen {ignore(currentFun := (snd $1)); registerFun $1 $3 }
+routine_header : routine_header_beg T_lparen routine_header_body T_rparen {ignore(currentFun := (snd $1); in_func := true); registerFun $1 $3 }
 
 routine_header_body :/*nothing*/ { [] } 
 		    |ptype formal routine_header_list { (($1,$2)::$3) }
@@ -351,9 +351,11 @@ formal : T_name { ($1,PASS_BY_VALUE,[]) }
 formal_end : /*nothing*/ { [] }
 	   | T_lbracket const_expr T_rbracket formal_end { (table_size $2 (rhs_start_pos 1)::$4) }
 
-routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1); return_null_stmt() }
+routine : routine_header T_semicolon closeScope { ignore(forwardFunction $1; in_func := false); return_null_stmt() }
 	| routine_header block {  (*before closing scope pass to fun_entry the size of the scope*)
-                                        ignore(closeFunctionScope $1.entry_info);
+                                        ignore(closeFunctionScope $1.entry_info); 
+                                        ignore(check_if_return $1 !did_return (rhs_start_pos 2)); 
+                                        did_return := false; in_func := false;
                                         { s_code = handle_func_def $1 [] $2.s_code; q_cont = []; q_break = [] } } 
 
 program_header : T_PROGRAM T_name T_lparen T_rparen { let fn =  newFunction (id_make "PROGRAM") true in 
@@ -593,7 +595,7 @@ stmt : T_semicolon { return_null_stmt () }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch $4 $7 }
      | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
      | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
-     | T_return T_semicolon { {s_code = handle_return_proc (rhs_start_pos 1); q_cont=[]; q_break=[]} }
+     | T_return T_semicolon {ignore(check_return !in_func (rhs_start_pos 1) ); {s_code = handle_return_proc (rhs_start_pos 1); q_cont=[]; q_break=[]} }
      | T_return expr T_semicolon { 
                                     let expr = (
                                         match (condition_to_expr $2) with
