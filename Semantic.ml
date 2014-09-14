@@ -276,5 +276,13 @@ let check_function_params symb_table_param_list given_param_types pos =
   in let params_info = List.map get_param_info symb_table_param_list 
   in help_check (params_info, given_param_types)
 
+let check_lval e pos = 
+    match e.entry_info with
+    |ENTRY_variable _
+    |ENTRY_parameter _
+    |ENTRY_temporary _ -> true
+    |_ -> error  "Line:%d.%d: Not an lvalue" (pos.pos_lnum) 
+                   (pos.pos_cnum - pos.pos_bol); false
+
 (*bool val if in loop*)
 let in_loop = ref 0

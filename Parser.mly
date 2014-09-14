@@ -465,8 +465,9 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
 
 l_value : T_name expr_list { 
     let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true  in
-    let pos = (rhs_start_pos 1)
-    in if (List.length (fst $2)) = 0 then Expr({code=[];place=(Quad_entry (e))})
+    let pos = (rhs_start_pos 1) in
+    ignore(check_lval e pos);
+    if (List.length (fst $2)) = 0 then Expr({code=[];place=(Quad_entry (e))})
     else let type_of_var = (match e.entry_info with
         | ENTRY_parameter par -> par.parameter_type
         | ENTRY_variable var -> var.variable_type
