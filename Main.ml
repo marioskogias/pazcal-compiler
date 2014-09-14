@@ -6,7 +6,7 @@ let rec optimize block_code =
     CodeElimination.perform_deletions block_code;                               
                                                                                 
     (* Simplify jumps *)                                                        
-    Optimizations.jump_simplification block_code;                               
+    (* Optimizations.jump_simplification block_code; *)
                                                                                 
     (* Dummy elimination *)                                                     
     Optimizations.dummy_elimination block_code;                                 
