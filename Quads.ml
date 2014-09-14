@@ -780,23 +780,36 @@ let handle_if_else_stmt sexpr s1 s2 =
   }
 
 
-let create_cond_quads expr switch =
+let create_cond_quads expr switch =(
     let rec merge_lists = function
         | ([], [], l) -> l
         | ((h1::t1), (h2::t2), l) -> merge_lists (t1, t2, l@[(h1,h2)])
         | (_, _, _) -> []
-    in let create_quad (a, b) = Quad_cond("==", expr.place, Quad_int(a), b)
+    in let create_quads (a, b) = (
+            let true_ref = ref 2 in
+            let false_ref = ref 2 in
+            let code_cond = (Quad_cond("==", expr.place, Quad_int(a), true_ref))
+            in let code_false = (Quad_jump (false_ref))
+	    in let code_true = (Quad_jump b)
+            in (code_true::code_false::[code_cond])
+	)
+    in let create_and_append_quads acc tuple = 
+	let quadlist = create_quads tuple in
+	acc @ quadlist
     in let mylist = merge_lists (switch.cond_list, switch.true_list, [])
-    in List.map create_quad mylist
-    
+    in List.fold_left create_and_append_quads [] mylist;
+    )
 
 (* Handle switch statement *)
 let handle_switch sexpr inner_switch =
      match sexpr with
      | Expr expr ->
+	 List.iter (fun x -> x := !x + 1) inner_switch.true_list;
          let cond_quads = create_cond_quads expr inner_switch
-         in {
-             s_code = (inner_switch.code_list)@(cond_quads@expr.code);
+	 in let l = List.length inner_switch.code_list
+         in 
+	 {
+             s_code = (inner_switch.code_list)@((Quad_jump (ref (l + 1)))::cond_quads@expr.code);
              q_break = [];
              q_cont = [];
          }
@@ -812,14 +825,14 @@ let handle_switch_default sexpr inner_switch default_clause =
         List.iter (fun x -> x := !x + l) inner_switch.false_list;
 
         {
-         s_code = default_clause.s_code@(inner_switch.code_list@((Quad_jump(ref l2))::(cond_quads@expr.code)));
+         s_code = default_clause.s_code@(inner_switch.code_list@((Quad_jump(ref (l2 + 1)))::(cond_quads@expr.code)));
          q_break = [];
          q_cont = [];
         }
     | Cond cond -> return_null_stmt()
 
 let handle_inner_switch switch_expr body next_switch =
-   let l1 = List.length next_switch.cond_list in
+   let l1 = (List.length next_switch.cond_list * 3) in
     let l2 = List.length next_switch.code_list in
     let l3 = List.length body.s_code in
     List.iter (fun x -> x := !x + l1) switch_expr.jump_list;
@@ -835,7 +848,7 @@ let handle_inner_switch switch_expr body next_switch =
 
 let handle_switch_exp case switch_exp =
     let l = List.length switch_exp.case_list in
-    let true_ref=ref (1+l) in
+    let true_ref=ref ( 1 + 3*l) in 
     {
     case_list = switch_exp.case_list@[case];
     jump_list = switch_exp.jump_list@[true_ref];    
