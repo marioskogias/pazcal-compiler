@@ -595,8 +595,8 @@ stmt : T_semicolon { return_null_stmt () }
      | T_switch stoppable T_lparen expr T_rparen T_lbrace inner_switch T_rbrace { in_loop := !in_loop - 1; handle_switch $4 $7 }
      | T_break T_semicolon { ignore(if (!in_loop <= 0) then print_error "break not in loop" (rhs_start_pos 1)); handle_break() }
      | T_continue T_semicolon { ignore(if (!in_loop <= 0) then print_error "continue not in loop" (rhs_start_pos 1)); handle_continue() }
-     | T_return T_semicolon {ignore(check_return !in_func (rhs_start_pos 1) ); {s_code = handle_return_proc (rhs_start_pos 1); q_cont=[]; q_break=[]} }
-     | T_return expr T_semicolon { 
+     | T_return T_semicolon {ignore(check_return !in_func (rhs_start_pos 1) ); did_return := true ;{s_code = handle_return_proc (rhs_start_pos 1); q_cont=[]; q_break=[]} }
+     | T_return expr T_semicolon {  did_return := true ;
                                     let expr = (
                                         match (condition_to_expr $2) with
                                             |Expr e -> e
