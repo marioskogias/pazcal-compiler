@@ -36,7 +36,7 @@ let should_optimize = ref false
 let fflag = ref false
 let iflag = ref false
 let in_file = ref ""
-let usage = "This is th usage:"
+let usage = "./pazcal [-o] <path/to/asm> | [-f] [-i] "
 let anon_fun name = in_file := name
 
 let speclist = Arg.align [
