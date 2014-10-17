@@ -890,7 +890,7 @@ let handle_for_stmt indx info body pos=
                          }
                 |"-" ->let comp_quads = handle_comparison ">=" (Expr({code=[];place=Quad_entry(temp_index)})) (Expr({code=[];place=Quad_entry(temp_endto)})) pos in
                        let temp = newTemporary TYPE_int in                                     
-                       let minus_quad = Quad_calc("-", step.place, Quad_entry(temp_index), Quad_entry(temp)) in
+                       let minus_quad = Quad_calc("-", Quad_entry(temp_index), step.place, Quad_entry(temp)) in
                        let assign_in_loop_quad = Quad_set(Quad_entry(temp), Quad_entry(temp_index)) in
                        let l1 = List.length body.s_code in
                        let l2 = List.length comp_quads.c_code in
