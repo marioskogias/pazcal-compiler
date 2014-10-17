@@ -232,11 +232,11 @@ let registerLibraryFunctions () =
 %token <string> T_int_const
 
 %token T_eof
-
+%left T_AND T_and T_OR T_or
 %left T_equal T_not_equal T_less T_greater T_less_equal T_greater_equal
 
-%left T_plus T_minus T_OR T_or
-%left T_times T_div T_mod T_MOD T_and T_AND
+%left T_plus T_minus
+%left T_times T_div T_mod T_MOD
 
 %right T_not T_NOT
 
