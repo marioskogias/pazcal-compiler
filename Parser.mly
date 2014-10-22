@@ -291,7 +291,9 @@ let registerLibraryFunctions () =
 
 
 
-pmodule : initialization declaration_list T_eof { $2.s_code }
+pmodule : initialization declaration_list T_eof {
+  if ((List.length $2.s_code) == 0) then (error "file is empty: No code to compile."; raise Terminate) else $2.s_code
+}
 
 initialization : { ignore(initSymbolTable 256);
 ignore(registerLibraryFunctions())}
