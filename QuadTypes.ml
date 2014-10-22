@@ -56,6 +56,11 @@ and expr_ret_type = {
   place : quad_elem_t
 }
 
+and l_value_ret_type = {
+  l_code : quad_t list;
+  l_place : quad_elem_t;
+  l_type : Types.typ
+}
 (* Return Type of a Condition 
  * Jumps are handled as relative jumps at first, converted later *)
 and cond_ret_type = {

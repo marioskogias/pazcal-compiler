@@ -205,6 +205,21 @@ let handle_expr_to_stmt sexpr =
   |Expr expr -> {s_code= expr.code; q_break=[]; q_cont=[]}
   |Cond cond -> return_null_stmt()
 
+let handle_lval_to_expr l_val =
+  match l_val.l_type with
+    | TYPE_none -> Expr({code = l_val.l_code; place = l_val.l_place})
+    | _ -> (
+	let result_temp = newTemporary l_val.l_type in
+        let array_quad = List.hd l_val.l_code in
+        let array_temp = match array_quad with
+          | Quad_array(q1, q2, e) -> e
+          | _ -> internal "Not an array"; raise Terminate
+        in
+	Expr({
+          code = Quad_set(Quad_valof(array_temp), Quad_entry(result_temp))::l_val.l_code;
+          place = Quad_entry(result_temp)
+        })
+      )
 
 (* Handle statement merge *) 
 

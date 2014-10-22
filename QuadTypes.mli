@@ -38,6 +38,11 @@ and expr_ret_type = {
 	place : quad_elem_t;
 }
 
+and l_value_ret_type = {
+    l_code : quad_t list;
+    l_place : quad_elem_t;
+    l_type: Types.typ;
+}
 and cond_ret_type = {
 	c_code : quad_t list;	
 	q_true: int ref list;   

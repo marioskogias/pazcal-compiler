@@ -262,7 +262,7 @@ let registerLibraryFunctions () =
 %type <Types.typ> ptype
 %type <QuadTypes.superexpr> const_expr
 %type <QuadTypes.superexpr> expr
-%type <QuadTypes.superexpr> l_value
+%type <QuadTypes.l_value_ret_type> l_value
 %type <(QuadTypes.superexpr list) * int> expr_list
 //%type <unit> unop
 //%type <unit> binop
@@ -387,7 +387,7 @@ expr:  T_int_const { Expr( {code=[]; place= Quad_int ($1)}) }
     | T_lparen expr T_rparen { $2 }
 
 
-     | l_value { Expr(dereference $1) }
+     | l_value { Expr(dereference (handle_lval_to_expr $1)) }
      | call { $1 }
 
      | T_plus expr { if (check_is_number $2 (rhs_start_pos 1)) then
@@ -469,7 +469,7 @@ l_value : T_name expr_list {
     let e = lookupEntry  (id_make $1) LOOKUP_ALL_SCOPES true  in
     let pos = (rhs_start_pos 1) in
     ignore(check_lval e pos);
-    if (List.length (fst $2)) = 0 then Expr({code=[];place=(Quad_entry (e))})
+    if (List.length (fst $2)) = 0 then ({l_code=[];l_place=(Quad_entry (e)); l_type=TYPE_none})
     else let type_of_var = (match e.entry_info with
         | ENTRY_parameter par -> par.parameter_type
         | ENTRY_variable var -> var.variable_type
@@ -481,12 +481,13 @@ l_value : T_name expr_list {
                     |Expr expr ->
                         (
                             let result_type = get_var_type pos ((get_type (Quad_entry e)), (snd $2))
-                            in let result_temp = newTemporary result_type
+                            in let array_temp = newTemporary TYPE_int
                             in let final_expr = match (fst $2) with
                                 | h::[] ->
-                                    Expr({
-                                        code = Quad_array(Quad_entry(e), expr.place, result_temp)::expr.code;
-                                        place = Quad_entry(result_temp)
+                                    ({
+                                        l_code = Quad_array(Quad_entry(e), expr.place, array_temp)::expr.code;
+                                        l_place = Quad_entry(array_temp);
+                                        l_type = result_type;
                                     })
                                 | h::t  ->
                                     let offset_quads_expr = handle_array type_of_var (List.tl (fst $2))
@@ -496,18 +497,19 @@ l_value : T_name expr_list {
                                             code = Quad_calc("+", expr.place, offset_quads_expr.place, Quad_entry(temp))::offset_quads_expr.code;
                                             place = Quad_entry(temp)
                                         }
-                                    in ( Expr(
+                                    in (
                                         {
-                                            code = Quad_array(Quad_entry(e), Quad_entry(temp), result_temp)::(first_offset_included.code);
-                                            place = Quad_entry(result_temp)
+                                            l_code = Quad_array(Quad_entry(e), Quad_entry(temp), array_temp)::(first_offset_included.code);
+                                            l_place = Quad_entry(array_temp);
+                                            l_type = result_type;
                                         }
-                                    ))
-                                | [] -> Expr(return_null())
+                                    )
+                                | [] -> ({l_code=[];l_place=(Quad_entry (e)); l_type=TYPE_none})
                                     in final_expr
                         )
-                    | Cond c -> Expr(return_null()) (*error here*)
+                    | Cond c -> internal "error"; raise Terminate
                 )
-            | _ -> Expr({code=[];place=(Quad_entry (e))})
+            | _ -> ({l_code=[];l_place=(Quad_entry (e)); l_type=TYPE_none})
 }
 
 expr_list : /*nothing*/ { ([], 0) }
@@ -553,16 +555,19 @@ local_def : const_def { return_null_stmt() }
 	  | var_def { $1 }
 
 stmt : T_semicolon { return_null_stmt () }
-     | l_value assign expr T_semicolon { if (check_assign $2 $1 $3 (rhs_start_pos 1)) then
-                                            handle_assignment $2 (dereference $1) $3 (get_binop_pos())
+     | l_value assign expr T_semicolon { let l_val = Expr({code = ($1.l_code); place = ($1.l_place)}) in
+                                         if (check_assign $2 l_val $3 (rhs_start_pos 1)) then
+                                            handle_assignment $2 (dereference l_val) $3 (get_binop_pos())
                                          else return_null_stmt()
                                         }
-     | l_value T_plus_plus T_semicolon{ if (check_assign "+=" $1 $1 (rhs_start_pos 1)) then
-                                           handle_plus_plus $1 
+     | l_value T_plus_plus T_semicolon{ let l_val = Expr({code = ($1.l_code); place = ($1.l_place)}) in
+                                        if (check_assign "+=" l_val l_val (rhs_start_pos 1)) then
+                                           handle_plus_plus l_val
                                         else return_null_stmt()
                                        }
-     | l_value T_minus_minus T_semicolon { if (check_assign "-=" $1 $1 (rhs_start_pos 1)) then
-                                             handle_minus_minus $1
+     | l_value T_minus_minus T_semicolon { let l_val = Expr({code = ($1.l_code); place = ($1.l_place)}) in
+                                         if (check_assign "-=" l_val l_val (rhs_start_pos 1)) then
+                                             handle_minus_minus l_val
                                            else return_null_stmt()
                                           }
      | call T_semicolon { handle_expr_to_stmt $1 }
