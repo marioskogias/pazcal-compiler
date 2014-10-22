@@ -64,7 +64,10 @@ rule lexer = parse
   | (['1'-'9']+ digit*) | ('0'+) as value { T_int_const(value) }
   | digit+'.'digit+(('e'|'E')('+'|'-')? digit+)? as value { T_real_const(value) }
   | "'" ([^ '\'' '\"' '\\' ] | ("\\n" | "\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\""))  "'"  as value{ T_const_char(value) }
-  | '"' ([^ '\'' '\"' '\\' ] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' as value { T_string_const(value) }
+  | '"' ([^ '\'' '\"' '\\' '\n'] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' as value { T_string_const(value) }
+  | '"' ([^ '\'' '\"' '\\'] | ("\\t" | "\\r" | "\\0" | "\\\'" | "\\\\" | "\\\"" | "\\n"))* '"' {
+	 Printf.eprintf "Line %n: Unfinished string\n" (lexbuf.Lexing.lex_curr_p.Lexing.pos_lnum);
+                    lexer lexbuf }
   | "//" [^ '\n']* "\n"   { Lexing.new_line lexbuf ; lexer lexbuf }
   | "/*"(_|white|new_line)* "*/"  {for i = 1 to (count_substring (Lexing.lexeme lexbuf) "\n") do Lexing.new_line lexbuf done;
 				    lexer lexbuf }
