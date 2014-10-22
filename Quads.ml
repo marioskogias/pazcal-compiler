@@ -15,7 +15,7 @@ let get_type = function
   |Quad_char(_) -> TYPE_char
   |Quad_bool(_) -> TYPE_bool
   |Quad_string (str) -> TYPE_array(TYPE_char, String.length str)
-  |Quad_valof (ent) 
+  |Quad_valof (_, t) -> t 
   |Quad_entry (ent) -> get_entry_type ent
 
 (* Small Function To Check if Quad is en entry or not *)
@@ -116,8 +116,8 @@ let dereference x =
   | Expr ex ->
     begin
       match ex.code with
-      |(Quad_array(_, _, ent)::_)->
-        {ex with place = Quad_valof(ent)}
+      |(Quad_array(a, _, ent)::_)->
+        {ex with place = Quad_valof(ent, get_type a)}
       |_ -> ex
     end
   | Cond cond -> return_null () 
@@ -128,7 +128,7 @@ let dereference x =
 (* Extract the Entry from a quad_elem_t *)
 let extract_entry = function
   |Quad_entry (ent) -> ent
-  |Quad_valof (ent) -> ent
+  |Quad_valof (ent, _) -> ent
   |_ -> internal "Not an entry"; raise Terminate
 
 (* Get a string description of a quad_elem_t *)
@@ -139,7 +139,7 @@ let get_id = function
   |Quad_char (c) -> c
   |Quad_bool (b) -> b
   |Quad_string (s) -> s
-  |Quad_valof (ent)
+  |Quad_valof (ent, _)
   |Quad_entry (ent) -> id_name ent.entry_id
 
 (* Main function to convert a quad to a string *)
@@ -211,12 +211,12 @@ let handle_lval_to_expr l_val =
     | _ -> (
 	let result_temp = newTemporary l_val.l_type in
         let array_quad = List.hd l_val.l_code in
-        let array_temp = match array_quad with
-          | Quad_array(q1, q2, e) -> e
+        let array_temp, array_type = match array_quad with
+          | Quad_array(q1, q2, e) -> e, get_type q1
           | _ -> internal "Not an array"; raise Terminate
         in
 	Expr({
-          code = Quad_set(Quad_valof(array_temp), Quad_entry(result_temp))::l_val.l_code;
+          code = Quad_set(Quad_valof(array_temp, array_type), Quad_entry(result_temp))::l_val.l_code;
           place = Quad_entry(result_temp)
         })
       )

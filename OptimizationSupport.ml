@@ -221,9 +221,9 @@ let single_compute_temporary_info flowgraph =
     | Quad_set (q1,q2) ->
         handle_use q1 i j;
         handle_def q2 i j false
-    | Quad_array (_, q, e) ->
+    | Quad_array (a, q, e) ->
         handle_use q i j;
-        handle_def (Quad_valof e) i j true
+        handle_def (Quad_valof(e, get_type a)) i j true
     | Quad_cond (_, q1, q2, _) ->
         handle_use q1 i j;
         handle_use q2 i j

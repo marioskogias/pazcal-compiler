@@ -33,6 +33,7 @@ let registerVar var_type place (a,b,c) = match c with
                                          | Expr(e) -> 
                                          begin
                                             match e.place with
+                                                    
                                                 | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
                                                 | _ ->
                                                     let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)}) in

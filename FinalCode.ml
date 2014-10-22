@@ -76,8 +76,8 @@ let rec load a reg =
                              |(false,_) -> let ar = get_ar in 
                                 (Mov(Register get_register(reg, entry_type), Mem_loc(length, Si,offset))::ar)
        )
-      |Quad_valof(e) -> 
-          let entry_type = get_entry_type e in
+      |Quad_valof(e,t) -> 
+          let entry_type = t in
           let length = mem_size entry_type in 
           let l = load (Quad_entry(e)) Di in
             ((Mov(Register get_register(reg, entry_type), Mem_loc(length, Di, 0)))::l)
@@ -90,7 +90,7 @@ let load_addr addr reg =
   match addr with
     |Quad_string(s) ->let addr = add_string (strip  s) in
        [Lea (Register reg, String_addr addr)]
-    |Quad_valof(ent) -> load (Quad_entry(ent)) reg
+    |Quad_valof(ent,_) -> load (Quad_entry(ent)) reg
     |Quad_entry(e) ->( let l = local e in
                        let (offset, is_reference) = get_info e.entry_info in
                        let entry_type = get_entry_type e in
@@ -117,8 +117,8 @@ let store a reg =
         |(false,_) -> let ar = get_ar in 
             (Mov(Mem_loc(length, Si,offset), Register get_register(reg, entry_type))::ar)
     )
-    |Quad_valof(e) -> let l = load (Quad_entry(e)) Di in
-        let entry_type = get_entry_type e in
+    |Quad_valof(e, t) -> let l = load (Quad_entry(e)) Di in
+        let entry_type = t in
         let length = mem_size entry_type in 
         (Mov(Mem_loc(length, Di, 0), Register get_register(reg, entry_type))::l)
     |_ -> internal "Can not store to non entry"; raise Terminate

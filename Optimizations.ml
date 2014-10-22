@@ -139,7 +139,7 @@ let constant_folding fun_code =
           begin 
             match q with
             | Quad_entry e 
-            | Quad_valof e ->
+            | Quad_valof (e,_) ->
               Hashtbl.remove constants_hash e;
             | _ -> ()
           end;     

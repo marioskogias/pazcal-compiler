@@ -7,7 +7,7 @@ open Error
 type quad_elem_t =
   |Quad_none                        (* Error Handling              *)
   |Quad_entry of Symbol.entry       (* Symbol Table Entries        *)
-  |Quad_valof of Symbol.entry       (* Dereferenced Symbol Entries *)
+  |Quad_valof of Symbol.entry * Types.typ    (* Dereferenced Symbol Entries *)
   |Quad_real of string
   |Quad_int of string               (* Constant Integers           *)
   |Quad_char of string              (* Constant Characters         *)
@@ -17,7 +17,7 @@ type quad_elem_t =
 let string_of_quad_elem_t = function
   |Quad_none          -> ""
   |Quad_entry ent     -> id_name ent.entry_id
-  |Quad_valof ent     -> Printf.sprintf "[%s]" (id_name ent.entry_id)
+  |Quad_valof (ent,_)     -> Printf.sprintf "[%s]" (id_name ent.entry_id)
   |Quad_int str       -> str
   |Quad_real str      -> str
   |Quad_char str      -> str
