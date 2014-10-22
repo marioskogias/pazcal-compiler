@@ -10,7 +10,7 @@ open Parsing
 open Output
 open QuadTypes
 open Quads
-
+open Lexing
 
 let printTup (a,b) = print_string a; print_string " "; List.iter (printf "%d ") b
 
@@ -514,7 +514,11 @@ l_value : T_name expr_list {
                         )
                     | Cond c -> internal "error"; raise Terminate
                 )
-            | _ ->  ((error "Not an array."); raise Terminate)
+            | _ ->  (error "Line:%d.%d: subscripted value is not an array"
+            (pos.pos_lnum) (pos.pos_cnum - pos.pos_bol));
+                   ({l_code=[];l_place=(Quad_entry (e)); l_type=TYPE_none})
+
+
 }
 
 expr_list : /*nothing*/ { ([], 0) }
