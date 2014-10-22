@@ -31,16 +31,19 @@ let get_binop_pos () = (rhs_start_pos 1, rhs_start_pos 3)
 (*function to register a variable*)
 let registerVar var_type place (a,b,c) = match c with
                                          | Expr(e) -> 
-                                         begin 
+                                         begin
                                             match e.place with
                                                 | Quad_none -> ignore(newVariable (id_make a) (table_type var_type b) true); return_null_stmt()
-                                                | _ -> 
-                                                    let quad_e = Expr({code=[]; 
-                                                    place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                                    in handle_assignment "=" (dereference quad_e) c place
+                                                | _ ->
+                                                    let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)}) in
+                                                    if (check_assign "=" quad_e c (rhs_start_pos 1)) then
+                                                        (handle_assignment "=" (dereference quad_e) c place)
+						    else (internal "Types not matching"; raise Terminate)
                                          end
                                          | Cond(cond) -> let quad_e = Expr({code=[]; place=Quad_entry(newVariable (id_make a) (table_type var_type b) true)})
-                                            in handle_assignment "=" (dereference quad_e) c (get_binop_pos())
+                                            in if (check_assign "=" quad_e c  (rhs_start_pos 1)) then
+                                                handle_assignment "=" (dereference quad_e) c (get_binop_pos())
+                                            else (internal "Types not matching"; raise Terminate)
                         
 (*function to register a const*)
 let registerConst pos var_type (a,v) = let const_val = get_const_val v pos in
@@ -325,7 +328,7 @@ var_def_list : /*nothing*/ { [] }
 	     | T_comma var_init var_def_list { ($2::$3) }
 
 var_init : T_name { ($1,[], Expr(return_null())) } 
-	    | T_name T_eq expr { ($1,[],$3)  }
+	    | T_name T_eq expr {($1,[],$3)}
 	    | T_name var_init_bra_list { ($1,$2, Expr(return_null())) }
 
 
