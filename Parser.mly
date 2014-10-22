@@ -512,7 +512,7 @@ l_value : T_name expr_list {
                         )
                     | Cond c -> internal "error"; raise Terminate
                 )
-            | _ -> ({l_code=[];l_place=(Quad_entry (e)); l_type=TYPE_none})
+            | _ ->  ((error "Not an array."); raise Terminate)
 }
 
 expr_list : /*nothing*/ { ([], 0) }
