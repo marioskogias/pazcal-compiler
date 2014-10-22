@@ -654,5 +654,5 @@ write : T_WRITE { ($1) }
       | T_WRITESP { ($1) }
       | T_WRITESPLN { ($1) }
 
-pformat : expr { ($1, Expr({ code=[]; place= Quad_int ("0")})) }
-	| T_FORM T_lparen expr T_comma expr T_rparen { ($3, $5) }
+pformat : expr { (condition_to_expr $1, Expr({ code=[]; place= Quad_int ("0")})) }
+	| T_FORM T_lparen expr T_comma expr T_rparen { (condition_to_expr $3,condition_to_expr $5) }
