@@ -3,6 +3,7 @@ open Quads
 open Error
 open Symbol
 open Identifier
+open Types
 
 (* Type Definitions *)
 
@@ -223,7 +224,7 @@ let single_compute_temporary_info flowgraph =
         handle_def q2 i j false
     | Quad_array (a, q, e) ->
         handle_use q i j;
-        handle_def (Quad_valof(e, get_type a)) i j true
+        handle_def (Quad_valof(e, getArrayType(get_type a))) i j true
     | Quad_cond (_, q1, q2, _) ->
         handle_use q1 i j;
         handle_use q2 i j

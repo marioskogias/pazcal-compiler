@@ -117,7 +117,7 @@ let dereference x =
     begin
       match ex.code with
       |(Quad_array(a, _, ent)::_)->
-        {ex with place = Quad_valof(ent, get_type a)}
+        {ex with place = Quad_valof(ent, getArrayType (get_type a))}
       |_ -> ex
     end
   | Cond cond -> return_null () 
@@ -205,7 +205,7 @@ let handle_expr_to_stmt sexpr =
   |Expr expr -> {s_code= expr.code; q_break=[]; q_cont=[]}
   |Cond cond -> return_null_stmt()
 
-let handle_lval_to_expr l_val =
+(*let handle_lval_to_expr l_val =
   match l_val.l_type with
     | TYPE_none -> Expr({code = l_val.l_code; place = l_val.l_place})
     | _ -> (
@@ -220,7 +220,7 @@ let handle_lval_to_expr l_val =
           place = Quad_entry(result_temp)
         })
       )
-
+ *)
 (* Handle statement merge *) 
 
 let handle_stmt_merge stmt1 stmt2 =

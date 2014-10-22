@@ -22,6 +22,11 @@ let rec sizeOfArrayType t =
     |TYPE_array(et, sz) -> sizeOfArrayType et
     |_ -> sizeOfType t
 
+let rec getArrayType t =  
+  match t with
+    |TYPE_array(et, sz) -> getArrayType et
+    |_ -> t
+
 let rec equalType t1 t2 =
   match t1, t2 with
     | TYPE_array (et1, sz1), TYPE_array (et2, sz2) -> if sz1*sz2 = 0 then equalType et1 et2
