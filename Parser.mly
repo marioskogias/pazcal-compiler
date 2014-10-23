@@ -486,7 +486,6 @@ l_value : T_name expr_list {
                 (match (List.hd (fst $2)) with
                     |Expr expr ->
                         (
-                            let result_type = get_var_type pos ((get_type (Quad_entry e)), (snd $2))
                             in let result_temp = newTemporary TYPE_int
                             in let final_expr = match (fst $2) with
                                 | h::[] ->
@@ -639,7 +638,8 @@ stmt_list : /*nothing*/ { return_null_stmt() }
       
       | stmt_list stmt { handle_stmt_merge $1 $2 }
 
-clause : stmt_list { ($1) }
+clause : stmt_list T_break T_semicolon{
+	    let jump_ref = ref 1 in {s_code = (Quad_jump(jump_ref))::($1.s_code); q_cont = $1.q_cont; q_break =(jump_ref)::($1.q_break)  }}
        | stmt_list T_NEXT T_semicolon {($1) }
 
 inner_switch : /*nothing*/ { {cond_list=[]; code_list=[]; true_list=[]; false_list=[]} }
