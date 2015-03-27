@@ -486,7 +486,7 @@ l_value : T_name expr_list {
                 (match (List.hd (fst $2)) with
                     |Expr expr ->
                         (
-                            in let result_temp = newTemporary TYPE_int
+                            let result_temp = newTemporary TYPE_int
                             in let final_expr = match (fst $2) with
                                 | h::[] ->
                                     Expr({
